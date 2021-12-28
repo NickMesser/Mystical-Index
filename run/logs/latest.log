@@ -1,0 +1,19 @@
+[06:12:28] [Server thread/INFO] (Minecraft) Saving and pausing game...
+[06:12:28] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[New World]'/minecraft:overworld
+[06:12:28] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[New World]'/minecraft:the_nether
+[06:12:28] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[New World]'/minecraft:the_end
+[06:12:29] [Server thread/INFO] (Minecraft) Player166 lost connection: Disconnected
+[06:12:29] [Server thread/INFO] (Minecraft) Player166 left the game
+[06:12:29] [Server thread/INFO] (Minecraft) Stopping singleplayer server as player logged out
+[06:12:29] [Server thread/INFO] (Minecraft) Stopping server
+[06:12:29] [Server thread/INFO] (Minecraft) Saving players
+[06:12:29] [Server thread/INFO] (Minecraft) Saving worlds
+[06:12:29] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[New World]'/minecraft:overworld
+[06:12:29] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[New World]'/minecraft:the_nether
+[06:12:29] [Server thread/INFO] (Minecraft) Saving chunks for level 'ServerLevel[New World]'/minecraft:the_end
+[06:12:29] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (New World (5)): All chunks are saved
+[06:12:29] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[06:12:29] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[06:12:29] [Server thread/INFO] (Minecraft) ThreadedAnvilChunkStorage: All dimensions are saved
+[06:12:29] [Render thread/INFO] (firstmod) This line is printed by an example mod mixin!
+[06:12:31] [Render thread/INFO] (Minecraft) Stopping!
