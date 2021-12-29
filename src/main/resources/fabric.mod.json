@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "id": "firstmod",
+  "id": "mystical_index",
   "version": "${version}",
 
-  "name": "First Mod",
+  "name": "Mystical Index",
   "description": "This is an example description! Tell everyone what your mod is about!",
   "authors": [
     "Me!"
@@ -19,14 +19,14 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "net.messer.firstmod.FirstMod"
+      "net.messer.mystical_index.MysticalIndex"
     ],
     "client": [
-      "net.messer.firstmod.FirstModClient"
+      "net.messer.mystical_index.MysticalIndexClient"
     ]
   },
   "mixins": [
-    "firstmod.mixins.json"
+    "mystical_index.mixins.json"
   ],
 
   "depends": {
