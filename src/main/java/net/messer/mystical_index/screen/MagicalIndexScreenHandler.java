@@ -1,5 +1,6 @@
 package net.messer.mystical_index.screen;
 
+import net.messer.mystical_index.item.inventory.CustomSlot;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
@@ -26,7 +27,7 @@ public class MagicalIndexScreenHandler extends ScreenHandler {
         inventory.onOpen(playerInventory.player);
 
         for (int i = 0; i < 5; i++) {
-            this.addSlot(new Slot(inventory, i, 44 + i * 18, 20));
+            this.addSlot(new CustomSlot(inventory, i, 44 + i * 18, 20));
         }
 
         for (int y = 0; y < 3; y++) {

@@ -13,6 +13,11 @@ import net.minecraft.util.collection.DefaultedList;
  */
 public interface ImplementedInventory extends Inventory {
 
+    @Override
+    default int getMaxCountPerStack() {
+        return 256;
+    }
+
     /**
      * Retrieves the item list of this inventory.
      * Must return the same instance every time it's called.

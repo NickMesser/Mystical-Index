@@ -11,7 +11,7 @@ import net.minecraft.util.registry.Registry;
 public class ModItems {
 
     public static final Item STORAGE_BOOK = registerItem("storage_book",
-            new StorageBook(new FabricItemSettings().group(ItemGroup.MISC).maxCount(1)));
+            new StorageBook(new FabricItemSettings().group(ItemGroup.MISC).maxCount(500)));
 
     private static Item registerItem(String name, Item item){
         return Registry.register(Registry.ITEM, new Identifier(MysticalIndex.MOD_ID, name), item);

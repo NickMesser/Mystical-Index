@@ -95,6 +95,10 @@ public class MagicalIndexBlock extends BlockWithEntity implements BlockEntityPro
             player.openHandledScreen(screenHandlerFactory);
         }
 
+        for(ItemStack items: magicalIndex.getItems()){
+            MysticalIndex.LOGGER.info(items.getCount());
+        }
+
         return super.onUse(state, world, pos, player, hand, hit);
     }
 

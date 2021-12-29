@@ -5,6 +5,7 @@ import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -29,6 +30,10 @@ public class MagicalIndexScreen extends HandledScreen<MagicalIndexScreenHandler>
 
     @Override
     public void render(MatrixStack matrices, int mouseX, int mouseY, float delta) {
+
+        var count = String.valueOf(handler.getSlot(0).getStack().getCount());
+        textRenderer.draw(matrices,count, 10,10, 0xFFFFFF);
+
         renderBackground(matrices);
         super.render(matrices, mouseX, mouseY, delta);
         drawMouseoverTooltip(matrices,mouseX,mouseY);
