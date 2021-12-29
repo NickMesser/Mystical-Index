@@ -9,10 +9,12 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 public class LibraryInventoryScreen extends HandledScreen<LibraryInventoryScreenHandler> {
-    private static final Identifier TEXTURE = new Identifier("textures/gui/container/hopper.png");
+    private static final Identifier TEXTURE = new Identifier("firstmod:textures/gui/library_screen.png");
 
     public LibraryInventoryScreen(LibraryInventoryScreenHandler handler, PlayerInventory inventory, Text title) {
         super(handler, inventory, title);
+        this.backgroundHeight = 133;
+        this.playerInventoryTitleY = this.backgroundHeight - 94;
     }
 
     @Override
