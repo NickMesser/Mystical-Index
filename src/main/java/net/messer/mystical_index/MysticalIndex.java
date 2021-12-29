@@ -3,6 +3,7 @@ package net.messer.mystical_index;
 import net.fabricmc.api.ModInitializer;
 import net.messer.mystical_index.block.ModBlocks;
 import net.messer.mystical_index.block.entity.LibraryBlockEntity;
+import net.messer.mystical_index.block.entity.ModBlockEntities;
 import net.messer.mystical_index.item.ModItems;
 import net.minecraft.block.entity.BlockEntityType;
 import org.apache.logging.log4j.LogManager;
@@ -17,5 +18,6 @@ public class MysticalIndex implements ModInitializer {
 	public void onInitialize() {
 		ModItems.registerModItems();
 		ModBlocks.registerModBlocks();
+		ModBlockEntities.registerBlockEntities();
 	}
 }

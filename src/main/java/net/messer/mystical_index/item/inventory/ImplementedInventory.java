@@ -98,7 +98,7 @@ public interface ImplementedInventory extends Inventory {
     @Override
     default void setStack(int slot, ItemStack stack) {
         getItems().set(slot, stack);
-        if (stack.getCount() > getMaxCountPerStack()) {
+        if (stack.getCount() > (getMaxCountPerStack() * 5)) {
             stack.setCount(getMaxCountPerStack());
         }
     }
@@ -127,5 +127,51 @@ public interface ImplementedInventory extends Inventory {
     @Override
     default boolean canPlayerUse(PlayerEntity player) {
         return true;
+    }
+
+    default ItemStack addStack(ItemStack stackToAdd) {
+        ItemStack itemStack = stackToAdd.copy();
+        this.addToExistingSlot(itemStack);
+        if (itemStack.isEmpty()) {
+            return ItemStack.EMPTY;
+        } else {
+            this.addToNewSlot(itemStack);
+            return itemStack.isEmpty() ? ItemStack.EMPTY : itemStack;
+        }
+    }
+
+    default void addToNewSlot(ItemStack stack) {
+        for(int i = 0; i < this.getItems().size(); ++i) {
+            ItemStack itemStack = this.getStack(i);
+            if (itemStack.isEmpty()) {
+                this.setStack(i, stack.copy());
+                stack.setCount(0);
+                return;
+            }
+        }
+
+    }
+
+    default void addToExistingSlot(ItemStack stack) {
+        for(int i = 0; i < this.getItems().size(); ++i) {
+            ItemStack itemStack = this.getStack(i);
+            if (ItemStack.canCombine(itemStack, stack)) {
+                if((itemStack.getCount() + stack.getCount()) > (itemStack.getMaxCount() * 5))
+                {
+                    stack.decrement(itemStack.getMaxCount() - itemStack.getCount());
+                    itemStack.setCount(200);
+                    this.markDirty();
+                    continue;
+                }
+                else{
+                    itemStack.setCount(200);
+                    stack.decrement(stack.getCount());
+                    this.markDirty();
+                }
+                if (stack.isEmpty()) {
+                    return;
+                }
+            }
+        }
     }
 }

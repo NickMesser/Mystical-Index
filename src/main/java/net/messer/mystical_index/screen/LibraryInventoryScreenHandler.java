@@ -64,7 +64,6 @@ public class LibraryInventoryScreenHandler extends ScreenHandler {
                 slot.markDirty();
             }
         }
-
         return newStack;
     }
 

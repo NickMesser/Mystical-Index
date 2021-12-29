@@ -1,5 +1,6 @@
 package net.messer.mystical_index.block.entity;
 
+import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.item.inventory.ImplementedInventory;
 import net.messer.mystical_index.screen.LibraryInventoryScreenHandler;
 import net.minecraft.block.BlockState;
@@ -16,6 +17,8 @@ import net.minecraft.text.Text;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.logging.Logger;
 
 public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandlerFactory, ImplementedInventory {
     private final DefaultedList<ItemStack> inventory =
