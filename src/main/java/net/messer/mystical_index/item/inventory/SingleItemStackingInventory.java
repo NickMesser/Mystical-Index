@@ -7,6 +7,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.text.LiteralText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.registry.Registry;
@@ -43,12 +44,15 @@ public class SingleItemStackingInventory implements Inventory {
         Inventories.readNbt(stack.getOrCreateNbt(), items);
         var itemName = stack.getNbt().get("storedItem").asString();
         currentlyStoredItem = Registry.ITEM.get(Identifier.tryParse(itemName));
+        if(!itemName.isBlank()){
+            this.stack.setCustomName(new LiteralText("Book of " + currentlyStoredItem.getName().getString()));
+        }
     }
 
 
     @Override
     public int getMaxCountPerStack() {
-        return 64000;
+        return 1600;
     }
 
     @Override
@@ -109,48 +113,34 @@ public class SingleItemStackingInventory implements Inventory {
     }
 
     public ItemStack addStack(ItemStack stackToAdd) {
-        ItemStack itemStack = stackToAdd.copy();
-        this.addToExistingSlot(itemStack);
-        if (itemStack.isEmpty()) {
-            return ItemStack.EMPTY;
+        var currentStack = this.getStack(0);
+        if (ItemStack.canCombine(currentStack, stackToAdd)) {
+            if ((currentStack.getCount() + stackToAdd.getCount()) > this.getMaxCountPerStack()) {
+                var amountToMax = getMaxCountPerStack() - currentStack.getCount();
+                currentStack.increment(amountToMax);
+                stackToAdd.decrement(amountToMax);
+                this.markDirty();
+                return stackToAdd;
+            } else {
+                currentStack.increment(stackToAdd.getCount());
+                stackToAdd.setCount(0);
+                this.markDirty();
+                return ItemStack.EMPTY;
+            }
         } else {
-            this.addToNewSlot(itemStack);
-            return itemStack.isEmpty() ? ItemStack.EMPTY : itemStack;
-        }
-    }
-
-    private void addToNewSlot(ItemStack stack) {
-        for(int i = 0; i < this.inventorySize; ++i) {
-            ItemStack itemStack = this.getStack(i);
-            if (itemStack.isEmpty()) {
-                this.setStack(i, stack.copy());
-                stack.setCount(0);
-                return;
+            var newStack = stackToAdd.copy();
+            if(newStack.getCount() > getMaxCountPerStack()){
+                setStack(0, newStack);
+                newStack.setCount(getMaxCountPerStack());
+                stackToAdd.decrement(getMaxCountPerStack());
+                this.markDirty();
+                return stackToAdd;
+            } else {
+                setStack(0, newStack);
+                stackToAdd.setCount(0);
             }
         }
-
-    }
-
-    private void addToExistingSlot(ItemStack stack) {
-        for(int i = 0; i < this.inventorySize; ++i) {
-            ItemStack itemStack = this.getStack(i);
-            if (ItemStack.canCombine(itemStack, stack)) {
-                if((itemStack.getCount() + stack.getCount()) > this.getMaxCountPerStack())
-                {
-                    stack.decrement(itemStack.getMaxCount() - itemStack.getCount());
-                    itemStack.setCount(itemStack.getMaxCount());
-                    this.markDirty();
-                    continue;
-                }
-                else{
-                    itemStack.increment(stack.getCount());
-                    stack.decrement(stack.getCount());
-                    this.markDirty();
-                }
-                if (stack.isEmpty()) {
-                    return;
-                }
-            }
-        }
+        this.markDirty();
+        return stackToAdd;
     }
 }
