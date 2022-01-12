@@ -4,16 +4,16 @@
   "version": "${version}",
 
   "name": "Mystical Index",
-  "description": "This is an example description! Tell everyone what your mod is about!",
+  "description": "Magical Storage or something like that.",
   "authors": [
-    "Me!"
+    "Nick Messer"
   ],
   "contact": {
-    "homepage": "https://fabricmc.net/",
-    "sources": "https://github.com/FabricMC/fabric-example-mod"
+    "homepage": "https://github.com/NickMesser",
+    "sources": "https://github.com/NickMesser/Mystical-Index"
   },
 
-  "license": "CC0-1.0",
+  "license": "GNU",
   "icon": "assets/modid/icon.png",
 
   "environment": "*",

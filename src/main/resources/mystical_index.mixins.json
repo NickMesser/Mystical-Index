@@ -4,6 +4,7 @@
   "package": "net.messer.mixin",
   "compatibilityLevel": "JAVA_16",
   "mixins": [
+    "ItemStackPickupMixin"
   ],
   "client": [
     "MysticalIndexMixin"

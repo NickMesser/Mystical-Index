@@ -1,5 +1,7 @@
 package net.messer.mystical_index.screen;
 
+import net.messer.mystical_index.item.ModItems;
+import net.messer.mystical_index.item.inventory.LibraryBookSlot;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
@@ -25,7 +27,7 @@ public class LibraryInventoryScreenHandler extends ScreenHandler {
         inventory.onOpen(playerInventory.player);
 
         for (int i = 0; i < 5; i++) {
-            this.addSlot(new Slot(inventory, i, 44 + i * 18, 20));
+            this.addSlot(new LibraryBookSlot(this, inventory, i, 44 + i * 18, 20));
         }
 
         for (int y = 0; y < 3; y++) {
@@ -64,7 +66,13 @@ public class LibraryInventoryScreenHandler extends ScreenHandler {
                 slot.markDirty();
             }
         }
+
         return newStack;
+    }
+
+    public boolean isStorageBook(ItemStack itemStack){
+        if(itemStack.getItem() == ModItems.STORAGE_BOOK) return true;
+        else return false;
     }
 
 }

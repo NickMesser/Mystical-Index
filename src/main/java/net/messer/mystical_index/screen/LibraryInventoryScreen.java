@@ -17,6 +17,7 @@ public class LibraryInventoryScreen extends HandledScreen<LibraryInventoryScreen
         this.playerInventoryTitleY = this.backgroundHeight - 94;
     }
 
+
     @Override
     protected void drawBackground(MatrixStack matrices, float delta, int mouseX, int mouseY) {
         RenderSystem.setShader(GameRenderer::getPositionTexShader);

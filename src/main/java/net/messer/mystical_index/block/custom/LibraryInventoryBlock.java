@@ -2,7 +2,10 @@ package net.messer.mystical_index.block.custom;
 
 
 import net.messer.mystical_index.block.entity.LibraryBlockEntity;
-import net.minecraft.block.*;
+import net.minecraft.block.BlockEntityProvider;
+import net.minecraft.block.BlockRenderType;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.BlockWithEntity;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
@@ -56,7 +59,6 @@ public class LibraryInventoryBlock extends BlockWithEntity implements BlockEntit
                 player.openHandledScreen(screenHandlerFactory);
             }
         }
-
         return ActionResult.SUCCESS;
     }
 }

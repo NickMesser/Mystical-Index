@@ -3,21 +3,52 @@ package net.messer.mystical_index.item.inventory;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventories;
 import net.minecraft.inventory.Inventory;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.util.registry.Registry;
 
-public class ItemInventory implements Inventory {
+public class SingleItemStackingInventory implements Inventory {
     public final ItemStack stack;
     public final int inventorySize;
     public final DefaultedList<ItemStack> items;
+    public Item currentlyStoredItem;
 
-    public ItemInventory(ItemStack stack , int size){
+    public SingleItemStackingInventory(ItemStack stack , int size){
         this.stack = stack;
         this.inventorySize = size;
         this.items = DefaultedList.ofSize(size,ItemStack.EMPTY);
+        this.currentlyStoredItem = Items.AIR;
         if(stack.hasNbt()){
-            Inventories.readNbt(stack.getOrCreateNbt(), items);
+            readNbt(stack);
         }
+    }
+
+    public void setCurrentlyStoredItem(Item item){
+        this.currentlyStoredItem = item;
+        this.markDirty();
+    }
+
+    public void writeNbt(){
+        NbtCompound nbtData = new NbtCompound();
+        nbtData.putString("storedItem", this.currentlyStoredItem.toString());
+        Inventories.writeNbt(nbtData, items);
+        stack.setNbt(nbtData);
+    }
+
+    public void readNbt(ItemStack stack){
+        Inventories.readNbt(stack.getOrCreateNbt(), items);
+        var itemName = stack.getNbt().get("storedItem").asString();
+        currentlyStoredItem = Registry.ITEM.get(Identifier.tryParse(itemName));
+    }
+
+
+    @Override
+    public int getMaxCountPerStack() {
+        return 64000;
     }
 
     @Override
@@ -54,6 +85,7 @@ public class ItemInventory implements Inventory {
     @Override
     public void setStack(int slot, ItemStack stack) {
         this.items.set(slot, stack);
+        this.currentlyStoredItem = stack.getItem();
         if (!stack.isEmpty() && stack.getCount() > this.getMaxCountPerStack()) {
             stack.setCount(this.getMaxCountPerStack());
         }
@@ -63,7 +95,7 @@ public class ItemInventory implements Inventory {
 
     @Override
     public void markDirty() {
-        Inventories.writeNbt(stack.getOrCreateNbt(),items);
+        writeNbt();
     }
 
     @Override
@@ -103,7 +135,7 @@ public class ItemInventory implements Inventory {
         for(int i = 0; i < this.inventorySize; ++i) {
             ItemStack itemStack = this.getStack(i);
             if (ItemStack.canCombine(itemStack, stack)) {
-                if((itemStack.getCount() + stack.getCount()) > itemStack.getMaxCount())
+                if((itemStack.getCount() + stack.getCount()) > this.getMaxCountPerStack())
                 {
                     stack.decrement(itemStack.getMaxCount() - itemStack.getCount());
                     itemStack.setCount(itemStack.getMaxCount());

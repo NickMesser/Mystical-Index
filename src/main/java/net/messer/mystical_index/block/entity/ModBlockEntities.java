@@ -10,14 +10,8 @@ import net.minecraft.util.registry.Registry;
 public class ModBlockEntities {
 
     public static BlockEntityType<LibraryBlockEntity> LIBRARY_BLOCK_ENTITY;
-    public static BlockEntityType<MagicalIndexBlockEntity> MAGICAL_INDEX_BLOCK_ENTITY;
 
-    public static void registerBlockEntities(){
-
-        MAGICAL_INDEX_BLOCK_ENTITY =
-                Registry.register(Registry.BLOCK_ENTITY_TYPE, new Identifier(MysticalIndex.MOD_ID, "magical_index"),
-                        FabricBlockEntityTypeBuilder.create(MagicalIndexBlockEntity::new,
-                                ModBlocks.MAGICAL_INDEX).build(null));
+    public static void registerBlockEntities() {
 
         LIBRARY_BLOCK_ENTITY =
                 Registry.register(Registry.BLOCK_ENTITY_TYPE, new Identifier(MysticalIndex.MOD_ID, "library"),

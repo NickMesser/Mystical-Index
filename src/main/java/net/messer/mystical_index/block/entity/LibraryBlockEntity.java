@@ -1,7 +1,6 @@
 package net.messer.mystical_index.block.entity;
 
-import net.messer.mystical_index.MysticalIndex;
-import net.messer.mystical_index.item.inventory.ImplementedInventory;
+import net.messer.mystical_index.item.inventory.ILibraryInventory;
 import net.messer.mystical_index.screen.LibraryInventoryScreenHandler;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -18,19 +17,16 @@ import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.logging.Logger;
-
-public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandlerFactory, ImplementedInventory {
-    private final DefaultedList<ItemStack> inventory =
-            DefaultedList.ofSize(5,ItemStack.EMPTY);
-
-    public LibraryBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.LIBRARY_BLOCK_ENTITY,pos, state);
-    }
+public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandlerFactory, ILibraryInventory {
+    private final DefaultedList<ItemStack> storedBooks = DefaultedList.ofSize(5, ItemStack.EMPTY);
 
     @Override
     public DefaultedList<ItemStack> getItems() {
-        return inventory;
+        return storedBooks;
+    }
+
+    public LibraryBlockEntity(BlockPos pos, BlockState state) {
+        super(ModBlockEntities.LIBRARY_BLOCK_ENTITY,pos, state);
     }
 
     @Override
@@ -45,14 +41,14 @@ public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandle
     }
 
     @Override
-    public void readNbt(NbtCompound nbt) {
-        super.readNbt(nbt);
-        Inventories.readNbt(nbt, inventory);
+    protected void writeNbt(NbtCompound nbt) {
+        Inventories.writeNbt(nbt, storedBooks);
+        super.writeNbt(nbt);
     }
 
     @Override
-    protected void writeNbt(NbtCompound nbt) {
-        super.writeNbt(nbt);
-        Inventories.writeNbt(nbt,inventory);
+    public void readNbt(NbtCompound nbt) {
+        super.readNbt(nbt);
+        Inventories.readNbt(nbt, storedBooks);
     }
 }
