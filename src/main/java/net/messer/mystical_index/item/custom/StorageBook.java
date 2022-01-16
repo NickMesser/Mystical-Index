@@ -12,7 +12,6 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,38 +51,20 @@ public class StorageBook extends Item {
 
         if(currentBookInventory.isEmpty()){ return super.useOnBlock(context); }
 
-        var sideOfBlockClicked = context.getSide();
-        var newBlockPos = new BlockPos.Mutable(0,0,0);
+        var stackInBook = currentBookInventory.getStack(0);
 
-        switch (sideOfBlockClicked.name()){
-            case "UP":
-                newBlockPos.set(currentBlockPos.getX(), currentBlockPos.getY() + 1, currentBlockPos.getZ());
-                break;
-            case "DOWN":
-                newBlockPos.set(currentBlockPos.getX(), currentBlockPos.getY() - 1, currentBlockPos.getZ());
-                break;
-            case "NORTH":
-                newBlockPos.set(currentBlockPos.getX(), currentBlockPos.getY(), currentBlockPos.getZ() - 1);
-                break;
-            case "SOUTH":
-                newBlockPos.set(currentBlockPos.getX(), currentBlockPos.getY(), currentBlockPos.getZ() + 1);
-                break;
-            case "EAST":
-                newBlockPos.set(currentBlockPos.getX() + 1, currentBlockPos.getY(), currentBlockPos.getZ());
-                break;
-            case "WEST":
-                newBlockPos.set(currentBlockPos.getX() - 1, currentBlockPos.getY(), currentBlockPos.getZ());
-                break;
+        if(stackInBook.getItem() instanceof BlockItem blockItem){
+            var hitBlockPos = context.getBlockPos();
+            var direction = context.getSide();
+            var newBlockPos = hitBlockPos.offset(direction);
+            var world = context.getWorld();
+            if(world.canPlayerModifyAt(player, newBlockPos) && player.canPlaceOn(newBlockPos, direction, stackInBook) && world.canSetBlock(newBlockPos)){
+                currentBookInventory.removeStack(0, 1);
+                var soundEvent = blockItem.getBlock().getSoundGroup(null).getPlaceSound();
+                context.getWorld().playSound(null, newBlockPos,soundEvent, SoundCategory.BLOCKS, 1.0f,1.0f);
+                context.getWorld().setBlockState(newBlockPos, blockItem.getBlock().getDefaultState());
+            }
         }
-
-
-        if(currentBookInventory.getStack(0).getItem() instanceof BlockItem blockItem){
-            currentBookInventory.removeStack(0, 1);
-            var soundEvent = blockItem.getBlock().getSoundGroup(null).getPlaceSound();
-            context.getWorld().playSound(null, newBlockPos,soundEvent, SoundCategory.BLOCKS, 1.0f,1.0f);
-            context.getWorld().setBlockState(newBlockPos, blockItem.getBlock().getDefaultState());
-        }
-
 
         return super.useOnBlock(context);
     }
