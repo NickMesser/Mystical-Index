@@ -5,5 +5,6 @@
   "tooltip.mystical_index.storage_book": "Hold §eSHIFT§r for more info.",
   "tooltip.mystical_index.storage_book_shift0": "§eSHIFT§r + §eRIGHT CLICK§r a block to set this book.",
   "tooltip.mystical_index.storage_book_shift1": "§eRIGHT CLICK§r with a stored block to place it.",
-  "tooltip.mystical_index.library": "Used to store Storage Books."
+  "tooltip.mystical_index.library": "Used to store Storage Books.",
+  "item.mystical_index.fluid_storage_book": "Book of Fluids"
 }

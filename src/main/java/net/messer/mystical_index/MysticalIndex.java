@@ -1,6 +1,7 @@
 package net.messer.mystical_index;
 
 import net.fabricmc.api.ModInitializer;
+import net.messer.config.ModConfigs;
 import net.messer.mystical_index.block.ModBlocks;
 import net.messer.mystical_index.block.entity.ModBlockEntities;
 import net.messer.mystical_index.item.ModItems;
@@ -14,8 +15,11 @@ public class MysticalIndex implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+		ModConfigs.registerConfigs();
+
 		ModItems.registerModItems();
 		ModBlocks.registerModBlocks();
+
 		ModBlockEntities.registerBlockEntities();
 	}
 }
