@@ -1,6 +1,6 @@
 package net.messer.mystical_index.item.inventory;
 
-import net.messer.config.ModConfigs;
+import net.messer.mystical_index.MysticalIndex;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventories;
 import net.minecraft.inventory.Inventory;
@@ -53,7 +53,7 @@ public class SingleItemStackingInventory implements Inventory {
 
     @Override
     public int getMaxCountPerStack() {
-        return ModConfigs.BOOK_OF_STORAGE_MAX_STACKS * 64;
+        return MysticalIndex.CONFIG.BookOfStorage.MaxStacks * 64;
     }
 
     @Override

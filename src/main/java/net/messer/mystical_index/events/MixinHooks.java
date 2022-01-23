@@ -1,13 +1,18 @@
 package net.messer.mystical_index.events;
 
+import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.inventory.SingleItemStackingInventory;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.registry.Registry;
 
 public class MixinHooks {
     public static boolean interceptPickup(PlayerInventory playerInventory, ItemStack itemPickedUp) {
         var player = playerInventory.player;
+
+        if(MysticalIndex.CONFIG.BookOfStorage.BlockBlacklist.contains(Registry.ITEM.getId(itemPickedUp.getItem())))
+            return false;
 
         if (player.world.isClient())
             return false;
@@ -19,7 +24,6 @@ public class MixinHooks {
                 if (bookInventory.currentlyStoredItem == itemPickedUp.getItem()) {
                     var itemToAdd = bookInventory.addStack(itemPickedUp);
                     if (itemToAdd.isEmpty()) {
-                        //itemPickedUp.setCount(0);
                         return true;
                     } else {
                         itemPickedUp.setCount(itemToAdd.getCount());

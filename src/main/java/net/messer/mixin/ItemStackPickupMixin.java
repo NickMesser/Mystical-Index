@@ -15,16 +15,4 @@ public class ItemStackPickupMixin {
     private void onItemPickup(ItemStack stack, CallbackInfoReturnable<Boolean> cir){
         if(MixinHooks.interceptPickup((PlayerInventory)(Object) this, stack)) cir.setReturnValue(true);
     }
-
-//    private void onItemAdd
-
-//    @Inject(method = { "onItemPickup" }, at = @At(value = "HEAD"))
-//    private void onItemPickup(ItemEntity itemEntity, CallbackInfo info)
-//    {
-//        if (this instanceof Player)
-//        {
-//            Player player = (Player)(Object)this;
-//            ItemStackPickupCallBack.EVENT.invoker().onItemPickup(player.getUUID(), itemEntity.getItem());
-//        }
-//    }
 }

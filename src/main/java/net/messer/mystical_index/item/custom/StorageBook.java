@@ -1,5 +1,6 @@
 package net.messer.mystical_index.item.custom;
 
+import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.item.inventory.SingleItemStackingInventory;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.item.TooltipContext;
@@ -12,6 +13,7 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +41,12 @@ public class StorageBook extends Item {
             if(currentBookInventory.isEmpty())
             {
                 var item = context.getWorld().getBlockState(currentBlockPos).getBlock().asItem();
+
+                if(MysticalIndex.CONFIG.BookOfStorage.BlockBlacklist.contains(Registry.ITEM.getId(item).toString())){
+                    player.sendMessage(new LiteralText("This block is blacklisted. Sorry :("), true);
+                    return super.useOnBlock(context);
+                }
+
                 currentBookInventory.setCurrentlyStoredItem(item);
                 heldBookStack.setCustomName(new LiteralText("Book of " + item.getName().getString()));
                 return super.useOnBlock(context);
