@@ -1,5 +1,5 @@
-# Mystical Index
+# Mystical Index - FABRIC
  
-A magical storage mod focused on storing items/fluids/and entitys in books. This mod will release in stages. Ultimate goal is a full storage system around these storage books. 
+A fun collection of storage based items centered around books, while maintaining the vanilla experience. 
 
 https://www.curseforge.com/minecraft/mc-mods/mystical-index
