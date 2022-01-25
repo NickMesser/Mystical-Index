@@ -19,11 +19,19 @@ public class MysticalConfig implements ConfigData {
     @ConfigEntry.Gui.CollapsibleObject
     public BookOfStorageConfig BookOfStorage = new BookOfStorageConfig();
 
+    @ConfigEntry.Gui.CollapsibleObject
+    public BookOfFluidConfig BookOfFluid = new BookOfFluidConfig();
+
     public static class BookOfStorageConfig {
         @Comment("How many stacks a Book Of Storage can hold. Default: 25")
         public int MaxStacks = 25;
 
         @Comment("What blocks do you NOT want the player to be able to store?")
         public List<String> BlockBlacklist = new ArrayList<>();
+    }
+
+    public static class BookOfFluidConfig{
+        @Comment("How many buckets of liquid a Book Of Fluids Hold. Default: 10")
+        public int MaxBuckets = 10;
     }
 }

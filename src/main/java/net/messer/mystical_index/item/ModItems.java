@@ -2,6 +2,7 @@ package net.messer.mystical_index.item;
 
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.messer.mystical_index.MysticalIndex;
+import net.messer.mystical_index.item.custom.FluidBook;
 import net.messer.mystical_index.item.custom.StorageBook;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
@@ -9,6 +10,9 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 
 public class ModItems {
+
+    public static final Item FLUID_BOOK = registerItem("fluid_book",
+            new FluidBook(new FabricItemSettings().group(ItemGroup.MISC).maxCount(1)));
 
     public static final Item STORAGE_BOOK = registerItem("storage_book",
             new StorageBook(new FabricItemSettings().group(ItemGroup.MISC).maxCount(1)));
