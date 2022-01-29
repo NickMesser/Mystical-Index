@@ -1,6 +1,12 @@
 {
-  "parent": "block/cube_all",
+  "parent": "block/cube",
   "textures": {
-    "all": "minecraft:block/bookshelf"
+    "north": "mystical_index:block/library_block",
+    "south": "mystical_index:block/library_block",
+    "east": "mystical_index:block/library_block",
+    "west": "mystical_index:block/library_block",
+    "up": "minecraft:block/smooth_stone",
+    "down": "minecraft:block/smooth_stone",
+    "particles": "mystical_index:block/library_block"
   }
 }

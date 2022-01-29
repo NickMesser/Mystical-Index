@@ -31,7 +31,7 @@ public class MysticalConfig implements ConfigData {
     }
 
     public static class BookOfFluidConfig{
-        @Comment("How many buckets of liquid a Book Of Fluids Hold. Default: 10")
+        @Comment("How many buckets of liquid a Book Of Fluids can hold. Default: 10")
         public int MaxBuckets = 10;
     }
 }

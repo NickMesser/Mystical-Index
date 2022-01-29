@@ -1,5 +1,5 @@
 {
   "variants": {
-    "": {"model": "minecraft:block/bookshelf"}
+    "": {"model": "mystical_index:block/library"}
   }
 }

@@ -4,10 +4,10 @@ import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
-import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.item.inventory.SingleFluidStackingInventory;
 import net.minecraft.advancement.criterion.Criteria;
 import net.minecraft.block.*;
+import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.FlowableFluid;
 import net.minecraft.fluid.Fluids;
@@ -19,6 +19,8 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.tag.FluidTags;
+import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.hit.BlockHitResult;
@@ -30,6 +32,8 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
 import net.minecraft.world.event.GameEvent;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class FluidBook extends Item {
     public FluidBook(Settings settings) {
@@ -75,7 +79,6 @@ public class FluidBook extends Item {
                                 fluidStorage.insert(variant, FluidConstants.BUCKET, transaction);
                                 transaction.commit();
                             }
-                            MysticalIndex.LOGGER.info(fluidStorage.amount);
                             return super.use(world, user, hand);
                         }
                     }
@@ -159,5 +162,11 @@ public class FluidBook extends Item {
     public boolean hasGlint(ItemStack stack) {
         var fluidInventory = new SingleFluidStackingInventory(stack);
         return fluidInventory.IsFluidEmpty();
+    }
+
+    @Override
+    public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
+        tooltip.add(new TranslatableText("tooltip.mystical_index.fluid_book"));
+        super.appendTooltip(stack, world, tooltip, context);
     }
 }
