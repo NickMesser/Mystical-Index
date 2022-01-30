@@ -1,6 +1,7 @@
 package net.messer.mystical_index.item.inventory;
 
 import net.messer.mystical_index.MysticalIndex;
+import net.messer.mystical_index.item.ModItems;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventories;
 import net.minecraft.inventory.Inventory;
@@ -53,7 +54,14 @@ public class SingleItemStackingInventory implements Inventory {
 
     @Override
     public int getMaxCountPerStack() {
-        return MysticalIndex.CONFIG.BookOfStorage.MaxStacks * 64;
+
+        if(this.stack.getItem() == ModItems.STORAGE_BOOK)
+            return MysticalIndex.CONFIG.BookOfStorage.MaxStacks * 64;
+
+        if(this.stack.getItem() == ModItems.SATURATION_BOOK)
+            return MysticalIndex.CONFIG.BookOfSaturation.MaxStacks * 64;
+
+        return 64;
     }
 
     @Override
@@ -78,8 +86,14 @@ public class SingleItemStackingInventory implements Inventory {
     @Override
     public ItemStack removeStack(int slot, int amount) {
         ItemStack stack = Inventories.splitStack(items, slot, amount);
-        if (!stack.isEmpty()) this.markDirty();
+        this.markDirty();
         return stack;
+    }
+
+    public ItemStack decrementStack(int amount){
+        getStack(0).decrement(amount);
+        this.markDirty();
+        return getStack(0);
     }
 
     @Override

@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "ACA",
+    "MFM",
+    "ACA"
+  ],
+  "key":{
+    "A": {
+      "item": "minecraft:golden_apple"
+    },
+    "C": {
+      "item": "minecraft:golden_carrot"
+    },
+    "M": {
+      "item": "minecraft:glistering_melon_slice"
+    },
+    "F": {
+      "item": "mystical_index:storage_book"
+    }
+  },
+  "result": {
+    "item": "mystical_index:saturation_book"
+  }
+}

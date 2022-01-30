@@ -1,11 +1,15 @@
 {
   "item.mystical_index.storage_book": "Book Of Storage",
-  "item.mystical_index.library": "Library",
-  "block.mystical_index.library": "Library",
   "tooltip.mystical_index.storage_book": "Hold §eSHIFT§r for more info.",
   "tooltip.mystical_index.storage_book_shift0": "§eSHIFT§r + §eRIGHT CLICK§r a block to set this book.",
   "tooltip.mystical_index.storage_book_shift1": "§eRIGHT CLICK§r with a stored block to place it.",
+  "item.mystical_index.library": "Library",
+  "block.mystical_index.library": "Library",
   "tooltip.mystical_index.library": "Used to store Storage Books.",
   "item.mystical_index.fluid_book": "Book of Fluids",
-  "tooltip.mystical_index.fluid_book": "Used to hold multiple buckets of liquid."
+  "tooltip.mystical_index.fluid_book": "Used to hold multiple buckets of liquid.",
+  "item.mystical_index.saturation_book": "Book Of Saturation",
+  "tooltip.mystical_index.saturation_book": "Hold §eSHIFT§r for more info.",
+  "tooltip.mystical_index.saturation_book_shift0": "§eSHIFT§r + §eRIGHT CLICK§r a food item ",
+  "tooltip.mystical_index.saturation_book_shift1": "on the ground to set this book."
 }
