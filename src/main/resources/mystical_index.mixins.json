@@ -7,7 +7,6 @@
     "ItemStackPickupMixin"
   ],
   "client": [
-    "MysticalIndexMixin"
   ],
   "injectors": {
     "defaultRequire": 1

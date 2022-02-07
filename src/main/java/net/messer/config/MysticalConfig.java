@@ -25,6 +25,9 @@ public class MysticalConfig implements ConfigData {
     @ConfigEntry.Gui.CollapsibleObject
     public BookOfSaturation BookOfSaturation = new BookOfSaturation();
 
+    @ConfigEntry.Gui.CollapsibleObject
+    public BookOfMagnetism BookOfMangetism = new BookOfMagnetism();
+
     public static class BookOfStorageConfig {
         @Comment("How many stacks a Book Of Storage can hold. Default: 25")
         public int MaxStacks = 25;
@@ -44,5 +47,10 @@ public class MysticalConfig implements ConfigData {
 
         @Comment("How long the book will wait in seconds between feedings to feed again. Default: 10 seconds(based on tick rate.. 20tps x 10 = 10 seconds)")
         public int TimeBetweenFeedings = 10;
+    }
+
+    public static class BookOfMagnetism{
+        @Comment("How many blocks from the player the book will pull items.")
+        public int Range = 5;
     }
 }

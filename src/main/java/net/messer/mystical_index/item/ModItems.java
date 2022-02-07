@@ -3,6 +3,7 @@ package net.messer.mystical_index.item;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.item.custom.FluidBook;
+import net.messer.mystical_index.item.custom.MagnetismBook;
 import net.messer.mystical_index.item.custom.SaturationBook;
 import net.messer.mystical_index.item.custom.StorageBook;
 import net.minecraft.item.Item;
@@ -20,6 +21,9 @@ public class ModItems {
 
     public static final Item SATURATION_BOOK = registerItem("saturation_book",
             new SaturationBook(new FabricItemSettings().group(ItemGroup.MISC).maxCount(1)));
+
+    public static final Item MAGNETISM_BOOK = registerItem("magnetism_book",
+            new MagnetismBook(new FabricItemSettings().group(ItemGroup.MISC).maxCount(1)));
 
     private static Item registerItem(String name, Item item){
         return Registry.register(Registry.ITEM, new Identifier(MysticalIndex.MOD_ID, name), item);

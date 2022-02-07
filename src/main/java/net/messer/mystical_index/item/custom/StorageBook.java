@@ -37,7 +37,7 @@ public class StorageBook extends Item {
         var heldBookStack = player.getStackInHand(hand);
 
         var currentBookInventory = new SingleItemStackingInventory(player.getStackInHand(hand), 1);
-        if(Screen.hasShiftDown()){
+        if(player.isSneaking()){
             if(currentBookInventory.isEmpty())
             {
                 var item = context.getWorld().getBlockState(currentBlockPos).getBlock().asItem();
@@ -49,12 +49,11 @@ public class StorageBook extends Item {
 
                 currentBookInventory.setCurrentlyStoredItem(item);
                 heldBookStack.setCustomName(new LiteralText("Book of " + item.getName().getString()));
-                return super.useOnBlock(context);
             }
             else{
                 player.sendMessage(new LiteralText("Unable to update stored item. Please empty all contents first"), true);
-                return super.useOnBlock(context);
             }
+            return super.useOnBlock(context);
         }
 
         if(currentBookInventory.isEmpty()){ return super.useOnBlock(context); }
@@ -91,7 +90,6 @@ public class StorageBook extends Item {
         } else {
             tooltip.add(new TranslatableText("tooltip.mystical_index.storage_book"));
         }
-
         super.appendTooltip(stack, world, tooltip, context);
     }
 }

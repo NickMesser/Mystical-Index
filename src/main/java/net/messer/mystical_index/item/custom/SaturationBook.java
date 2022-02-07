@@ -32,17 +32,16 @@ public class SaturationBook extends Item {
             return super.use(world, player, hand);
 
         var stack = player.getStackInHand(hand);
-        if(Screen.hasShiftDown()){
+        if(player.isSneaking()){
             var hitResult = player.raycast(10, 0, false);
             if (hitResult.getType() == HitResult.Type.MISS)
                 return TypedActionResult.pass(stack);
 
             var inventory = new SingleItemStackingInventory(stack, 1);
             if(inventory.isEmpty()){
-                var box1 = hitResult.getPos().add(-.5,-.5,-.5);
-                var box2 = hitResult.getPos().add(.5,.5,.5);
+                var box = Box.from(hitResult.getPos()).expand(.5);
 
-                for(Entity entity : world.getNonSpectatingEntities(ItemEntity.class, new Box(box1, box2))){
+                for(Entity entity : world.getNonSpectatingEntities(ItemEntity.class, box)){
                     ItemEntity item = (ItemEntity) entity;
                     var hitStack = item.getStack();
                     if(hitStack.isFood()){
