@@ -1,5 +1,6 @@
 package net.messer.mystical_index.item.custom;
 
+import eu.pb4.polymer.api.item.PolymerItem;
 import net.messer.mystical_index.MysticalIndex;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.gui.screen.Screen;
@@ -10,8 +11,10 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
+import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
@@ -28,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MagnetismBook extends Item {
+public class MagnetismBook extends BookItem {
     public List<Item> itemFilters = new ArrayList<>();
     public MagnetismBook(Settings settings) {
         super(settings);
@@ -137,15 +140,7 @@ public class MagnetismBook extends Item {
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        if(Screen.hasShiftDown()){
-            tooltip.add(new TranslatableText("tooltip.mystical_index.magnetism_book_shift0"));
-            tooltip.add(new TranslatableText("tooltip.mystical_index.magnetism_book_shift1"));
-            tooltip.add(new TranslatableText("tooltip.mystical_index.magnetism_book_shift2"));
-            tooltip.add(new TranslatableText("tooltip.mystical_index.magnetism_book_shift3"));
-        } else {
-            tooltip.add(new TranslatableText("tooltip.mystical_index.storage_book"));
-        }
-        super.appendTooltip(stack, world, tooltip, context);
+    public Item getPolymerItem(ItemStack itemStack, @Nullable ServerPlayerEntity player) {
+        return Items.KNOWLEDGE_BOOK;
     }
 }

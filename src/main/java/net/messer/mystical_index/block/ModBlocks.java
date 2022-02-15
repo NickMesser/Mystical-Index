@@ -1,5 +1,6 @@
 package net.messer.mystical_index.block;
 
+import eu.pb4.polymer.api.item.PolymerBlockItem;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.messer.mystical_index.MysticalIndex;
@@ -8,12 +9,16 @@ import net.minecraft.block.Block;
 import net.minecraft.block.Material;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemGroup;
+import net.minecraft.item.Items;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 
 public class ModBlocks {
 
     public static final Block LIBRARY = registerBlock("library",
+            new LibraryInventoryBlock(FabricBlockSettings.of(Material.WOOD).strength(1.5f)));
+
+    public static final Block INDEX = registerBlock("index",
             new LibraryInventoryBlock(FabricBlockSettings.of(Material.WOOD).strength(1.5f)));
 
     private static Block registerBlock(String name, Block block){
@@ -23,7 +28,7 @@ public class ModBlocks {
 
     private static BlockItem registerBlockItem(String name, Block block){
         return Registry.register(Registry.ITEM, new Identifier(MysticalIndex.MOD_ID, name),
-                new BlockItem(block, new FabricItemSettings().group(ItemGroup.MISC).maxCount(64)));
+                new PolymerBlockItem(block, new FabricItemSettings().group(ItemGroup.MISC).maxCount(64), Items.BOOKSHELF));
     }
 
     public static void registerModBlocks(){

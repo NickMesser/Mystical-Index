@@ -1,7 +1,10 @@
 package net.messer.mystical_index.block.entity;
 
+import eu.pb4.polymer.api.utils.PolymerObject;
+import net.messer.mystical_index.item.custom.InventoryBookItem;
 import net.messer.mystical_index.item.inventory.ILibraryInventory;
 import net.messer.mystical_index.screen.LibraryInventoryScreenHandler;
+import net.messer.mystical_index.util.ContentsIndex;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -17,12 +20,21 @@ import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.Nullable;
 
-public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandlerFactory, ILibraryInventory {
+public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandlerFactory, ILibraryInventory, PolymerObject {
     private final DefaultedList<ItemStack> storedBooks = DefaultedList.ofSize(5, ItemStack.EMPTY);
 
     @Override
     public DefaultedList<ItemStack> getItems() {
         return storedBooks;
+    }
+
+    public ContentsIndex getContents() {
+        ContentsIndex contents = new ContentsIndex();
+        for (ItemStack book : storedBooks) {
+            if (book.getItem() instanceof InventoryBookItem inventoryBookItem)
+                contents.merge(inventoryBookItem.getContents(book));
+        }
+        return contents;
     }
 
     public LibraryBlockEntity(BlockPos pos, BlockState state) {

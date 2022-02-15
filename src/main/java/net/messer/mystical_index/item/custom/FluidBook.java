@@ -1,5 +1,6 @@
 package net.messer.mystical_index.item.custom;
 
+import eu.pb4.polymer.api.item.PolymerItem;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
@@ -13,6 +14,7 @@ import net.minecraft.fluid.FlowableFluid;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
@@ -35,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class FluidBook extends Item {
+public class FluidBook extends BookItem {
     public FluidBook(Settings settings) {
         super(settings);
     }
@@ -165,8 +167,7 @@ public class FluidBook extends Item {
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        tooltip.add(new TranslatableText("tooltip.mystical_index.fluid_book"));
-        super.appendTooltip(stack, world, tooltip, context);
+    public Item getPolymerItem(ItemStack itemStack, @Nullable ServerPlayerEntity player) {
+        return Items.ENCHANTED_BOOK;
     }
 }

@@ -4,7 +4,8 @@
   "package": "net.messer.mixin",
   "compatibilityLevel": "JAVA_16",
   "mixins": [
-    "ItemStackPickupMixin"
+    "ItemStackPickupMixin",
+    "ServerPlayNetworkHandlerMixin"
   ],
   "client": [
   ],

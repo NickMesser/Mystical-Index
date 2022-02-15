@@ -1,6 +1,7 @@
 package net.messer.mystical_index.screen;
 
 import net.messer.mystical_index.item.ModItems;
+import net.messer.mystical_index.item.custom.InventoryBookItem;
 import net.messer.mystical_index.item.inventory.LibraryBookSlot;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -8,6 +9,7 @@ import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenHandler;
+import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.world.World;
 
@@ -20,7 +22,8 @@ public class LibraryInventoryScreenHandler extends ScreenHandler {
     }
 
     public LibraryInventoryScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory) {
-        super(ModScreenHandlers.LIBRARY_INVENTORY_SCREEN_HANDLER, syncId);
+        //super(ModScreenHandlers.LIBRARY_INVENTORY_SCREEN_HANDLER, syncId);
+        super(ScreenHandlerType.HOPPER, syncId);
         checkSize(inventory,5);
         this.inventory = inventory;
         this.world = playerInventory.player.world;
@@ -71,8 +74,7 @@ public class LibraryInventoryScreenHandler extends ScreenHandler {
     }
 
     public boolean isStorageBook(ItemStack itemStack){
-        if(itemStack.getItem() == ModItems.STORAGE_BOOK) return true;
-        else return false;
+        return itemStack.getItem() instanceof InventoryBookItem;
     }
 
 }

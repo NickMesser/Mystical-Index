@@ -1,11 +1,9 @@
 package net.messer.mystical_index.block.custom;
 
 
+import eu.pb4.polymer.api.block.PolymerBlock;
 import net.messer.mystical_index.block.entity.LibraryBlockEntity;
-import net.minecraft.block.BlockEntityProvider;
-import net.minecraft.block.BlockRenderType;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.BlockWithEntity;
+import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.player.PlayerEntity;
@@ -25,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class LibraryInventoryBlock extends BlockWithEntity implements BlockEntityProvider {
+public class LibraryInventoryBlock extends BlockWithEntity implements BlockEntityProvider, PolymerBlock {
 
     public LibraryInventoryBlock(Settings settings) {
         super(settings);
@@ -70,7 +68,7 @@ public class LibraryInventoryBlock extends BlockWithEntity implements BlockEntit
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, @Nullable BlockView world, List<Text> tooltip, TooltipContext options) {
-        tooltip.add(new TranslatableText("tooltip.mystical_index.library"));
+    public Block getPolymerBlock(BlockState state) {
+        return Blocks.BOOKSHELF;
     }
 }
