@@ -4,6 +4,7 @@ import net.messer.mystical_index.block.entity.LibraryBlockEntity;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 
 import java.util.ArrayList;
 
@@ -28,7 +29,7 @@ public class LibraryIndex {
     }
 
 
-    public static LibraryIndex get(ServerWorld world, BlockPos pos) {
+    public static LibraryIndex get(World world, BlockPos pos) {
         ArrayList<BlockEntity> entities = new ArrayList<>();
         for (int x = -searchRange; x <= searchRange; x++) {
             for (int z = -searchRange; z <= searchRange; z++) {
