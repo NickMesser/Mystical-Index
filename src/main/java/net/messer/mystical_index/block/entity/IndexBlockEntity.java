@@ -5,6 +5,7 @@ import eu.pb4.sgui.api.elements.BookElementBuilder;
 import eu.pb4.sgui.api.gui.BookGui;
 import eu.pb4.sgui.virtual.book.BookScreenHandler;
 import net.messer.mystical_index.screen.LibraryInventoryScreenHandler;
+import net.messer.mystical_index.util.ContentsIndex;
 import net.messer.mystical_index.util.LibraryIndex;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -14,6 +15,7 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.screen.LecternScreenHandler;
 import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.screen.ScreenHandler;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
@@ -30,6 +32,10 @@ public class IndexBlockEntity extends BlockEntity implements NamedScreenHandlerF
         return LibraryIndex.get(getWorld(), getPos());
     }
 
+    private ContentsIndex getIndexContents() {
+        return getIndex().getItems();
+    }
+
     @Override
     public Text getDisplayName() {
         return new LiteralText("Index");
@@ -38,12 +44,18 @@ public class IndexBlockEntity extends BlockEntity implements NamedScreenHandlerF
     @Nullable
     @Override
     public ScreenHandler createMenu(int syncId, PlayerInventory inv, PlayerEntity player) {
+        ContentsIndex index = getIndexContents();
         BookElementBuilder bookBuilder = new BookElementBuilder().signed();
+
+        // Comparator.comparingInt(BigStack::getAmount)
+
+        for (int page = 0; page < Math.ceil(index.getTextArray().size() / 8d); page++) {
+
+        }
+
         // TODO iterate over index with i / maxpages and mb add title or smt
 
-        BookGui gui = new BookGui(player);
-
-        return new BookScreenHandler()
-        //return new LibraryInventoryScreenHandler(syncId,inv,this); // WIP
+        BookGui gui = new BookGui((ServerPlayerEntity) player, bookBuilder);
+        return new BookScreenHandler(syncId, gui, player);
     }
 }

@@ -2,9 +2,14 @@ package net.messer.mystical_index.util;
 
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ContentsIndex {
     private final ArrayList<BigStack> contents;
@@ -45,5 +50,17 @@ public class ContentsIndex {
 
     public List<BigStack> getAll() {
         return contents;
+    }
+
+    public List<Text> getTextList() {
+        return getTextList(null);
+    }
+
+    public List<Text> getTextList(Comparator<BigStack> sorter) {
+        Stream<BigStack> stream = getAll().stream();
+        if (sorter != null) stream = stream.sorted(sorter);
+        return stream
+                .map(bigStack -> bigStack.getItemStack().getName().copy().append(" x" + bigStack.getAmount()))
+                .collect(Collectors.toList());
     }
 }

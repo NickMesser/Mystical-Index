@@ -96,5 +96,5 @@ public class RequestHelper {
         return string.substring(offset).endsWith(expression[expression.length - 1]);
     }
 
-    public static record ItemAmount(Item item, int amount) {}
+    public record ItemAmount(Item item, int amount) {}
 }
