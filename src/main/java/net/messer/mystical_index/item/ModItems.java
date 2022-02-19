@@ -25,6 +25,9 @@ public class ModItems {
 //    public static final Item MAGNETISM_BOOK = registerItem("magnetism_book",
 //            new MagnetismBook(new FabricItemSettings().group(ItemGroup.MISC).maxCount(1)));
 
+    public static final Item INDEX = registerItem("index",
+            new Index(new FabricItemSettings().group(ItemGroup.MISC).maxCount(1)));
+
     private static Item registerItem(String name, Item item){
         return Registry.register(Registry.ITEM, new Identifier(MysticalIndex.MOD_ID, name), item);
     }

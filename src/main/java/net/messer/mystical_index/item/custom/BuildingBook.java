@@ -1,10 +1,13 @@
 package net.messer.mystical_index.item.custom;
 
+import net.minecraft.advancement.criterion.Criteria;
 import net.minecraft.item.*;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.ActionResult;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
 
 public class BuildingBook extends InventoryBookItem {
     public BuildingBook(Settings settings) {
@@ -54,6 +57,7 @@ public class BuildingBook extends InventoryBookItem {
                     var soundEvent = blockItem.getBlock().getSoundGroup(null).getPlaceSound();
                     context.getWorld().playSound(null, newBlockPos, soundEvent, SoundCategory.BLOCKS, 1.0f, 1.0f);
                     context.getWorld().setBlockState(newBlockPos, blockItem.getBlock().getDefaultState());
+                    player.swingHand(context.getHand(), true);
                 }
             } else {
                 tryAddItem(heldBookStack, stackFromBook.get());

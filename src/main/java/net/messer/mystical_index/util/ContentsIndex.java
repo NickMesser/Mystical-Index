@@ -60,7 +60,7 @@ public class ContentsIndex {
         Stream<BigStack> stream = getAll().stream();
         if (sorter != null) stream = stream.sorted(sorter);
         return stream
-                .map(bigStack -> bigStack.getItemStack().getName().copy().append(" x" + bigStack.getAmount()))
+                .map(bigStack -> new LiteralText(bigStack.getItemStack().getName().getString() + " x" + bigStack.getAmount()))
                 .collect(Collectors.toList());
     }
 }

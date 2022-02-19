@@ -21,10 +21,10 @@ public class ModBlockEntities {
                         FabricBlockEntityTypeBuilder.create(LibraryBlockEntity::new,
                                 ModBlocks.LIBRARY).build(null));
 
-        INDEX_BLOCK_ENTITY =
-                Registry.register(Registry.BLOCK_ENTITY_TYPE, new Identifier(MysticalIndex.MOD_ID, "index"),
-                        FabricBlockEntityTypeBuilder.create(IndexBlockEntity::new,
-                                ModBlocks.INDEX).build(null));
+//        INDEX_BLOCK_ENTITY =
+//                Registry.register(Registry.BLOCK_ENTITY_TYPE, new Identifier(MysticalIndex.MOD_ID, "index"),
+//                        FabricBlockEntityTypeBuilder.create(IndexBlockEntity::new,
+//                                ModBlocks.INDEX).build(null));
 
         PolymerBlockUtils.registerBlockEntity(LIBRARY_BLOCK_ENTITY);
     }

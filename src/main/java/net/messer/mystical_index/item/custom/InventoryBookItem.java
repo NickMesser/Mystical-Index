@@ -1,8 +1,11 @@
 package net.messer.mystical_index.item.custom;
 
-import it.unimi.dsi.fastutil.objects.Object2IntArrayMap;
+import com.google.common.collect.ImmutableList;
+import it.unimi.dsi.fastutil.ints.IntLists;
 import net.messer.mystical_index.util.BigStack;
 import net.messer.mystical_index.util.ContentsIndex;
+import net.messer.mystical_index.util.IIndexInteractable;
+import net.messer.mystical_index.util.Request;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -21,8 +24,8 @@ import net.minecraft.util.Formatting;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -183,6 +186,56 @@ public abstract class InventoryBookItem extends BookItem {
         }
 
         return Optional.of(itemStack);
+    }
+
+    public static List<ItemStack> extractItems(ItemStack book, Request request, boolean apply) {
+        if (request.isSatisfied())
+            return Collections.emptyList();
+
+        NbtCompound bookNbt = book.getOrCreateNbt();
+        if (!bookNbt.contains("Items"))
+            return Collections.emptyList();
+
+        NbtList itemsList = bookNbt.getList("Items", 10);
+        if (itemsList.isEmpty())
+            return Collections.emptyList();
+
+        ImmutableList.Builder<ItemStack> builder = ImmutableList.builder();
+
+        for (int i = 0; i < itemsList.size(); i++) {
+            NbtCompound nbtItem = itemsList.getCompound(i);
+            ItemStack itemStack = ItemStack.fromNbt(nbtItem.getCompound("Item"));
+
+            if (request.matches(itemStack.getItem())) {
+                int itemCount = nbtItem.getInt("Count");
+                int extractAmount = Math.min(itemCount, request.getAmountUnsatisfied());
+                int stackSize = itemStack.getItem().getMaxCount();
+
+                request.satisfy(extractAmount);
+                if (apply) {
+                    if (extractAmount >= itemCount) {
+                        itemsList.remove(0);
+                        if (itemsList.isEmpty()) {
+                            book.removeSubNbt("Items");
+                        }
+                    } else {
+                        nbtItem.putInt("Count", itemCount - extractAmount);
+                    }
+                }
+
+                while (extractAmount > 0) {
+                    int extractAmountStack = Math.min(extractAmount, stackSize);
+
+                    ItemStack extractStack = itemStack.copy();
+                    extractStack.setCount(extractAmountStack);
+                    builder.add(extractStack);
+
+                    extractAmount -= extractAmountStack;
+                }
+            }
+        }
+
+        return builder.build();
     }
 
     // TODO get better sounds

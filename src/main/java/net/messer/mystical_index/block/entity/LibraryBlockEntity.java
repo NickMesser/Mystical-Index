@@ -1,10 +1,13 @@
 package net.messer.mystical_index.block.entity;
 
+import com.google.common.collect.ImmutableList;
 import eu.pb4.polymer.api.utils.PolymerObject;
 import net.messer.mystical_index.item.custom.InventoryBookItem;
 import net.messer.mystical_index.item.inventory.ILibraryInventory;
 import net.messer.mystical_index.screen.LibraryInventoryScreenHandler;
 import net.messer.mystical_index.util.ContentsIndex;
+import net.messer.mystical_index.util.IIndexInteractable;
+import net.messer.mystical_index.util.Request;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -20,7 +23,9 @@ import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.Nullable;
 
-public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandlerFactory, ILibraryInventory, PolymerObject {
+import java.util.List;
+
+public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandlerFactory, ILibraryInventory, PolymerObject, IIndexInteractable {
     private final DefaultedList<ItemStack> storedBooks = DefaultedList.ofSize(5, ItemStack.EMPTY);
 
     @Override
@@ -30,10 +35,10 @@ public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandle
 
     public ContentsIndex getContents() {
         ContentsIndex contents = new ContentsIndex();
-        for (ItemStack book : storedBooks) {
+        for (ItemStack book : getItems())
             if (book.getItem() instanceof InventoryBookItem inventoryBookItem)
                 contents.merge(inventoryBookItem.getContents(book));
-        }
+
         return contents;
     }
 
@@ -62,5 +67,16 @@ public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandle
     public void readNbt(NbtCompound nbt) {
         super.readNbt(nbt);
         Inventories.readNbt(nbt, storedBooks);
+    }
+
+    @Override
+    public List<ItemStack> extractItems(Request request, boolean apply) {
+        ImmutableList.Builder<ItemStack> builder = ImmutableList.builder();
+
+        for (ItemStack book : getItems())
+            if (book.getItem() instanceof InventoryBookItem)
+                builder.addAll(InventoryBookItem.extractItems(book, request, apply));
+
+        return builder.build();
     }
 }
