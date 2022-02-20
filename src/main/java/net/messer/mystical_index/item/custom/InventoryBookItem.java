@@ -214,10 +214,8 @@ public abstract class InventoryBookItem extends BookItem {
                 request.satisfy(extractAmount);
                 if (apply) {
                     if (extractAmount >= itemCount) {
-                        itemsList.remove(0);
-                        if (itemsList.isEmpty()) {
-                            book.removeSubNbt("Items");
-                        }
+                        itemsList.remove(i);
+                        i -= 1;
                     } else {
                         nbtItem.putInt("Count", itemCount - extractAmount);
                     }
@@ -235,10 +233,14 @@ public abstract class InventoryBookItem extends BookItem {
             }
         }
 
+        if (itemsList.isEmpty()) {
+            book.removeSubNbt("Items");
+        }
+
         return builder.build();
     }
 
-    // TODO get better sounds
+    // TODO get better sounds and make them actually work on servers
     private void playRemoveOneSound(Entity entity) {
         entity.playSound(SoundEvents.ITEM_BUNDLE_REMOVE_ONE, 0.8f, 0.8f + entity.getWorld().getRandom().nextFloat() * 0.4f);
     }

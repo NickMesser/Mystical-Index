@@ -1,14 +1,18 @@
 package net.messer.mystical_index.util;
 
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.item.Item;
+import net.minecraft.util.math.Vec3d;
 
 import java.util.Locale;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Request {
     private static final Pattern STACKS_MATCHER = Pattern.compile("(?<amount>\\d+) stacks?( of)? (?<item>.+)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern STACK_MATCHER = Pattern.compile("stack( of)? (?<item>.+)", Pattern.CASE_INSENSITIVE);
     private static final Pattern COUNTS_MATCHER = Pattern.compile("(?<amount>\\d+)x? (?<item>.+)", Pattern.CASE_INSENSITIVE);
     private static final Pattern SINGLE_MATCHER = Pattern.compile("(?<item>.+)", Pattern.CASE_INSENSITIVE);
     private static final String[] WILDCARD_STRINGS = { "...", "~", "+", "?" };
@@ -16,8 +20,11 @@ public class Request {
     private final String[] expression;
     private int amountUnsatisfied;
     private int amountExtracted = 0;
+    private int lastCheck = 0;
     private final BiFunction<Integer, Item, Integer> amountModifier;
+    private BiConsumer<Request, BlockEntity> blockExtractedCallback;
     private Item match;
+    private Vec3d sourcePosition;
 
     private Request(String itemQuery, int amount, BiFunction<Integer, Item, Integer> amountModifier) {
         boolean wildcard = false;
@@ -27,13 +34,17 @@ public class Request {
                 wildcard = true;
             }
         }
-        this.expression = (wildcard ? "*" + itemQuery + "*" : itemQuery).split("\\*+", -1);
+        this.expression = (wildcard ? "*" + itemQuery + "*" : itemQuery)
+                .replace(' ', '_').split("\\*+", -1);
+
         this.amountUnsatisfied = amount;
         this.amountModifier = amountModifier;
     }
 
     public static Request get(String query) {
         Request request = parseAmount(STACKS_MATCHER.matcher(query), (integer, item) -> integer * item.getMaxCount());
+        if (request != null) return request;
+        request = parseAmount(STACK_MATCHER.matcher(query), (integer, item) -> item.getMaxCount());
         if (request != null) return request;
         request = parseAmount(COUNTS_MATCHER.matcher(query), (integer, item) -> integer);
         if (request != null) return request;
@@ -104,8 +115,33 @@ public class Request {
         return match;
     }
 
-    public int getAmountExtracted() {
+    public int getTotalAmountExtracted() {
         return amountExtracted;
+    }
+
+    public int getAmountExtracted() {
+        int amount = amountExtracted - lastCheck;
+        lastCheck = amountExtracted;
+        return amount;
+    }
+
+    public Request setSourcePosition(Vec3d position) {
+        sourcePosition = position;
+        return this;
+    }
+
+    public Vec3d getSourcePosition() {
+        return sourcePosition;
+    }
+
+    public Request setBlockExtractedCallback(BiConsumer<Request, BlockEntity> callback) {
+        this.blockExtractedCallback = callback;
+        return this;
+    }
+
+    public void runBlockExtractedCallback(BlockEntity blockEntity) {
+        if (sourcePosition == null || blockExtractedCallback == null) return;
+        this.blockExtractedCallback.accept(this, blockEntity);
     }
 
     private static boolean matchGlob(String[] expression, String string) {

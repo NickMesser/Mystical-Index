@@ -12,19 +12,12 @@ public class ModBlockEntities {
 
     public static BlockEntityType<LibraryBlockEntity> LIBRARY_BLOCK_ENTITY;
 
-    public static BlockEntityType<IndexBlockEntity> INDEX_BLOCK_ENTITY;
-
     public static void registerBlockEntities() {
 
         LIBRARY_BLOCK_ENTITY =
                 Registry.register(Registry.BLOCK_ENTITY_TYPE, new Identifier(MysticalIndex.MOD_ID, "library"),
                         FabricBlockEntityTypeBuilder.create(LibraryBlockEntity::new,
                                 ModBlocks.LIBRARY).build(null));
-
-//        INDEX_BLOCK_ENTITY =
-//                Registry.register(Registry.BLOCK_ENTITY_TYPE, new Identifier(MysticalIndex.MOD_ID, "index"),
-//                        FabricBlockEntityTypeBuilder.create(IndexBlockEntity::new,
-//                                ModBlocks.INDEX).build(null));
 
         PolymerBlockUtils.registerBlockEntity(LIBRARY_BLOCK_ENTITY);
     }

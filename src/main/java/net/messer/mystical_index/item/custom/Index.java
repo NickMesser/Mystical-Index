@@ -18,7 +18,6 @@ import net.minecraft.item.ItemUsageContext;
 import net.minecraft.item.Items;
 import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.MutableText;
@@ -35,7 +34,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public class Index extends Item implements NamedScreenHandlerFactory, PolymerItem {
-    private static final int LINES_PER_PAGE = 8;
+    private static final int LINES_PER_PAGE = 12;
 
     public Index(Settings settings) {
         super(settings);

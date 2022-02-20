@@ -37,7 +37,7 @@ public class LibraryIndex implements IIndexInteractable {
         ArrayList<BlockEntity> entities = new ArrayList<>();
         for (int x = -searchRange; x <= searchRange; x++) {
             for (int z = -searchRange; z <= searchRange; z++) {
-                for (int y = 0; y <= searchRange; y++) {
+                for (int y = -searchRange; y <= searchRange; y++) {
                     if (world.getBlockEntity(pos.add(x, y, z)) instanceof LibraryBlockEntity entity) {
                         entities.add(entity);
                     }

@@ -4,7 +4,6 @@ import eu.pb4.polymer.api.item.PolymerBlockItem;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.messer.mystical_index.MysticalIndex;
-import net.messer.mystical_index.block.custom.IndexBlock;
 import net.messer.mystical_index.block.custom.LibraryInventoryBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.Material;
@@ -19,9 +18,6 @@ public class ModBlocks {
 
     public static final Block LIBRARY = registerBlock("library",
             new LibraryInventoryBlock(FabricBlockSettings.of(Material.WOOD).strength(1.5f)), Items.BOOKSHELF);
-
-//    public static final Block INDEX = registerBlock("index",
-//            new IndexBlock(FabricBlockSettings.of(Material.WOOD).strength(1.5f)), Items.LECTERN);
 
     private static Block registerBlock(String name, Block block, Item polymerItem){
         registerBlockItem(name, block, polymerItem);
