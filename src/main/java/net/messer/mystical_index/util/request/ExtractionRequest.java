@@ -1,32 +1,25 @@
-package net.messer.mystical_index.util;
+package net.messer.mystical_index.util.request;
 
-import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.item.Item;
-import net.minecraft.util.math.Vec3d;
 
 import java.util.Locale;
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Request {
-    private static final Pattern STACKS_MATCHER = Pattern.compile("(?<amount>\\d+) stacks?( of)? (?<item>.+)", Pattern.CASE_INSENSITIVE);
+public class ExtractionRequest extends Request {
+    private static final Pattern STACKS_MATCHER = Pattern.compile("(?<amount>\\d+|all) stacks?( of)? (?<item>.+)", Pattern.CASE_INSENSITIVE);
     private static final Pattern STACK_MATCHER = Pattern.compile("stack( of)? (?<item>.+)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern COUNTS_MATCHER = Pattern.compile("(?<amount>\\d+)x? (?<item>.+)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern COUNTS_MATCHER = Pattern.compile("(?<amount>\\d+|all)x? (?<item>.+)", Pattern.CASE_INSENSITIVE);
     private static final Pattern SINGLE_MATCHER = Pattern.compile("(?<item>.+)", Pattern.CASE_INSENSITIVE);
     private static final String[] WILDCARD_STRINGS = { "...", "~", "+", "?" };
 
     private final String[] expression;
-    private int amountUnsatisfied;
-    private int amountExtracted = 0;
-    private int lastCheck = 0;
     private final BiFunction<Integer, Item, Integer> amountModifier;
-    private BiConsumer<Request, BlockEntity> blockExtractedCallback;
     private Item match;
-    private Vec3d sourcePosition;
 
-    private Request(String itemQuery, int amount, BiFunction<Integer, Item, Integer> amountModifier) {
+    private ExtractionRequest(String itemQuery, int amount, BiFunction<Integer, Item, Integer> amountModifier) {
+        super(amount);
         boolean wildcard = false;
         for (String wildcardString : WILDCARD_STRINGS) {
             if (itemQuery.endsWith(wildcardString)) {
@@ -37,12 +30,11 @@ public class Request {
         this.expression = (wildcard ? "*" + itemQuery + "*" : itemQuery)
                 .replace(' ', '_').split("\\*+", -1);
 
-        this.amountUnsatisfied = amount;
         this.amountModifier = amountModifier;
     }
 
-    public static Request get(String query) {
-        Request request = parseAmount(STACKS_MATCHER.matcher(query), (integer, item) -> integer * item.getMaxCount());
+    public static ExtractionRequest get(String query) {
+        ExtractionRequest request = parseAmount(STACKS_MATCHER.matcher(query), (integer, item) -> integer * item.getMaxCount());
         if (request != null) return request;
         request = parseAmount(STACK_MATCHER.matcher(query), (integer, item) -> item.getMaxCount());
         if (request != null) return request;
@@ -52,16 +44,18 @@ public class Request {
         return request;
     }
 
-    private static Request parseAmount(Matcher matcher, BiFunction<Integer, Item, Integer> amountModifier) {
+    private static ExtractionRequest parseAmount(Matcher matcher, BiFunction<Integer, Item, Integer> amountModifier) {
         if (matcher.matches()) {
             int amount;
             try {
                 amount = Integer.parseInt(matcher.group("amount"));
+            } catch (NumberFormatException e) {
+                amount = Integer.MAX_VALUE;
             } catch (IllegalArgumentException e) {
                 amount = 1;
             }
 
-            return new Request(matcher.group("item"), amount, amountModifier);
+            return new ExtractionRequest(matcher.group("item"), amount, amountModifier);
         }
         return null;
     }
@@ -90,58 +84,22 @@ public class Request {
         }
     }
 
+    @Override
     public void satisfy(int amount) {
         if (!hasMatched()) throw new IllegalStateException("Can't satisfy before a match has been found.");
-
-        if (amountUnsatisfied != -1) {
-            amountUnsatisfied -= amount;
-        }
-        amountExtracted += amount;
+        super.satisfy(amount);
     }
 
-    public boolean isSatisfied() {
-        return amountUnsatisfied <= 0;
-    }
-
+    @Override
     public int getAmountUnsatisfied() {
         if (!hasMatched()) throw new IllegalStateException("Can't get amount before a match has been found.");
-
-        return amountUnsatisfied;
+        return super.getAmountUnsatisfied();
     }
 
     public Item getMatchedItem() {
         if (!hasMatched()) throw new IllegalStateException("Can't get matched item before a match has been found.");
 
         return match;
-    }
-
-    public int getTotalAmountExtracted() {
-        return amountExtracted;
-    }
-
-    public int getAmountExtracted() {
-        int amount = amountExtracted - lastCheck;
-        lastCheck = amountExtracted;
-        return amount;
-    }
-
-    public Request setSourcePosition(Vec3d position) {
-        sourcePosition = position;
-        return this;
-    }
-
-    public Vec3d getSourcePosition() {
-        return sourcePosition;
-    }
-
-    public Request setBlockExtractedCallback(BiConsumer<Request, BlockEntity> callback) {
-        this.blockExtractedCallback = callback;
-        return this;
-    }
-
-    public void runBlockExtractedCallback(BlockEntity blockEntity) {
-        if (sourcePosition == null || blockExtractedCallback == null) return;
-        this.blockExtractedCallback.accept(this, blockEntity);
     }
 
     private static boolean matchGlob(String[] expression, String string) {

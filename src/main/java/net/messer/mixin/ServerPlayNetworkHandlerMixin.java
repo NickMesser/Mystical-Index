@@ -1,9 +1,9 @@
 package net.messer.mixin;
 
 import net.messer.mystical_index.item.ModItems;
-import net.messer.mystical_index.util.LibraryIndex;
+import net.messer.mystical_index.util.request.LibraryIndex;
 import net.messer.mystical_index.util.ParticleSystem;
-import net.messer.mystical_index.util.Request;
+import net.messer.mystical_index.util.request.ExtractionRequest;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.c2s.play.ChatMessageC2SPacket;
 import net.minecraft.server.MinecraftServer;
@@ -36,9 +36,9 @@ public abstract class ServerPlayNetworkHandlerMixin {
                 player.getStackInHand(Hand.OFF_HAND).getItem() == ModItems.INDEX) {
             server.execute(() -> {
                 LibraryIndex index = LibraryIndex.get(player.getWorld(), player.getBlockPos());
-                Request request = Request.get(message)
-                        .setSourcePosition(player.getPos())
-                        .setBlockExtractedCallback(ParticleSystem::extractionParticles);
+                ExtractionRequest request = ExtractionRequest.get(message);
+                request.setSourcePosition(player.getPos());
+                request.setBlockAffectedCallback(ParticleSystem::extractionParticles);
 
                 List<ItemStack> extracted = index.extractItems(request);
 
@@ -46,7 +46,7 @@ public abstract class ServerPlayNetworkHandlerMixin {
                     player.getInventory().offerOrDrop(stack);
 
                 if (request.hasMatched())
-                    player.sendMessage(new LiteralText("extracted " + request.getTotalAmountExtracted() + " of " + request.getMatchedItem().getName().getString()), false); // TODO
+                    player.sendMessage(new LiteralText("extracted " + request.getTotalAmountAffected() + " of " + request.getMatchedItem().getName().getString()), false); // TODO
                 else
                     player.sendMessage(new LiteralText("no match"), false);
             });

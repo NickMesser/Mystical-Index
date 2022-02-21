@@ -3,27 +3,28 @@ package net.messer.mystical_index.item.custom;
 import eu.pb4.polymer.api.item.PolymerItem;
 import eu.pb4.sgui.api.elements.BookElementBuilder;
 import eu.pb4.sgui.api.gui.BookGui;
-import eu.pb4.sgui.virtual.book.BookScreenHandler;
 import net.messer.mystical_index.util.BigStack;
 import net.messer.mystical_index.util.ContentsIndex;
-import net.messer.mystical_index.util.LibraryIndex;
+import net.messer.mystical_index.util.ParticleSystem;
+import net.messer.mystical_index.util.request.InsertionRequest;
+import net.messer.mystical_index.util.request.LibraryIndex;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.LecternBlock;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.StackReference;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.item.Items;
-import net.minecraft.screen.NamedScreenHandlerFactory;
-import net.minecraft.screen.ScreenHandler;
+import net.minecraft.screen.slot.Slot;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.ClickType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.math.BlockPos;
@@ -33,11 +34,39 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Comparator;
 import java.util.List;
 
-public class Index extends Item implements NamedScreenHandlerFactory, PolymerItem {
+public class Index extends Item implements PolymerItem {
     private static final int LINES_PER_PAGE = 12;
 
     public Index(Settings settings) {
         super(settings);
+    }
+
+    @Override
+    public boolean onStackClicked(ItemStack book, Slot slot, ClickType clickType, PlayerEntity player) {
+        if (clickType != ClickType.RIGHT || !slot.hasStack()) {
+            return false;
+        }
+        tryInsertItemStack(slot.getStack(), player);
+        return true;
+    }
+
+    @Override
+    public boolean onClicked(ItemStack book, ItemStack cursorStack, Slot slot, ClickType clickType, PlayerEntity player, StackReference cursorStackReference) {
+        if (clickType != ClickType.RIGHT || cursorStack.isEmpty() || !slot.canTakePartial(player)) {
+            return false;
+        }
+        tryInsertItemStack(cursorStack, player);
+        return true;
+    }
+
+    public void tryInsertItemStack(ItemStack itemStack, PlayerEntity player) {
+        LibraryIndex index = LibraryIndex.get(player.getWorld(), player.getBlockPos());
+
+        InsertionRequest request = new InsertionRequest(itemStack);
+        request.setSourcePosition(player.getPos());
+        request.setBlockAffectedCallback(ParticleSystem::insertionParticles);
+
+        index.insertStack(request);
     }
 
     @Override
@@ -52,9 +81,11 @@ public class Index extends Item implements NamedScreenHandlerFactory, PolymerIte
     }
 
     @Override
-    public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
-        ItemStack itemStack = user.getStackInHand(hand);
-        user.openHandledScreen(this);
+    public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
+        ItemStack itemStack = player.getStackInHand(hand);
+        if (player instanceof ServerPlayerEntity serverPlayer) {
+            createMenu(serverPlayer).open();
+        }
         return TypedActionResult.success(itemStack, world.isClient());
     }
 
@@ -63,12 +94,10 @@ public class Index extends Item implements NamedScreenHandlerFactory, PolymerIte
     }
 
     private ContentsIndex getIndexContents(PlayerEntity player) {
-        return getIndex(player).getItems();
+        return getIndex(player).getContents();
     }
 
-    @Nullable
-    @Override
-    public ScreenHandler createMenu(int syncId, PlayerInventory inv, PlayerEntity player) {
+    public BookGui createMenu(ServerPlayerEntity player) {
         List<Text> entries = getIndexContents(player).getTextList(Comparator.comparingInt(BigStack::getAmount).reversed());
         BookElementBuilder bookBuilder = new BookElementBuilder().signed();
 
@@ -90,13 +119,7 @@ public class Index extends Item implements NamedScreenHandlerFactory, PolymerIte
             bookBuilder.addPage(text);
         }
 
-        BookGui gui = new BookGui((ServerPlayerEntity) player, bookBuilder);
-        return new BookScreenHandler(syncId, gui, player);
-    }
-
-    @Override
-    public Text getDisplayName() {
-        return new TranslatableText("gui.mystical_index.index_screen"); // TODO correct translation key?
+        return new BookGui(player, bookBuilder);
     }
 
     @Override

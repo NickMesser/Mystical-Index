@@ -1,12 +1,9 @@
-package net.messer.mystical_index.util;
+package net.messer.mystical_index.util.request;
 
 import com.google.common.collect.ImmutableList;
-import net.messer.mystical_index.block.entity.LibraryBlockEntity;
-import net.messer.mystical_index.item.custom.InventoryBookItem;
+import net.messer.mystical_index.util.ContentsIndex;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
@@ -21,10 +18,10 @@ public class LibraryIndex implements IIndexInteractable {
         this.blockEntities = blockEntities;
     }
 
-    public ContentsIndex getItems() {
+    public ContentsIndex getContents() {
         ContentsIndex result = new ContentsIndex();
         for (BlockEntity entity : blockEntities) {
-            result.merge(((LibraryBlockEntity) entity).getContents());
+            result.merge(((IIndexInteractable) entity).getContents());
         }
         return result;
     }
@@ -38,7 +35,8 @@ public class LibraryIndex implements IIndexInteractable {
         for (int x = -searchRange; x <= searchRange; x++) {
             for (int z = -searchRange; z <= searchRange; z++) {
                 for (int y = -searchRange; y <= searchRange; y++) {
-                    if (world.getBlockEntity(pos.add(x, y, z)) instanceof LibraryBlockEntity entity) {
+                    BlockEntity entity = world.getBlockEntity(pos.add(x, y, z));
+                    if (entity instanceof IIndexInteractable) {
                         entities.add(entity);
                     }
                 }
@@ -49,13 +47,26 @@ public class LibraryIndex implements IIndexInteractable {
     }
 
     @Override
-    public List<ItemStack> extractItems(Request request, boolean apply) {
+    public List<ItemStack> extractItems(ExtractionRequest request, boolean apply) {
         ImmutableList.Builder<ItemStack> builder = ImmutableList.builder();
 
-        for (BlockEntity entity : blockEntities)
-            if (entity instanceof IIndexInteractable interactable)
-                builder.addAll(interactable.extractItems(request, apply));
+        for (BlockEntity entity : blockEntities) {
+            if (request.isSatisfied()) break;
+
+            if (entity instanceof IIndexInteractable intractable)
+                builder.addAll(intractable.extractItems(request, apply));
+        }
 
         return builder.build();
+    }
+
+    @Override
+    public void insertStack(InsertionRequest request) {
+        for (BlockEntity entity : blockEntities) {
+            if (request.isSatisfied()) break;
+
+            if (entity instanceof IIndexInteractable intractable)
+                intractable.insertStack(request);
+        }
     }
 }

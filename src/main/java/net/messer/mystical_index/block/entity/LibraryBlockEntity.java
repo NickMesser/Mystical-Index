@@ -6,8 +6,9 @@ import net.messer.mystical_index.item.custom.InventoryBookItem;
 import net.messer.mystical_index.item.inventory.ILibraryInventory;
 import net.messer.mystical_index.screen.LibraryInventoryScreenHandler;
 import net.messer.mystical_index.util.ContentsIndex;
-import net.messer.mystical_index.util.IIndexInteractable;
-import net.messer.mystical_index.util.Request;
+import net.messer.mystical_index.util.request.IIndexInteractable;
+import net.messer.mystical_index.util.request.ExtractionRequest;
+import net.messer.mystical_index.util.request.InsertionRequest;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -15,16 +16,12 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventories;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.particle.ParticleTypes;
 import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.screen.ScreenHandler;
-import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -74,15 +71,32 @@ public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandle
     }
 
     @Override
-    public List<ItemStack> extractItems(Request request, boolean apply) {
+    public List<ItemStack> extractItems(ExtractionRequest request, boolean apply) {
         ImmutableList.Builder<ItemStack> builder = ImmutableList.builder();
 
-        for (ItemStack book : getItems())
+        for (ItemStack book : getItems()) {
+            if (request.isSatisfied()) break;
+
             if (book.getItem() instanceof InventoryBookItem)
                 builder.addAll(InventoryBookItem.extractItems(book, request, apply));
+        }
 
-        request.runBlockExtractedCallback(this);
+        request.runBlockAffectedCallback(this);
 
         return builder.build();
+    }
+
+    @Override
+    public void insertStack(InsertionRequest request) {
+        for (ItemStack book : getItems()) {
+            if (request.isSatisfied()) break;
+
+            if (book.getItem() instanceof InventoryBookItem) {
+                int amountInserted = ((InventoryBookItem) book.getItem()).tryAddItem(book, request.getItemStack());
+                request.satisfy(amountInserted);
+            }
+        }
+
+        request.runBlockAffectedCallback(this);
     }
 }

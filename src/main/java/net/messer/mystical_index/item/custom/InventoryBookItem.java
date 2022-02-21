@@ -1,11 +1,9 @@
 package net.messer.mystical_index.item.custom;
 
 import com.google.common.collect.ImmutableList;
-import it.unimi.dsi.fastutil.ints.IntLists;
 import net.messer.mystical_index.util.BigStack;
 import net.messer.mystical_index.util.ContentsIndex;
-import net.messer.mystical_index.util.IIndexInteractable;
-import net.messer.mystical_index.util.Request;
+import net.messer.mystical_index.util.request.ExtractionRequest;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -188,7 +186,7 @@ public abstract class InventoryBookItem extends BookItem {
         return Optional.of(itemStack);
     }
 
-    public static List<ItemStack> extractItems(ItemStack book, Request request, boolean apply) {
+    public static List<ItemStack> extractItems(ItemStack book, ExtractionRequest request, boolean apply) {
         if (request.isSatisfied())
             return Collections.emptyList();
 

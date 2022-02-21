@@ -1,7 +1,6 @@
 package net.messer.mystical_index.item.custom;
 
 import net.messer.mystical_index.MysticalIndex;
-import net.messer.mystical_index.util.Request;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
@@ -11,7 +10,6 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Optional;
 
 public class SaturationBook extends InventoryBookItem {
