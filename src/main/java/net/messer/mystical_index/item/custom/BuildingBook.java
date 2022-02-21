@@ -47,7 +47,7 @@ public class BuildingBook extends InventoryBookItem {
 
         var stackFromBook = removeFirstStack(heldBookStack, 1);
 
-        if (stackFromBook.isPresent()) {
+        if (stackFromBook.isPresent()) { // TODO stack.useOnBlock?
             if (stackFromBook.get().getItem() instanceof BlockItem blockItem) {
                 var hitBlockPos = context.getBlockPos();
                 var direction = context.getSide();

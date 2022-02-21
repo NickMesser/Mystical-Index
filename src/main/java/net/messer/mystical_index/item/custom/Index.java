@@ -84,21 +84,14 @@ public class Index extends Item implements PolymerItem {
     public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
         ItemStack itemStack = player.getStackInHand(hand);
         if (player instanceof ServerPlayerEntity serverPlayer) {
-            createMenu(serverPlayer).open();
+            createMenu(serverPlayer, serverPlayer.getBlockPos()).open();
         }
         return TypedActionResult.success(itemStack, world.isClient());
     }
 
-    private LibraryIndex getIndex(PlayerEntity player) {
-        return LibraryIndex.get(player.getWorld(), player.getBlockPos());
-    }
-
-    private ContentsIndex getIndexContents(PlayerEntity player) {
-        return getIndex(player).getContents();
-    }
-
-    public BookGui createMenu(ServerPlayerEntity player) {
-        List<Text> entries = getIndexContents(player).getTextList(Comparator.comparingInt(BigStack::getAmount).reversed());
+    public BookGui createMenu(ServerPlayerEntity player, BlockPos pos) {
+        LibraryIndex index = LibraryIndex.get(player.getWorld(), pos);
+        List<Text> entries = index.getContents().getTextList(Comparator.comparingInt(BigStack::getAmount).reversed());
         BookElementBuilder bookBuilder = new BookElementBuilder().signed();
 
         entries.addAll(0, List.of(new Text[]{

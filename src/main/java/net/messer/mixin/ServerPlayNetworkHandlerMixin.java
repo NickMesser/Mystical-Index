@@ -33,7 +33,7 @@ public abstract class ServerPlayNetworkHandlerMixin {
         String message = packet.getChatMessage();
 
         if (player.getStackInHand(Hand.MAIN_HAND).getItem() == ModItems.INDEX ||
-                player.getStackInHand(Hand.OFF_HAND).getItem() == ModItems.INDEX) {
+                player.getStackInHand(Hand.OFF_HAND).getItem() == ModItems.INDEX) { // TODO startswith /
             server.execute(() -> {
                 LibraryIndex index = LibraryIndex.get(player.getWorld(), player.getBlockPos());
                 ExtractionRequest request = ExtractionRequest.get(message);

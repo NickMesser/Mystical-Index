@@ -258,7 +258,7 @@ public abstract class InventoryBookItem extends BookItem {
             tooltipEntry.append(" x").append(String.valueOf(bigStack.getAmount()));
             tooltip.add(tooltipEntry.formatted(Formatting.GRAY).formatted(Formatting.ITALIC));
         }
-        super.appendTooltip(book, world, tooltip, context); // TODO index.getTextList()
+        super.appendTooltip(book, world, tooltip, context); // TODO index.getTextList() yes this is important
     }
 
     @Override
