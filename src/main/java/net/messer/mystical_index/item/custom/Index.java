@@ -89,7 +89,7 @@ public class Index extends Item implements PolymerItem {
         return TypedActionResult.success(itemStack, world.isClient());
     }
 
-    public BookGui createMenu(ServerPlayerEntity player, BlockPos pos) {
+    public ItemStack getMenuItem(ServerPlayerEntity player, BlockPos pos) {
         LibraryIndex index = LibraryIndex.get(player.getWorld(), pos);
         List<Text> entries = index.getContents().getTextList(Comparator.comparingInt(BigStack::getAmount).reversed());
         BookElementBuilder bookBuilder = new BookElementBuilder().signed();
@@ -112,7 +112,11 @@ public class Index extends Item implements PolymerItem {
             bookBuilder.addPage(text);
         }
 
-        return new BookGui(player, bookBuilder);
+        return bookBuilder.asStack();
+    }
+
+    public BookGui createMenu(ServerPlayerEntity player, BlockPos pos) {
+        return new BookGui(player, getMenuItem(player, pos));
     }
 
     @Override

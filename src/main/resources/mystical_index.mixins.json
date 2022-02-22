@@ -5,7 +5,7 @@
   "compatibilityLevel": "JAVA_16",
   "mixins": [
     "ItemStackPickupMixin",
-    "LecternBlockMixin",
+    "LecternBlockEntityMixin",
     "ServerPlayNetworkHandlerMixin"
   ],
   "client": [
