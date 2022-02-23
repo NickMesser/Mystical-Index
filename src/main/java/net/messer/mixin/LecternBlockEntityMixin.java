@@ -7,8 +7,8 @@ import net.minecraft.block.entity.LecternBlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
+import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
 import net.minecraft.screen.LecternScreenHandler;
 import net.minecraft.screen.PropertyDelegate;
 import net.minecraft.screen.ScreenHandler;
@@ -25,22 +25,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class LecternBlockEntityMixin {
     @Shadow @Final private Inventory inventory;
 
-    @Shadow @Final private PropertyDelegate propertyDelegate;
-
-    @Inject(method = "createMenu", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "createMenu", at = @At("HEAD"))
     public void createMenu(int i, PlayerInventory playerInventory, PlayerEntity playerEntity, CallbackInfoReturnable<ScreenHandler> cir) {
         Item item = inventory.getStack(0).getItem();
-        if (item == ModItems.INDEX) {
+        if (playerEntity instanceof ServerPlayerEntity serverPlayer && item == ModItems.INDEX) {
             BlockPos pos = ((BlockEntity) (Object) this).getPos();
-            cir.setReturnValue(new LecternScreenHandler(i, inventory, propertyDelegate) {
-                @Override
-                public ItemStack getBookItem() {
-                    if (!playerEntity.getWorld().isClient) {
-                        return ((Index) ModItems.INDEX).getMenuItem((ServerPlayerEntity) playerEntity, pos);
-                    }
-                    return null;
-                }
-            });
+            inventory.setStack(1, ((Index) ModItems.INDEX).getMenuItem(serverPlayer, pos).asStack());
+//            Inventory bookInventory = new BookInventory(new BookGui(serverPlayer, ));
         }
     }
 }
