@@ -3,8 +3,9 @@ package net.messer.mystical_index.item.custom;
 import eu.pb4.polymer.api.item.PolymerItem;
 import eu.pb4.sgui.api.elements.BookElementBuilder;
 import eu.pb4.sgui.api.gui.BookGui;
+import net.messer.mystical_index.MysticalIndex;
+import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.util.BigStack;
-import net.messer.mystical_index.util.ContentsIndex;
 import net.messer.mystical_index.util.ParticleSystem;
 import net.messer.mystical_index.util.request.InsertionRequest;
 import net.messer.mystical_index.util.request.LibraryIndex;
@@ -19,14 +20,12 @@ import net.minecraft.item.ItemUsageContext;
 import net.minecraft.item.Items;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.ClickType;
-import net.minecraft.util.Hand;
-import net.minecraft.util.TypedActionResult;
+import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +35,7 @@ import java.util.List;
 
 public class Index extends Item implements PolymerItem {
     private static final int LINES_PER_PAGE = 12;
+    public static final String LECTERN_TAG_NAME = new Identifier(MysticalIndex.MOD_ID, "index_nbt").toString();
 
     public Index(Settings settings) {
         super(settings);
@@ -75,7 +75,15 @@ public class Index extends Item implements PolymerItem {
         World world = context.getWorld();
         BlockState blockState = world.getBlockState(blockPos = context.getBlockPos());
         if (blockState.isOf(Blocks.LECTERN)) {
-            return LecternBlock.putBookIfAbsent(context.getPlayer(), world, blockPos, blockState, context.getStack()) ? ActionResult.success(world.isClient) : ActionResult.PASS;
+            return LecternBlock.putBookIfAbsent(
+                    context.getPlayer(), world,
+                    blockPos, blockState,
+                    toLecternBook(
+                            context.getStack(),
+                            (ServerWorld) world,
+                            blockPos
+                    )
+            ) ? ActionResult.success(world.isClient) : ActionResult.PASS;
         }
         return ActionResult.PASS;
     }
@@ -90,7 +98,11 @@ public class Index extends Item implements PolymerItem {
     }
 
     public BookElementBuilder getMenuItem(ServerPlayerEntity player, BlockPos pos) {
-        LibraryIndex index = LibraryIndex.get(player.getWorld(), pos);
+        return getMenuItem(player.getWorld(), pos);
+    }
+
+    public static BookElementBuilder getMenuItem(ServerWorld world, BlockPos pos) {
+        LibraryIndex index = LibraryIndex.get(world, pos);
         List<Text> entries = index.getContents().getTextList(Comparator.comparingInt(BigStack::getAmount).reversed());
         BookElementBuilder bookBuilder = new BookElementBuilder().signed();
 
@@ -122,5 +134,23 @@ public class Index extends Item implements PolymerItem {
     @Override
     public Item getPolymerItem(ItemStack itemStack, @Nullable ServerPlayerEntity player) {
         return Items.WRITTEN_BOOK;
+    }
+
+    public static ItemStack getFromLecternBook(ItemStack book) {
+        if (book.getOrCreateNbt().contains(Index.LECTERN_TAG_NAME)) {
+            ItemStack newItem = new ItemStack(ModItems.INDEX);
+            newItem.setNbt(book.getOrCreateNbt().getCompound(Index.LECTERN_TAG_NAME));
+            return newItem;
+        }
+        return book;
+    }
+
+    public static ItemStack toLecternBook(ItemStack index, ServerWorld world, BlockPos pos) {
+        ItemStack itemStack = getMenuItem(world, pos).asStack();
+        itemStack.getOrCreateNbt().put(
+                LECTERN_TAG_NAME,
+                index.getOrCreateNbt()
+        );
+        return itemStack;
     }
 }
