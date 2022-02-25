@@ -1,6 +1,7 @@
 package net.messer.mixin;
 
 import net.messer.mystical_index.item.custom.Index;
+import net.messer.mystical_index.util.request.LibraryIndex;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.LecternBlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -25,7 +26,7 @@ public class LecternBlockEntityMixin {
         if (book.getOrCreateNbt().contains(Index.LECTERN_TAG_NAME)) {
             BlockPos pos = ((BlockEntity) (Object) this).getPos();
             World world = ((BlockEntity) (Object) this).getWorld();
-            ItemStack stack = Index.getMenuItem((ServerWorld) world, pos).asStack();
+            ItemStack stack = Index.getMenuItem((ServerWorld) world, pos, LibraryIndex.LECTERN_SEARCH_RANGE).asStack();
             stack.getOrCreateNbt().put(Index.LECTERN_TAG_NAME, book.getOrCreateNbt().get(Index.LECTERN_TAG_NAME));
             book = stack;
             ((LecternBlockEntity) (Object) this).markDirty();

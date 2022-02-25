@@ -32,10 +32,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 public class Index extends Item implements PolymerItem {
     private static final int LINES_PER_PAGE = 12;
     public static final String LECTERN_TAG_NAME = new Identifier(MysticalIndex.MOD_ID, "index_nbt").toString();
+    public static final double LECTERN_PICKUP_RADIUS = 2d;
+    public static final UUID EXTRACTED_DROP_UUID = UUID.randomUUID();
 
     public Index(Settings settings) {
         super(settings);
@@ -60,7 +63,7 @@ public class Index extends Item implements PolymerItem {
     }
 
     public void tryInsertItemStack(ItemStack itemStack, PlayerEntity player) {
-        LibraryIndex index = LibraryIndex.get(player.getWorld(), player.getBlockPos());
+        LibraryIndex index = LibraryIndex.get(player.getWorld(), player.getBlockPos(), LibraryIndex.ITEM_SEARCH_RANGE);
 
         InsertionRequest request = new InsertionRequest(itemStack);
         request.setSourcePosition(player.getPos());
@@ -75,11 +78,13 @@ public class Index extends Item implements PolymerItem {
         World world = context.getWorld();
         BlockState blockState = world.getBlockState(blockPos = context.getBlockPos());
         if (blockState.isOf(Blocks.LECTERN)) {
+            ItemStack stack = context.getStack().copy();
+            context.getStack().decrement(1);
             return LecternBlock.putBookIfAbsent(
                     context.getPlayer(), world,
                     blockPos, blockState,
                     toLecternBook(
-                            context.getStack(),
+                            stack,
                             (ServerWorld) world,
                             blockPos
                     )
@@ -97,12 +102,12 @@ public class Index extends Item implements PolymerItem {
         return TypedActionResult.success(itemStack, world.isClient());
     }
 
-    public BookElementBuilder getMenuItem(ServerPlayerEntity player, BlockPos pos) {
-        return getMenuItem(player.getWorld(), pos);
+    public BookElementBuilder getMenuItem(ServerPlayerEntity player, BlockPos pos, int range) {
+        return getMenuItem(player.getWorld(), pos, range);
     }
 
-    public static BookElementBuilder getMenuItem(ServerWorld world, BlockPos pos) {
-        LibraryIndex index = LibraryIndex.get(world, pos);
+    public static BookElementBuilder getMenuItem(ServerWorld world, BlockPos pos, int range) {
+        LibraryIndex index = LibraryIndex.get(world, pos, range);
         List<Text> entries = index.getContents().getTextList(Comparator.comparingInt(BigStack::getAmount).reversed());
         BookElementBuilder bookBuilder = new BookElementBuilder().signed();
 
@@ -128,7 +133,7 @@ public class Index extends Item implements PolymerItem {
     }
 
     public BookGui createMenu(ServerPlayerEntity player, BlockPos pos) {
-        return new BookGui(player, getMenuItem(player, pos));
+        return new BookGui(player, getMenuItem(player, pos, LibraryIndex.ITEM_SEARCH_RANGE));
     }
 
     @Override
@@ -146,7 +151,7 @@ public class Index extends Item implements PolymerItem {
     }
 
     public static ItemStack toLecternBook(ItemStack index, ServerWorld world, BlockPos pos) {
-        ItemStack itemStack = getMenuItem(world, pos).asStack();
+        ItemStack itemStack = getMenuItem(world, pos, LibraryIndex.LECTERN_SEARCH_RANGE).asStack();
         itemStack.getOrCreateNbt().put(
                 LECTERN_TAG_NAME,
                 index.getOrCreateNbt()

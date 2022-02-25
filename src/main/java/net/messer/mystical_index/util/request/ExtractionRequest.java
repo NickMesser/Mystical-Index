@@ -1,6 +1,8 @@
 package net.messer.mystical_index.util.request;
 
 import net.minecraft.item.Item;
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 
 import java.util.Locale;
 import java.util.function.BiFunction;
@@ -11,7 +13,7 @@ public class ExtractionRequest extends Request {
     private static final Pattern STACKS_MATCHER = Pattern.compile("(?<amount>\\d+|all) stacks?( of)? (?<item>.+)", Pattern.CASE_INSENSITIVE);
     private static final Pattern STACK_MATCHER = Pattern.compile("stack( of)? (?<item>.+)", Pattern.CASE_INSENSITIVE);
     private static final Pattern COUNTS_MATCHER = Pattern.compile("(?<amount>\\d+|all)x? (?<item>.+)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern SINGLE_MATCHER = Pattern.compile("(?<item>.+)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern SINGLE_MATCHER = Pattern.compile("(?<item>.+)", Pattern.CASE_INSENSITIVE); // TODO rework this
     private static final String[] WILDCARD_STRINGS = { "...", "~", "+", "?" };
 
     private final String[] expression;
@@ -100,6 +102,12 @@ public class ExtractionRequest extends Request {
         if (!hasMatched()) throw new IllegalStateException("Can't get matched item before a match has been found.");
 
         return match;
+    }
+
+    public Text getMessage() {
+        if (hasMatched())
+            return new LiteralText("extracted " + getTotalAmountAffected() + " of " + getMatchedItem().getName().getString());
+        return new LiteralText("no match"); // TODO translation keys
     }
 
     private static boolean matchGlob(String[] expression, String string) {
