@@ -3,12 +3,14 @@ package net.messer.mystical_index.util.request;
 import com.google.common.collect.ImmutableList;
 import net.messer.mystical_index.block.ModTags;
 import net.messer.mystical_index.util.ContentsIndex;
+import net.messer.mystical_index.util.IndexCache;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class LibraryIndex implements IIndexInteractable {
     public static final int ITEM_SEARCH_RANGE = 5; // TODO: config // TODO: higher range for lectern based somehow, extenders?
@@ -32,6 +34,12 @@ public class LibraryIndex implements IIndexInteractable {
     }
 
     public static LibraryIndex get(World world, BlockPos pos, int searchRange) {
+        // Check if we have an index cached for this location
+        Optional<LibraryIndex> cachedIndex = IndexCache.get(pos, world, searchRange);
+        if (cachedIndex.isPresent())
+            return cachedIndex.get();
+
+        // If not, iterate over nearby blocks and generate the index
         ArrayList<IIndexInteractable> entities = new ArrayList<>();
         for (int x = -searchRange; x <= searchRange; x++) {
             for (int z = -searchRange; z <= searchRange; z++) {
@@ -45,7 +53,10 @@ public class LibraryIndex implements IIndexInteractable {
             }
         }
 
-        return new LibraryIndex(entities);
+        // Cache the generated index and return it
+        LibraryIndex generatedIndex = new LibraryIndex(entities);
+        IndexCache.put(pos, world, searchRange, generatedIndex);
+        return generatedIndex;
     }
 
     @Override

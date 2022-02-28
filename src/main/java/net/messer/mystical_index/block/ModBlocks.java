@@ -30,7 +30,6 @@ public class ModBlocks {
     }
 
     public static void registerModBlocks(){
-        MysticalIndex.LOGGER.info("Registering Mod Blocks");
+        MysticalIndex.LOGGER.info("Registering blocks for " + MysticalIndex.MOD_ID);
     }
-
 }

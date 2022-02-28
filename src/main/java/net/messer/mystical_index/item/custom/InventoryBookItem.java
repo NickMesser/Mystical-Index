@@ -253,12 +253,10 @@ public abstract class InventoryBookItem extends BookItem {
 
     @Override
     public void appendTooltip(ItemStack book, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        for (BigStack bigStack : getContents(book).getAll()) {
-            MutableText tooltipEntry = bigStack.getItem().getName().shallowCopy();
-            tooltipEntry.append(" x").append(String.valueOf(bigStack.getAmount()));
-            tooltip.add(tooltipEntry.formatted(Formatting.GRAY).formatted(Formatting.ITALIC));
+        for (Text text : getContents(book).getTextList()) {
+            tooltip.add(text.copy().formatted(Formatting.GRAY).formatted(Formatting.ITALIC));
         }
-        super.appendTooltip(book, world, tooltip, context); // TODO index.getTextList() yes this is important
+        super.appendTooltip(book, world, tooltip, context);
     }
 
     @Override

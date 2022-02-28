@@ -3,10 +3,13 @@ package net.messer.mystical_index.block.custom;
 
 import eu.pb4.polymer.api.block.PolymerBlock;
 import net.messer.mystical_index.block.entity.LibraryBlockEntity;
+import net.messer.mystical_index.util.IndexCache;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
+import net.minecraft.item.ItemStack;
 import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -14,6 +17,7 @@ import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldAccess;
 import org.jetbrains.annotations.Nullable;
 
 public class LibraryInventoryBlock extends BlockWithEntity implements BlockEntityProvider, PolymerBlock {
@@ -58,6 +62,16 @@ public class LibraryInventoryBlock extends BlockWithEntity implements BlockEntit
             }
         }
         return ActionResult.SUCCESS;
+    }
+
+    @Override
+    public void onPlaced(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
+        IndexCache.markDirty();
+    }
+
+    @Override
+    public void afterBreak(World world, PlayerEntity player, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, ItemStack stack) {
+        IndexCache.markDirty();
     }
 
     @Override

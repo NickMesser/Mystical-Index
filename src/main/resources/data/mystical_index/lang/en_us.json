@@ -8,5 +8,9 @@
   "item.mystical_index.saturation_book": "Book Of Saturation",
   "item.mystical_index.magnetism_book": "Book Of Magnetism",
   "item.mystical_index.building_book": "Book Of Building",
-  "gui.mystical_index.index_screen_header": "Library Contents:"
+  "gui.mystical_index.index_screen_header": "Library Contents:",
+  "gui.mystical_index.index_list_clickable": "Click for more info",
+  "gui.mystical_index.index_stored_header": "Stored:",
+  "chat.mystical_index.no_match": "No match",
+  "chat.mystical_index.extracted": "Extracted %s of %s"
 }

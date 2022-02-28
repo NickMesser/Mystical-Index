@@ -7,6 +7,7 @@ import net.minecraft.block.entity.LecternBlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.WrittenBookItem;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -18,8 +19,10 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LecternBlockEntity.class)
-public class LecternBlockEntityMixin {
+public abstract class LecternBlockEntityMixin {
     @Shadow ItemStack book;
+
+    @Shadow private int pageCount;
 
     @Inject(method = "createMenu", at = @At("HEAD"))
     public void createMenu(int i, PlayerInventory playerInventory, PlayerEntity playerEntity, CallbackInfoReturnable<ScreenHandler> cir) {
@@ -29,6 +32,7 @@ public class LecternBlockEntityMixin {
             ItemStack stack = Index.getMenuItem((ServerWorld) world, pos, LibraryIndex.LECTERN_SEARCH_RANGE).asStack();
             stack.getOrCreateNbt().put(Index.LECTERN_TAG_NAME, book.getOrCreateNbt().get(Index.LECTERN_TAG_NAME));
             book = stack;
+            pageCount = WrittenBookItem.getPageCount(book);
             ((LecternBlockEntity) (Object) this).markDirty();
         }
     }

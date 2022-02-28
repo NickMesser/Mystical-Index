@@ -4,14 +4,16 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class ContentsIndex {
+public class ContentsIndex implements Iterable<BigStack> {
     private final ArrayList<BigStack> contents;
 
     public ContentsIndex() {
@@ -62,5 +64,15 @@ public class ContentsIndex {
         return stream
                 .map(bigStack -> new LiteralText(bigStack.getItemStack().getName().getString() + " x" + bigStack.getAmount()))
                 .collect(Collectors.toList());
+    }
+
+    public ContentsIndex sorted(Comparator<BigStack> sorter) {
+        return new ContentsIndex(new ArrayList<>(contents.stream().sorted(sorter).collect(Collectors.toList())));
+    }
+
+    @NotNull
+    @Override
+    public Iterator<BigStack> iterator() {
+        return contents.iterator();
     }
 }

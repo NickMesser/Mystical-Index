@@ -1,11 +1,13 @@
 package net.messer.mystical_index.item.custom;
 
+import com.google.common.collect.ImmutableList;
 import eu.pb4.polymer.api.item.PolymerItem;
 import eu.pb4.sgui.api.elements.BookElementBuilder;
 import eu.pb4.sgui.api.gui.BookGui;
 import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.util.BigStack;
+import net.messer.mystical_index.util.ContentsIndex;
 import net.messer.mystical_index.util.ParticleSystem;
 import net.messer.mystical_index.util.request.InsertionRequest;
 import net.messer.mystical_index.util.request.LibraryIndex;
@@ -21,15 +23,13 @@ import net.minecraft.item.Items;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.LiteralText;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
+import net.minecraft.text.*;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -39,6 +39,10 @@ public class Index extends Item implements PolymerItem {
     public static final String LECTERN_TAG_NAME = new Identifier(MysticalIndex.MOD_ID, "index_nbt").toString();
     public static final double LECTERN_PICKUP_RADIUS = 2d;
     public static final UUID EXTRACTED_DROP_UUID = UUID.randomUUID();
+    private static final List<Text> HEADER = List.of(new Text[]{
+            new TranslatableText("gui.mystical_index.index_screen_header"),
+            new LiteralText("")
+    });
 
     public Index(Settings settings) {
         super(settings);
@@ -108,28 +112,62 @@ public class Index extends Item implements PolymerItem {
 
     public static BookElementBuilder getMenuItem(ServerWorld world, BlockPos pos, int range) {
         LibraryIndex index = LibraryIndex.get(world, pos, range);
-        List<Text> entries = index.getContents().getTextList(Comparator.comparingInt(BigStack::getAmount).reversed());
+        ContentsIndex contents = index.getContents().sorted(Comparator.comparingInt(BigStack::getAmount).reversed());
+        List<Text> entries = contents.getTextList();
         BookElementBuilder bookBuilder = new BookElementBuilder().signed();
 
-        entries.addAll(0, List.of(new Text[]{
-                new TranslatableText("gui.mystical_index.index_screen_header"),
-                new LiteralText("")
-        }));
+        int headerSize = HEADER.size();
+        entries.addAll(0, HEADER);
 
+        // Construct the short list pages
         int size = entries.size();
+        int indexPages = (int) Math.ceil((double) size / LINES_PER_PAGE);
         for (int current = 0; current < size; current += LINES_PER_PAGE) {
             MutableText text = new LiteralText("");
 
             for (int line = 0; line < Math.min(LINES_PER_PAGE, size - current); line++) {
                 int position = current + line;
 
-                text.append(entries.get(position).copy().append("\n")); // TODO button to request
+                if (position < headerSize) {
+                    text.append(entries.get(position).copy().append("\n"));
+                } else {
+                    text.append(entries.get(position).copy().append("\n").styled(style -> style
+                            .withColor(Formatting.DARK_GRAY)
+                            .withClickEvent(new ClickEvent(ClickEvent.Action.CHANGE_PAGE, String.valueOf(position - headerSize + indexPages + 1)))
+                            .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TranslatableText("gui.mystical_index.index_list_clickable")))
+                    ));
+                }
             }
 
             bookBuilder.addPage(text);
         }
 
-        return bookBuilder; // Preferably i'd have this return an ItemStack, but due to a bug in sgui it's easier like this.
+        // Construct the detail pages
+        for (BigStack stack : contents) {
+            ItemStack itemStack = stack.getItemStack();
+
+            ImmutableList.Builder<Text> builder = ImmutableList.builder();
+            builder.add(new LiteralText("<<<\n").styled(style -> style
+                    .withColor(Formatting.GREEN)
+                    .withClickEvent(new ClickEvent(ClickEvent.Action.CHANGE_PAGE, String.valueOf(1)))
+            ));
+            builder.add(itemStack.toHoverableText().copy().append("\n"));
+            builder.add(new TranslatableText("gui.mystical_index.index_stored_header"));
+            int amount = stack.getAmount();
+            int stackSize = itemStack.getMaxCount();
+            int stacksAmount = Math.floorDiv(amount, stackSize);
+            int amountLeftover = amount % stackSize;
+            builder.add(new LiteralText(String.valueOf(amount)).styled(style ->
+                    style.withColor(Formatting.DARK_GRAY)
+            ).append(new LiteralText(" (" + stacksAmount + "*" + stackSize + "+" + amountLeftover + ")").styled(style ->
+                    style.withColor(Formatting.GRAY)
+            )));
+
+            bookBuilder.addPage(builder.build().toArray(new Text[0]));
+        }
+
+        // Preferably I'd have this return an ItemStack, but due to a bug in sgui it's easier like this.
+        return bookBuilder;
     }
 
     public BookGui createMenu(ServerPlayerEntity player, BlockPos pos) {

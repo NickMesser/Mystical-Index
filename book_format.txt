@@ -1,0 +1,11 @@
+tabularium libri                # define as storage book
+
+acervos <stacks>                # stacks
+agraphum <types>                # types
+
+sortis [ accipere | rejicere ]  # sort whitelist/blacklist
+    nomen <name>                # sort by name with wildcards
+    genus <category>            # sort by creative inv category
+
+ipso manducare                  # add auto eating
+angustos positio                # add block placing

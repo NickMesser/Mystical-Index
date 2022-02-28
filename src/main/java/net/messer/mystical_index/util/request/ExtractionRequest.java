@@ -3,6 +3,7 @@ package net.messer.mystical_index.util.request;
 import net.minecraft.item.Item;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
 
 import java.util.Locale;
 import java.util.function.BiFunction;
@@ -106,8 +107,8 @@ public class ExtractionRequest extends Request {
 
     public Text getMessage() {
         if (hasMatched())
-            return new LiteralText("extracted " + getTotalAmountAffected() + " of " + getMatchedItem().getName().getString());
-        return new LiteralText("no match"); // TODO translation keys
+            return new TranslatableText("chat.mystical_index.extracted", getTotalAmountAffected(), getMatchedItem().getName().getString());
+        return new TranslatableText("chat.mystical_index.no_match");
     }
 
     private static boolean matchGlob(String[] expression, String string) {
