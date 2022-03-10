@@ -1,6 +1,5 @@
 package net.messer.mystical_index.screen;
 
-import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.custom.InventoryBookItem;
 import net.messer.mystical_index.item.inventory.LibraryBookSlot;
 import net.minecraft.entity.player.PlayerEntity;

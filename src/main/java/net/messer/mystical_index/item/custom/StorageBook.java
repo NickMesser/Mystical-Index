@@ -19,12 +19,12 @@ public class StorageBook extends InventoryBookItem {
     }
 
     @Override
-    public int getMaxTypes() {
+    public int getMaxTypes(ItemStack book) {
         return 32;
     }
 
     @Override
-    public int getMaxStack() {
+    public int getMaxStack(ItemStack book) {
         return 8;
     }
 }

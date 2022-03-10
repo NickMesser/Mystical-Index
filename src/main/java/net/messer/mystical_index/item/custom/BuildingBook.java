@@ -1,13 +1,10 @@
 package net.messer.mystical_index.item.custom;
 
-import net.minecraft.advancement.criterion.Criteria;
 import net.minecraft.item.*;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.ActionResult;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Optional;
 
 public class BuildingBook extends InventoryBookItem {
     public BuildingBook(Settings settings) {
@@ -20,12 +17,12 @@ public class BuildingBook extends InventoryBookItem {
     }
 
     @Override
-    public int getMaxTypes() {
+    public int getMaxTypes(ItemStack book) {
         return 1;
     }
 
     @Override
-    public int getMaxStack() {
+    public int getMaxStack(ItemStack book) {
         return 8;
     }
 

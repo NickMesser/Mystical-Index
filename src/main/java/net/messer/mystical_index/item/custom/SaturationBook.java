@@ -18,12 +18,12 @@ public class SaturationBook extends InventoryBookItem {
     }
 
     @Override
-    public int getMaxTypes() {
+    public int getMaxTypes(ItemStack book) {
         return 16;
     }
 
     @Override
-    public int getMaxStack() {
+    public int getMaxStack(ItemStack book) {
         return 2;
     }
 

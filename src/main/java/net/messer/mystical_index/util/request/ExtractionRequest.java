@@ -1,7 +1,6 @@
 package net.messer.mystical_index.util.request;
 
 import net.minecraft.item.Item;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 

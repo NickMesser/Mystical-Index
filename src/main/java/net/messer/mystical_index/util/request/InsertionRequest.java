@@ -4,6 +4,7 @@ import net.minecraft.item.ItemStack;
 
 public class InsertionRequest extends Request {
     private final ItemStack itemStack;
+    // TODO priority?
 
     public InsertionRequest(ItemStack itemStack) {
         super(itemStack.getCount());

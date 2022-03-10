@@ -1,6 +1,7 @@
 package net.messer.mystical_index.item.custom;
 
 import com.google.common.collect.ImmutableList;
+import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.util.BigStack;
 import net.messer.mystical_index.util.ContentsIndex;
 import net.messer.mystical_index.util.request.ExtractionRequest;
@@ -15,7 +16,6 @@ import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.ClickType;
 import net.minecraft.util.Formatting;
@@ -31,6 +31,10 @@ import java.util.stream.Stream;
 public abstract class InventoryBookItem extends BookItem {
     public InventoryBookItem(Settings settings) {
         super(settings);
+    }
+
+    public static NbtCompound getModTag(ItemStack book) {
+        return book.getOrCreateNbt().getCompound(MysticalIndex.MOD_ID);
     }
 
     @Override
@@ -72,9 +76,9 @@ public abstract class InventoryBookItem extends BookItem {
         return true;
     }
 
-    public abstract int getMaxTypes();
+    public abstract int getMaxTypes(ItemStack book);
 
-    public abstract int getMaxStack();
+    public abstract int getMaxStack(ItemStack book);
 
     public ContentsIndex getContents(ItemStack book) {
         NbtCompound nbtCompound = book.getNbt();
@@ -122,7 +126,7 @@ public abstract class InventoryBookItem extends BookItem {
             nbtCompound.put("Items", new NbtList());
         }
 
-        int maxFullness = getMaxStack() * 64;
+        int maxFullness = getMaxStack(book) * 64;
         int fullnessLeft = maxFullness - getFullness(book);
         int canBeTakenAmount = Math.min(stack.getCount(), fullnessLeft / getItemOccupancy(stack.getItem()));
         if (canBeTakenAmount == 0) {
@@ -137,7 +141,7 @@ public abstract class InventoryBookItem extends BookItem {
             nbtList.remove(mergeStack);
             nbtList.add(0, mergeStack);
         } else {
-            if (nbtList.size() >= getMaxTypes()) {
+            if (nbtList.size() >= getMaxTypes(book)) {
                 return 0;
             }
 
@@ -239,11 +243,11 @@ public abstract class InventoryBookItem extends BookItem {
     }
 
     // TODO get better sounds and make them actually work on servers
-    private void playRemoveOneSound(Entity entity) {
+    public static void playRemoveOneSound(Entity entity) {
         entity.playSound(SoundEvents.ITEM_BUNDLE_REMOVE_ONE, 0.8f, 0.8f + entity.getWorld().getRandom().nextFloat() * 0.4f);
     }
 
-    private void playInsertSound(Entity entity) {
+    public static void playInsertSound(Entity entity) {
         entity.playSound(SoundEvents.ITEM_BUNDLE_INSERT, 0.8f, 0.8f + entity.getWorld().getRandom().nextFloat() * 0.4f);
     }
 
