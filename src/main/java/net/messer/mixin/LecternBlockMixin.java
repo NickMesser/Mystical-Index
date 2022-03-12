@@ -1,7 +1,7 @@
 package net.messer.mixin;
 
 import net.messer.mystical_index.events.MixinHooks;
-import net.messer.mystical_index.item.custom.Index;
+import net.messer.mystical_index.item.custom.book.Index;
 import net.messer.mystical_index.util.LecternTracker;
 import net.messer.mystical_index.util.ParticleSystem;
 import net.messer.mystical_index.util.request.InsertionRequest;
@@ -29,6 +29,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import java.util.Objects;
 
+@SuppressWarnings("deprecation")
 @Mixin(LecternBlock.class)
 public abstract class LecternBlockMixin extends BlockWithEntity {
     protected LecternBlockMixin(Settings settings) {

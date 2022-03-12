@@ -1,13 +1,7 @@
 package net.messer.mixin;
 
-import net.messer.mystical_index.item.custom.InventoryBookItem;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.StackReference;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
 import net.minecraft.item.WrittenBookItem;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.util.ClickType;
 import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(WrittenBookItem.class)

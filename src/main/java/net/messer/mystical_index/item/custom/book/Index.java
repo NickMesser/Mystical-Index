@@ -1,4 +1,4 @@
-package net.messer.mystical_index.item.custom;
+package net.messer.mystical_index.item.custom.book;
 
 import com.google.common.collect.ImmutableList;
 import eu.pb4.polymer.api.item.PolymerItem;

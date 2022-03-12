@@ -8,8 +8,7 @@
     "LecternBlockEntityMixin",
     "LecternBlockMixin",
     "LecternScreenHandlerMixin",
-    "ServerPlayNetworkHandlerMixin",
-    "WrittenBookItemMixin"
+    "ServerPlayNetworkHandlerMixin"
   ],
   "client": [
   ],

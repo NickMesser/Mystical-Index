@@ -1,4 +1,4 @@
-package net.messer.mystical_index.item.custom;
+package net.messer.mystical_index.item.custom.book;
 
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;

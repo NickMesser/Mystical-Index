@@ -1,7 +1,7 @@
 package net.messer.mystical_index.events;
 
 import net.messer.mystical_index.MysticalIndex;
-import net.messer.mystical_index.item.custom.Index;
+import net.messer.mystical_index.item.custom.book.Index;
 import net.messer.mystical_index.util.LecternTracker;
 import net.messer.mystical_index.util.ParticleSystem;
 import net.minecraft.block.Block;

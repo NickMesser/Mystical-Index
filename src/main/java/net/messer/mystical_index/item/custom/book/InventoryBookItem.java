@@ -1,4 +1,4 @@
-package net.messer.mystical_index.item.custom;
+package net.messer.mystical_index.item.custom.book;
 
 import com.google.common.collect.ImmutableList;
 import net.messer.mystical_index.MysticalIndex;
@@ -16,7 +16,9 @@ import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ClickType;
 import net.minecraft.util.Formatting;
 import net.minecraft.world.World;
@@ -33,9 +35,8 @@ public abstract class InventoryBookItem extends BookItem {
         super(settings);
     }
 
-    public static NbtCompound getModTag(ItemStack book) {
-        return book.getOrCreateNbt().getCompound(MysticalIndex.MOD_ID);
-    }
+    public static final String OCCUPIED_STACKS_TAG = "occupied_stacks";
+    public static final String OCCUPIED_TYPES_TAG = "occupied_types";
 
     @Override
     public boolean onStackClicked(ItemStack book, Slot slot, ClickType clickType, PlayerEntity player) {
@@ -44,7 +45,7 @@ public abstract class InventoryBookItem extends BookItem {
         }
         ItemStack itemStack = slot.getStack();
         if (itemStack.isEmpty()) {
-            this.playRemoveOneSound(player);
+            playRemoveOneSound(player);
             removeFirstStack(book).ifPresent(removedStack -> tryAddItem(book, slot.insertStack(removedStack)));
         } else {
             int amount = tryAddItem(book, itemStack);
@@ -80,7 +81,7 @@ public abstract class InventoryBookItem extends BookItem {
 
     public abstract int getMaxStack(ItemStack book);
 
-    public ContentsIndex getContents(ItemStack book) {
+    public static ContentsIndex getContents(ItemStack book) {
         NbtCompound nbtCompound = book.getNbt();
         ContentsIndex result = new ContentsIndex();
         if (nbtCompound != null) {
@@ -93,7 +94,7 @@ public abstract class InventoryBookItem extends BookItem {
         return result;
     }
 
-    private int getFullness(ItemStack book) {
+    protected static int getFullness(ItemStack book) {
         int result = 0;
         for (BigStack bigStack : getContents(book).getAll()) {
             result += bigStack.getAmount() * getItemOccupancy(bigStack.getItem());
@@ -121,9 +122,9 @@ public abstract class InventoryBookItem extends BookItem {
         if (stack.isEmpty() || !canInsert(stack.getItem())) {
             return 0;
         }
-        NbtCompound nbtCompound = book.getOrCreateNbt();
-        if (!nbtCompound.contains("Items")) {
-            nbtCompound.put("Items", new NbtList());
+        NbtCompound bookNbt = book.getOrCreateNbt();
+        if (!bookNbt.contains("Items")) {
+            bookNbt.put("Items", new NbtList());
         }
 
         int maxFullness = getMaxStack(book) * 64;
@@ -133,15 +134,15 @@ public abstract class InventoryBookItem extends BookItem {
             return 0;
         }
 
-        NbtList nbtList = nbtCompound.getList("Items", 10);
-        Optional<NbtCompound> mergeAbleStack = canMergeStack(stack, nbtList);
+        NbtList itemsList = bookNbt.getList("Items", 10);
+        Optional<NbtCompound> mergeAbleStack = canMergeStack(stack, itemsList);
         if (mergeAbleStack.isPresent()) {
             NbtCompound mergeStack = mergeAbleStack.get();
             mergeStack.putInt("Count", mergeStack.getInt("Count") + canBeTakenAmount);
-            nbtList.remove(mergeStack);
-            nbtList.add(0, mergeStack);
+            itemsList.remove(mergeStack);
+            itemsList.add(0, mergeStack);
         } else {
-            if (nbtList.size() >= getMaxTypes(book)) {
+            if (itemsList.size() >= getMaxTypes(book)) {
                 return 0;
             }
 
@@ -150,8 +151,13 @@ public abstract class InventoryBookItem extends BookItem {
             NbtCompound insertNbt = new NbtCompound();
             insertNbt.put("Item", insertStack.writeNbt(new NbtCompound()));
             insertNbt.putInt("Count", canBeTakenAmount);
-            nbtList.add(0, insertNbt);
+            itemsList.add(0, insertNbt);
         }
+
+        saveOccupancy(bookNbt,
+                maxFullness - fullnessLeft + canBeTakenAmount * getItemOccupancy(stack.getItem()),
+                itemsList.size());
+
         return canBeTakenAmount;
     }
 
@@ -186,6 +192,8 @@ public abstract class InventoryBookItem extends BookItem {
         } else {
             firstItem.putInt("Count", itemCount - takeCount);
         }
+
+        saveOccupancy(bookNbt, getFullness(book), itemsList.size());
 
         return Optional.of(itemStack);
     }
@@ -239,7 +247,14 @@ public abstract class InventoryBookItem extends BookItem {
             book.removeSubNbt("Items");
         }
 
+        saveOccupancy(bookNbt, getFullness(book), itemsList.size());
+
         return builder.build();
+    }
+
+    public static void saveOccupancy(NbtCompound bookNbt, int stacks, int types) {
+        bookNbt.putInt(OCCUPIED_STACKS_TAG, stacks);
+        bookNbt.putInt(OCCUPIED_TYPES_TAG, types);
     }
 
     // TODO get better sounds and make them actually work on servers
@@ -258,8 +273,31 @@ public abstract class InventoryBookItem extends BookItem {
     @Override
     public void appendTooltip(ItemStack book, @Nullable World world, List<Text> tooltip, TooltipContext context) {
         for (Text text : getContents(book).getTextList()) {
-            tooltip.add(text.copy().formatted(Formatting.GRAY).formatted(Formatting.ITALIC));
+            tooltip.add(text.copy().formatted(Formatting.GRAY));
         }
+
+        var nbt = book.getOrCreateNbt();
+
+        var stacksOccupied = nbt.getInt(InventoryBookItem.OCCUPIED_STACKS_TAG);
+        var stacksTotal = getMaxStack(book) * 64;
+        double stacksFullRatio = (double) stacksOccupied / stacksTotal;
+        var typesOccupied = nbt.getInt(InventoryBookItem.OCCUPIED_TYPES_TAG);
+        var typesTotal = getMaxTypes(book);
+        double typesFullRatio = (double) typesOccupied / typesTotal;
+
+        super.appendTooltip(book, world, tooltip, context);
+        tooltip.add(new LiteralText(""));
+        tooltip.add(new TranslatableText("item.mystical_index.custom_book.tooltip.capacity")
+                .formatted(Formatting.GRAY));
+        tooltip.add(new TranslatableText("item.mystical_index.custom_book.tooltip.stacks",
+                stacksOccupied, stacksTotal)
+                .formatted(stacksFullRatio < 0.75 ? Formatting.GREEN :
+                        stacksFullRatio == 1 ? Formatting.RED : Formatting.GOLD));
+        tooltip.add(new TranslatableText("item.mystical_index.custom_book.tooltip.types",
+                typesOccupied, typesTotal)
+                .formatted(typesFullRatio < 0.75 ? Formatting.GREEN :
+                        typesFullRatio == 1 ? Formatting.RED : Formatting.GOLD));
+
         super.appendTooltip(book, world, tooltip, context);
     }
 

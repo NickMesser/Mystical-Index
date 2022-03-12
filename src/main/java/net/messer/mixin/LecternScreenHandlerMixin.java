@@ -1,6 +1,6 @@
 package net.messer.mixin;
 
-import net.messer.mystical_index.item.custom.Index;
+import net.messer.mystical_index.item.custom.book.Index;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.LecternScreenHandler;
 import org.spongepowered.asm.mixin.Mixin;

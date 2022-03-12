@@ -1,4 +1,4 @@
-package net.messer.mystical_index.item.custom;
+package net.messer.mystical_index.item.custom.book;
 
 import net.minecraft.item.*;
 import net.minecraft.server.network.ServerPlayerEntity;

@@ -7,6 +7,7 @@ import net.messer.config.MysticalConfig;
 import net.messer.mystical_index.block.ModBlocks;
 import net.messer.mystical_index.block.entity.ModBlockEntities;
 import net.messer.mystical_index.item.ModItems;
+import net.messer.mystical_index.item.ModRecipes;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -24,6 +25,7 @@ public class MysticalIndex implements ModInitializer {
 
 		ModItems.registerModItems();
 		ModBlocks.registerModBlocks();
+		ModRecipes.registerModRecipes();
 
 		ModBlockEntities.registerBlockEntities();
 	}

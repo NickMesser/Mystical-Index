@@ -1,16 +1,20 @@
 {
-  "item.mystical_index.storage_book": "Book Of Storage",
+  "item.mystical_index.custom_book": "Book of Storage",
+  "item.mystical_index.stacks_page": "Page of Stacking",
+  "item.mystical_index.types_page": "Page of Types",
   "item.mystical_index.library": "Library",
   "block.mystical_index.library": "Library",
   "item.mystical_index.index": "Index",
-  "block.mystical_index.index": "Index",
-  "item.mystical_index.fluid_book": "Book of Fluids",
-  "item.mystical_index.saturation_book": "Book Of Saturation",
-  "item.mystical_index.magnetism_book": "Book Of Magnetism",
-  "item.mystical_index.building_book": "Book Of Building",
   "gui.mystical_index.index_screen_header": "Library Contents:",
   "gui.mystical_index.index_list_clickable": "Click for more info",
   "gui.mystical_index.index_stored_header": "Stored:",
   "chat.mystical_index.no_match": "No match",
-  "chat.mystical_index.extracted": "Extracted %s of %s"
+  "chat.mystical_index.extracted": "Extracted %s of %s",
+  "item.mystical_index.custom_book.tooltip.capacity": "Properties:",
+  "item.mystical_index.custom_book.tooltip.stacks": " %d/%d Entries used",
+  "item.mystical_index.custom_book.tooltip.types": " %d/%d Types",
+  "item.mystical_index.page.tooltip.when_applied": "When bound into a book:",
+  "item.mystical_index.page.tooltip.stacks": " +%d Entries",
+  "item.mystical_index.page.tooltip.types": " +%d Types",
+  "item.mystical_index.page.tooltip.properties.index": " Indexing"
 }
