@@ -2,6 +2,7 @@ package net.messer.mystical_index.block.entity;
 
 import com.google.common.collect.ImmutableList;
 import eu.pb4.polymer.api.utils.PolymerObject;
+import net.messer.mystical_index.block.ModBlockEntities;
 import net.messer.mystical_index.item.custom.book.InventoryBookItem;
 import net.messer.mystical_index.item.inventory.ILibraryInventory;
 import net.messer.mystical_index.screen.LibraryInventoryScreenHandler;

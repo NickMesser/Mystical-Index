@@ -1,6 +1,6 @@
 package net.messer.mixin;
 
-import net.messer.mystical_index.item.custom.book.Index;
+import net.messer.mystical_index.item.custom.book.CustomIndexBook;
 import net.messer.mystical_index.util.request.LibraryIndex;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.LecternBlockEntity;
@@ -24,16 +24,16 @@ public abstract class LecternBlockEntityMixin {
 
     @Shadow private int pageCount;
 
-    @Inject(method = "createMenu", at = @At("HEAD"))
-    public void createMenu(int i, PlayerInventory playerInventory, PlayerEntity playerEntity, CallbackInfoReturnable<ScreenHandler> cir) {
-        if (book.getOrCreateNbt().contains(Index.LECTERN_TAG_NAME)) {
-            BlockPos pos = ((BlockEntity) (Object) this).getPos();
-            World world = ((BlockEntity) (Object) this).getWorld();
-            ItemStack stack = Index.getMenuItem((ServerWorld) world, pos, LibraryIndex.LECTERN_SEARCH_RANGE).asStack();
-            stack.getOrCreateNbt().put(Index.LECTERN_TAG_NAME, book.getOrCreateNbt().get(Index.LECTERN_TAG_NAME));
-            book = stack;
-            pageCount = WrittenBookItem.getPageCount(book);
-            ((LecternBlockEntity) (Object) this).markDirty();
-        }
-    }
+//    @Inject(method = "createMenu", at = @At("HEAD"))
+//    public void createMenu(int i, PlayerInventory playerInventory, PlayerEntity playerEntity, CallbackInfoReturnable<ScreenHandler> cir) {
+//        if (book.getOrCreateNbt().contains(CustomIndexBook.LECTERN_TAG_NAME)) {
+//            BlockPos pos = ((BlockEntity) (Object) this).getPos();
+//            World world = ((BlockEntity) (Object) this).getWorld();
+//            ItemStack stack = CustomIndexBook.getMenuItem((ServerWorld) world, pos, LibraryIndex.LECTERN_SEARCH_RANGE).asStack();
+//            stack.getOrCreateNbt().put(CustomIndexBook.LECTERN_TAG_NAME, book.getOrCreateNbt().get(CustomIndexBook.LECTERN_TAG_NAME));
+//            book = stack;
+//            pageCount = WrittenBookItem.getPageCount(book);
+//            ((LecternBlockEntity) (Object) this).markDirty();
+//        }
+//    }
 }

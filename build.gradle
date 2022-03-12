@@ -80,3 +80,7 @@ publishing {
 		// retrieving dependencies.
 	}
 }
+
+loom {
+	accessWidenerPath = file("src/main/resources/mystical_index.accesswidener")
+}

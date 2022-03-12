@@ -1,6 +1,7 @@
 package net.messer.mystical_index.item.custom.book;
 
 import com.google.common.collect.ImmutableList;
+import eu.pb4.polymer.api.other.PolymerSoundEvent;
 import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.util.BigStack;
 import net.messer.mystical_index.util.ContentsIndex;
@@ -14,7 +15,10 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
 import net.minecraft.screen.slot.Slot;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
@@ -257,13 +261,18 @@ public abstract class InventoryBookItem extends BookItem {
         bookNbt.putInt(OCCUPIED_TYPES_TAG, types);
     }
 
-    // TODO get better sounds and make them actually work on servers
-    public static void playRemoveOneSound(Entity entity) {
-        entity.playSound(SoundEvents.ITEM_BUNDLE_REMOVE_ONE, 0.8f, 0.8f + entity.getWorld().getRandom().nextFloat() * 0.4f);
+    public static void playRemoveOneSound(PlayerEntity player) {
+        MysticalIndex.playSoundOnServer(
+                player, SoundEvents.ITEM_BUNDLE_REMOVE_ONE, SoundCategory.PLAYERS, player.getEyePos());
+        MysticalIndex.playSoundOnServer(
+                player, SoundEvents.ITEM_BOOK_PAGE_TURN, SoundCategory.PLAYERS, player.getEyePos());
     }
 
-    public static void playInsertSound(Entity entity) {
-        entity.playSound(SoundEvents.ITEM_BUNDLE_INSERT, 0.8f, 0.8f + entity.getWorld().getRandom().nextFloat() * 0.4f);
+    public static void playInsertSound(PlayerEntity player) {
+        MysticalIndex.playSoundOnServer(
+                player, SoundEvents.ITEM_BUNDLE_INSERT, SoundCategory.PLAYERS, player.getEyePos());
+        MysticalIndex.playSoundOnServer(
+                player, SoundEvents.ITEM_BOOK_PAGE_TURN, SoundCategory.PLAYERS, player.getEyePos());
     }
 
     public boolean isEmpty(ItemStack book) {

@@ -19,9 +19,10 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
-public class LibraryInventoryBlock extends BlockWithEntity implements BlockEntityProvider, PolymerBlock {
+@SuppressWarnings("deprecation")
+public class LibraryBlock extends BlockWithEntity implements BlockEntityProvider, PolymerBlock {
 
-    public LibraryInventoryBlock(Settings settings) {
+    public LibraryBlock(Settings settings) {
         super(settings);
     }
 
@@ -65,6 +66,11 @@ public class LibraryInventoryBlock extends BlockWithEntity implements BlockEntit
 
     @Override
     public void onPlaced(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
+        IndexCache.markDirty();
+    }
+
+    @Override
+    public void onBlockAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean notify) {
         IndexCache.markDirty();
     }
 

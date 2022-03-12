@@ -1,7 +1,7 @@
 package net.messer.mixin;
 
 import net.messer.mystical_index.events.MixinHooks;
-import net.messer.mystical_index.item.custom.book.Index;
+import net.messer.mystical_index.item.custom.book.CustomIndexBook;
 import net.messer.mystical_index.util.LecternTracker;
 import net.messer.mystical_index.util.ParticleSystem;
 import net.messer.mystical_index.util.request.InsertionRequest;
@@ -36,44 +36,15 @@ public abstract class LecternBlockMixin extends BlockWithEntity {
         super(settings);
     }
 
-    @ModifyVariable(
-            method = "dropBook",
-            at = @At(value = "STORE")
-    )
-    public ItemStack modifyDroppedItem(ItemStack i) {
-        return Index.getFromLecternBook(i);
-    }
+//    @ModifyVariable(
+//            method = "dropBook",
+//            at = @At(value = "STORE")
+//    )
+//    public ItemStack modifyDroppedItem(ItemStack i) {
+//        return CustomIndexBook.getFromLecternBook(i);
+//    }
 
-    @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-        return checkType(type, BlockEntityType.LECTERN, MixinHooks::lecternTick);
-    }
 
-    @Override
-    public void afterBreak(World world, PlayerEntity player, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, ItemStack stack) {
-        if (blockEntity instanceof LecternBlockEntity lectern) {
-            LecternTracker.removeIndexLectern(lectern);
-        }
-        super.afterBreak(world, player, pos, state, blockEntity, stack);
-    }
 
-    @Override
-    public void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity) {
-        if (entity instanceof ItemEntity itemEntity &&
-                !Objects.equals(itemEntity.getThrower(), Index.EXTRACTED_DROP_UUID) &&
-                VoxelShapes.matchesAnywhere(VoxelShapes.cuboid(
-                        entity.getBoundingBox().offset(-pos.getX(), -pos.getY(), -pos.getZ())),
-                        MixinHooks.LECTERN_INPUT_AREA_SHAPE, BooleanBiFunction.AND)) {
 
-            ItemStack itemStack = itemEntity.getStack();
-
-            LibraryIndex index = LibraryIndex.get(world, pos, LibraryIndex.LECTERN_SEARCH_RANGE);
-
-            InsertionRequest request = new InsertionRequest(itemStack);
-            request.setSourcePosition(Vec3d.ofCenter(pos));
-            request.setBlockAffectedCallback(ParticleSystem::insertionParticles);
-
-            index.insertStack(request);
-        }
-    }
 }

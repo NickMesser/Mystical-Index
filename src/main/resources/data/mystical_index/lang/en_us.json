@@ -1,7 +1,9 @@
 {
   "item.mystical_index.custom_book": "Book of Storage",
+  "item.mystical_index.custom_index": "Book of Indexing",
   "item.mystical_index.stacks_page": "Page of Stacking",
   "item.mystical_index.types_page": "Page of Types",
+  "item.mystical_index.index_page": "Page of Indexing",
   "item.mystical_index.library": "Library",
   "block.mystical_index.library": "Library",
   "item.mystical_index.index": "Index",

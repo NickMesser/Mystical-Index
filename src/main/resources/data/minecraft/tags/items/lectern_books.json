@@ -1,6 +1,6 @@
 {
   "replace": false,
   "values": [
-    "mystical_index:index"
+    "mystical_index:custom_index"
   ]
 }

@@ -5,12 +5,15 @@ import eu.pb4.polymer.api.item.PolymerItem;
 import eu.pb4.sgui.api.elements.BookElementBuilder;
 import eu.pb4.sgui.api.gui.BookGui;
 import net.messer.mystical_index.MysticalIndex;
+import net.messer.mystical_index.block.ModBlocks;
+import net.messer.mystical_index.block.custom.IndexLecternBlock;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.util.BigStack;
 import net.messer.mystical_index.util.ContentsIndex;
 import net.messer.mystical_index.util.ParticleSystem;
 import net.messer.mystical_index.util.request.InsertionRequest;
 import net.messer.mystical_index.util.request.LibraryIndex;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.LecternBlock;
@@ -33,7 +36,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
-public class Index extends Item implements PolymerItem {
+public class CustomIndexBook extends CustomInventoryBook {
     private static final int LINES_PER_PAGE = 12;
     public static final String LECTERN_TAG_NAME = new Identifier(MysticalIndex.MOD_ID, "index_nbt").toString();
     public static final double LECTERN_PICKUP_RADIUS = 2d;
@@ -43,7 +46,7 @@ public class Index extends Item implements PolymerItem {
             new LiteralText("")
     });
 
-    public Index(Settings settings) {
+    public CustomIndexBook(Settings settings) {
         super(settings);
     }
 
@@ -80,18 +83,17 @@ public class Index extends Item implements PolymerItem {
         BlockPos blockPos;
         World world = context.getWorld();
         BlockState blockState = world.getBlockState(blockPos = context.getBlockPos());
-        if (blockState.isOf(Blocks.LECTERN)) {
+        if (blockState.isOf(Blocks.LECTERN) && !blockState.get(LecternBlock.HAS_BOOK)) {
+            var newState = ModBlocks.INDEX_LECTERN.getStateWithProperties(blockState);
+            world.setBlockState(blockPos, newState);
+            // something runs setblockstate a second time perhaps?
             ItemStack stack = context.getStack().copy();
             context.getStack().decrement(1);
-            return LecternBlock.putBookIfAbsent(
+            return IndexLecternBlock.putBookIfAbsent(
                     context.getPlayer(), world,
-                    blockPos, blockState,
-                    toLecternBook(
-                            stack,
-                            (ServerWorld) world,
-                            blockPos
-                    )
-            ) ? ActionResult.success(world.isClient) : ActionResult.PASS;
+                    blockPos, newState,
+                    stack
+            ) ? ActionResult.success(true) : ActionResult.PASS;
         }
         return ActionResult.PASS;
     }
@@ -173,26 +175,21 @@ public class Index extends Item implements PolymerItem {
         return new BookGui(player, getMenuItem(player, pos, LibraryIndex.ITEM_SEARCH_RANGE));
     }
 
-    @Override
-    public Item getPolymerItem(ItemStack itemStack, @Nullable ServerPlayerEntity player) {
-        return Items.WRITTEN_BOOK;
-    }
-
-    public static ItemStack getFromLecternBook(ItemStack book) {
-        if (book.getOrCreateNbt().contains(Index.LECTERN_TAG_NAME)) {
-            ItemStack newItem = new ItemStack(ModItems.INDEX);
-            newItem.setNbt(book.getOrCreateNbt().getCompound(Index.LECTERN_TAG_NAME));
-            return newItem;
-        }
-        return book;
-    }
-
-    public static ItemStack toLecternBook(ItemStack index, ServerWorld world, BlockPos pos) {
-        ItemStack itemStack = getMenuItem(world, pos, LibraryIndex.LECTERN_SEARCH_RANGE).asStack();
-        itemStack.getOrCreateNbt().put(
-                LECTERN_TAG_NAME,
-                index.getOrCreateNbt()
-        );
-        return itemStack;
-    }
+//    public static ItemStack getFromLecternBook(ItemStack book) {
+//        if (book.getOrCreateNbt().contains(CustomIndexBook.LECTERN_TAG_NAME)) {
+//            ItemStack newItem = new ItemStack(ModItems.CUSTOM_INDEX);
+//            newItem.setNbt(book.getOrCreateNbt().getCompound(CustomIndexBook.LECTERN_TAG_NAME));
+//            return newItem;
+//        }
+//        return book;
+//    }
+//
+//    public static ItemStack toLecternBook(ItemStack index, ServerWorld world, BlockPos pos) {
+//        ItemStack itemStack = getMenuItem(world, pos, LibraryIndex.LECTERN_SEARCH_RANGE).asStack();
+//        itemStack.getOrCreateNbt().put(
+//                LECTERN_TAG_NAME,
+//                index.getOrCreateNbt()
+//        );
+//        return itemStack;
+//    }
 }

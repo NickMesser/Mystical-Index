@@ -33,12 +33,13 @@ public abstract class PageItem extends Item implements PolymerItem {
         return 0;
     }
 
-    public void onCraftToBook(ItemStack page, ItemStack book) {
+    public ItemStack onCraftToBook(ItemStack page, ItemStack book) {
         var nbt = book.getOrCreateNbt();
         nbt.putInt(CustomInventoryBook.MAX_STACKS_TAG,
                 nbt.getInt(CustomInventoryBook.MAX_STACKS_TAG) + getStacksIncrease(page));
         nbt.putInt(CustomInventoryBook.MAX_TYPES_TAG,
                 nbt.getInt(CustomInventoryBook.MAX_TYPES_TAG) + getTypesIncrease(page));
+        return book;
     }
 
     public void bookInventoryTick(ItemStack book, World world, Entity entity, int slot, boolean selected) {

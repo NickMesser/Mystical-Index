@@ -18,6 +18,7 @@ import net.minecraft.recipe.RecipeSerializer;
 import net.minecraft.recipe.SpecialCraftingRecipe;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,10 +78,11 @@ public class CustomBookRecipe extends SpecialCraftingRecipe implements PolymerRe
         for (int i = 0; i < craftingInventory.size(); ++i) {
             var stack = craftingInventory.getStack(i);
             if (stack.getItem() instanceof PageItem pageItem) {
-                pagesList.add(NbtString.of(pageItem.toString()));
-                pageItem.onCraftToBook(stack, book);
+                pagesList.add(NbtString.of(Registry.ITEM.getId(pageItem).toString()));
+                book = pageItem.onCraftToBook(stack, book);
             }
         }
+        nbt.put(CustomInventoryBook.PAGES_TAG, pagesList);
         return book;
     }
 

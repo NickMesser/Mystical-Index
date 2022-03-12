@@ -1,7 +1,7 @@
 package net.messer.mixin;
 
 import net.messer.mystical_index.item.ModItems;
-import net.messer.mystical_index.item.custom.book.Index;
+import net.messer.mystical_index.item.custom.book.CustomIndexBook;
 import net.messer.mystical_index.util.LecternTracker;
 import net.messer.mystical_index.util.ParticleSystem;
 import net.messer.mystical_index.util.request.ExtractionRequest;
@@ -39,8 +39,8 @@ public abstract class ServerPlayNetworkHandlerMixin {
         String message = packet.getChatMessage();
 
         if (!(message.startsWith("/") || player.isSpectator())) {
-            if (player.getStackInHand(Hand.MAIN_HAND).getItem() == ModItems.INDEX ||
-                    player.getStackInHand(Hand.OFF_HAND).getItem() == ModItems.INDEX) {
+            if (player.getStackInHand(Hand.MAIN_HAND).getItem() == ModItems.CUSTOM_INDEX ||
+                    player.getStackInHand(Hand.OFF_HAND).getItem() == ModItems.CUSTOM_INDEX) {
                 server.execute(() -> {
                     LibraryIndex index = LibraryIndex.get(player.getWorld(), player.getBlockPos(), LibraryIndex.ITEM_SEARCH_RANGE);
                     ExtractionRequest request = ExtractionRequest.get(message);
@@ -56,7 +56,7 @@ public abstract class ServerPlayNetworkHandlerMixin {
                 });
                 info.cancel();
             } else { // TODO clean this up
-                LecternBlockEntity lectern = LecternTracker.findNearestLectern(player, Index.LECTERN_PICKUP_RADIUS);
+                LecternBlockEntity lectern = LecternTracker.findNearestLectern(player, CustomIndexBook.LECTERN_PICKUP_RADIUS);
                 if (lectern != null) {
                     server.execute(() -> {
                         World world = player.getWorld();
@@ -74,7 +74,7 @@ public abstract class ServerPlayNetworkHandlerMixin {
                             ItemEntity itemEntity = new ItemEntity(world, itemPos.getX(), itemPos.getY(), itemPos.getZ(), stack);
                             itemEntity.setToDefaultPickupDelay();
                             itemEntity.setVelocity(Vec3d.ZERO);
-                            itemEntity.setThrower(Index.EXTRACTED_DROP_UUID);
+                            itemEntity.setThrower(CustomIndexBook.EXTRACTED_DROP_UUID);
                             world.spawnEntity(itemEntity);
                         }
 
