@@ -66,7 +66,7 @@ public class LibraryBlock extends BlockWithEntity implements BlockEntityProvider
 
     @Override
     public void onPlaced(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
-        IndexCache.markDirty();
+        IndexCache.markDirty(); // TODO try to register with lectern, check if pos within lecternpos + range and - range, if so, add if not already present
     }
 
     @Override

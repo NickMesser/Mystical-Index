@@ -38,9 +38,13 @@ public class MysticalIndex implements ModInitializer {
 	}
 
 	public static void playSoundOnServer(PlayerEntity player, SoundEvent sound, SoundCategory category, Vec3d pos) {
+		playSoundOnServer(player, sound, category, pos, 0.8f);
+	}
+
+	public static void playSoundOnServer(PlayerEntity player, SoundEvent sound, SoundCategory category, Vec3d pos, float volume) {
 		if (player instanceof ServerPlayerEntity serverPlayer)
 			serverPlayer.networkHandler.sendPacket(new PlaySoundIdS2CPacket(
 					sound.getId(), category, pos,
-					0.8f, 0.8f + player.getWorld().getRandom().nextFloat() * 0.4f));
+					volume, 0.8f + player.getWorld().getRandom().nextFloat() * 0.4f));
 	}
 }

@@ -41,6 +41,10 @@ public abstract class Request {
         return amount;
     }
 
+    public boolean hasAffected() {
+        return amountAffected > 0;
+    }
+
     public void setSourcePosition(Vec3d position) {
         sourcePosition = position;
     }

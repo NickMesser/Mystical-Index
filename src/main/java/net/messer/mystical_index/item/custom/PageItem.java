@@ -2,6 +2,7 @@ package net.messer.mystical_index.item.custom;
 
 import eu.pb4.polymer.api.item.PolymerItem;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
+import net.messer.mystical_index.item.custom.book.CustomIndexBook;
 import net.messer.mystical_index.item.custom.book.CustomInventoryBook;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.Entity;
@@ -33,12 +34,33 @@ public abstract class PageItem extends Item implements PolymerItem {
         return 0;
     }
 
+    public int getRangeIncrease(ItemStack page, boolean lectern) {
+        return 0;
+    }
+
+    public int getLinksIncrease(ItemStack page, boolean lectern) {
+        return 0;
+    }
+
     public ItemStack onCraftToBook(ItemStack page, ItemStack book) {
         var nbt = book.getOrCreateNbt();
+
         nbt.putInt(CustomInventoryBook.MAX_STACKS_TAG,
                 nbt.getInt(CustomInventoryBook.MAX_STACKS_TAG) + getStacksIncrease(page));
         nbt.putInt(CustomInventoryBook.MAX_TYPES_TAG,
                 nbt.getInt(CustomInventoryBook.MAX_TYPES_TAG) + getTypesIncrease(page));
+
+        var lectern = true;
+        do {
+            lectern = !lectern;
+            var subTag = nbt.getCompound(lectern ? CustomIndexBook.ON_LECTERN_TAG : CustomIndexBook.IN_INVENTORY_TAG);
+
+            subTag.putInt(CustomIndexBook.MAX_RANGE_TAG,
+                    subTag.getInt(CustomIndexBook.MAX_RANGE_TAG) + getRangeIncrease(page, lectern));
+            subTag.putInt(CustomIndexBook.MAX_LINKS_TAG,
+                    subTag.getInt(CustomIndexBook.MAX_LINKS_TAG) + getLinksIncrease(page, lectern));
+        } while (!lectern);
+
         return book;
     }
 

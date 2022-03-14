@@ -4,6 +4,7 @@ import eu.pb4.polymer.api.block.PolymerBlock;
 import net.messer.mystical_index.block.ModBlockEntities;
 import net.messer.mystical_index.block.entity.IndexLecternBlockEntity;
 import net.messer.mystical_index.events.MixinHooks;
+import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.custom.book.CustomIndexBook;
 import net.messer.mystical_index.util.LecternTracker;
 import net.messer.mystical_index.util.ParticleSystem;
@@ -18,6 +19,10 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.particle.ParticleTypes;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.tag.ItemTags;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -48,8 +53,16 @@ public class IndexLecternBlock extends LecternBlock implements PolymerBlock {
     }
 
     @Override
+    public void onBlockAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean notify) {
+        super.onBlockAdded(state, world, pos, oldState, notify);
+        if (world.getBlockEntity(pos) instanceof IndexLecternBlockEntity blockEntity) {
+            blockEntity.setLinkedLibraries(LibraryIndex.fromRange(world, pos, blockEntity.getMaxRange(true)));
+        }
+    }
+
+    @Override
     public void afterBreak(World world, PlayerEntity player, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, ItemStack stack) {
-        if (blockEntity instanceof LecternBlockEntity lectern) {
+        if (blockEntity instanceof IndexLecternBlockEntity lectern) {
             LecternTracker.removeIndexLectern(lectern);
         }
         super.afterBreak(world, player, pos, state, blockEntity, stack);
@@ -61,17 +74,29 @@ public class IndexLecternBlock extends LecternBlock implements PolymerBlock {
                 !Objects.equals(itemEntity.getThrower(), CustomIndexBook.EXTRACTED_DROP_UUID) &&
                 VoxelShapes.matchesAnywhere(VoxelShapes.cuboid(
                                 entity.getBoundingBox().offset(-pos.getX(), -pos.getY(), -pos.getZ())),
-                        MixinHooks.LECTERN_INPUT_AREA_SHAPE, BooleanBiFunction.AND)) {
+                        MixinHooks.LECTERN_INPUT_AREA_SHAPE, BooleanBiFunction.AND) &&
+                world instanceof ServerWorld serverWorld) {
 
             ItemStack itemStack = itemEntity.getStack();
 
-            LibraryIndex index = LibraryIndex.get(world, pos, LibraryIndex.LECTERN_SEARCH_RANGE); // TODO changes here once index can store library positions
+            LibraryIndex index = LibraryIndex.fromRange(world, pos, LibraryIndex.LECTERN_SEARCH_RANGE); // TODO changes here once index can store library positions
 
             InsertionRequest request = new InsertionRequest(itemStack);
             request.setSourcePosition(Vec3d.ofCenter(pos));
             request.setBlockAffectedCallback(ParticleSystem::insertionParticles);
 
             index.insertStack(request);
+
+            if (request.hasAffected()) {
+                var sourcePos = entity.getPos();
+
+                serverWorld.playSound(null, sourcePos.getX(), sourcePos.getY(), sourcePos.getZ(),
+                        SoundEvents.BLOCK_AMETHYST_BLOCK_STEP, SoundCategory.BLOCKS,
+                        0.5f, 0.6f + world.getRandom().nextFloat() * 0.4f);
+                serverWorld.spawnParticles(
+                        ParticleTypes.SOUL_FIRE_FLAME, sourcePos.getX(), sourcePos.getY(), sourcePos.getZ(),
+                        5, 0, 0, 0, 0.1);
+            }
         }
     }
 

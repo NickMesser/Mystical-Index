@@ -265,14 +265,14 @@ public abstract class InventoryBookItem extends BookItem {
         MysticalIndex.playSoundOnServer(
                 player, SoundEvents.ITEM_BUNDLE_REMOVE_ONE, SoundCategory.PLAYERS, player.getEyePos());
         MysticalIndex.playSoundOnServer(
-                player, SoundEvents.ITEM_BOOK_PAGE_TURN, SoundCategory.PLAYERS, player.getEyePos());
+                player, SoundEvents.ITEM_BOOK_PAGE_TURN, SoundCategory.PLAYERS, player.getEyePos(), 0.4f);
     }
 
     public static void playInsertSound(PlayerEntity player) {
         MysticalIndex.playSoundOnServer(
                 player, SoundEvents.ITEM_BUNDLE_INSERT, SoundCategory.PLAYERS, player.getEyePos());
         MysticalIndex.playSoundOnServer(
-                player, SoundEvents.ITEM_BOOK_PAGE_TURN, SoundCategory.PLAYERS, player.getEyePos());
+                player, SoundEvents.ITEM_BOOK_PAGE_TURN, SoundCategory.PLAYERS, player.getEyePos(), 0.4f);
     }
 
     public boolean isEmpty(ItemStack book) {
@@ -306,8 +306,6 @@ public abstract class InventoryBookItem extends BookItem {
                 typesOccupied, typesTotal)
                 .formatted(typesFullRatio < 0.75 ? Formatting.GREEN :
                         typesFullRatio == 1 ? Formatting.RED : Formatting.GOLD));
-
-        super.appendTooltip(book, world, tooltip, context);
     }
 
     @Override

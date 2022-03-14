@@ -1,9 +1,11 @@
 package net.messer.mystical_index.util;
 
+import net.messer.mystical_index.util.request.IIndexInteractable;
 import net.messer.mystical_index.util.request.Request;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
@@ -58,5 +60,16 @@ public class ParticleSystem {
         double animationPos = (currentTick + cycleOffset) % cycleTicks / ((double) cycleTicks) * (2 * Math.PI);
         Vec3d particlePos = pos.add(radius * Math.cos(animationPos), 0, radius * Math.sin(animationPos));
         world.spawnParticles(ParticleTypes.ENCHANT, particlePos.getX(), particlePos.getY(), particlePos.getZ(), 1, 0, 0, 0, 0);
+    }
+
+    public static void registrationParticles(IIndexInteractable interactable) {
+        if (interactable instanceof BlockEntity blockEntity &&
+                blockEntity.getWorld() instanceof ServerWorld serverWorld) {
+            Vec3d pos = Vec3d.ofCenter(blockEntity.getPos());
+            serverWorld.spawnParticles(
+                    ParticleTypes.SOUL_FIRE_FLAME, pos.getX(), pos.getY(), pos.getZ(),
+                    5, 0.5, 0.5, 0.5, 0
+            );
+        }
     }
 }

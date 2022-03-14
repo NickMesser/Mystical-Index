@@ -11,6 +11,7 @@ import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Rarity;
 import net.minecraft.util.registry.Registry;
 
 import java.util.List;
@@ -46,6 +47,11 @@ public class ModItems {
                 }
 
                 @Override
+                public int getRangeIncrease(ItemStack page, boolean lectern) {
+                    return lectern ? 2 : 20;
+                }
+
+                @Override
                 public int getColor() {
                     return 4825911;
                 }
@@ -56,6 +62,11 @@ public class ModItems {
                 @Override
                 public int getTypesIncrease(ItemStack page) {
                     return 2;
+                }
+
+                @Override
+                public int getLinksIncrease(ItemStack page, boolean lectern) {
+                    return lectern ? 1 : 2;
                 }
 
                 @Override
@@ -82,7 +93,11 @@ public class ModItems {
                 public void appendProperties(ItemStack stack, List<Text> properties) {
                     properties.add(new TranslatableText("item.mystical_index.page.tooltip.properties.index")
                             .formatted(Formatting.YELLOW));
-                    super.appendProperties(stack, properties);
+                }
+
+                @Override
+                public Rarity getRarity(ItemStack stack) {
+                    return Rarity.RARE;
                 }
             });
 

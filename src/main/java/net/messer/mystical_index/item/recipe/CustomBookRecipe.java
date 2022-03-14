@@ -5,6 +5,7 @@ import eu.pb4.polymer.api.item.PolymerRecipe;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.ModRecipes;
 import net.messer.mystical_index.item.custom.PageItem;
+import net.messer.mystical_index.item.custom.book.CustomIndexBook;
 import net.messer.mystical_index.item.custom.book.CustomInventoryBook;
 import net.minecraft.inventory.CraftingInventory;
 import net.minecraft.item.Item;
@@ -16,6 +17,9 @@ import net.minecraft.recipe.Ingredient;
 import net.minecraft.recipe.Recipe;
 import net.minecraft.recipe.RecipeSerializer;
 import net.minecraft.recipe.SpecialCraftingRecipe;
+import net.minecraft.text.LiteralText;
+import net.minecraft.text.TranslatableText;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
 import net.minecraft.util.registry.Registry;
@@ -73,8 +77,21 @@ public class CustomBookRecipe extends SpecialCraftingRecipe implements PolymerRe
         var book = new ItemStack(ModItems.CUSTOM_BOOK);
         var nbt = book.getOrCreateNbt();
         var pagesList = nbt.getList(CustomInventoryBook.PAGES_TAG, NbtElement.STRING_TYPE);
-        nbt.putInt(CustomInventoryBook.MAX_STACKS_TAG, 1);
-        nbt.putInt(CustomInventoryBook.MAX_TYPES_TAG, 2);
+
+        nbt.putInt(CustomInventoryBook.MAX_STACKS_TAG, ((PageItem) ModItems.STACKS_PAGE).getStacksIncrease(null));
+        nbt.putInt(CustomInventoryBook.MAX_TYPES_TAG, ((PageItem) ModItems.TYPES_PAGE).getTypesIncrease(null));
+
+        var lectern = true;
+        do {
+            lectern = !lectern;
+            var subTag = nbt.getCompound(lectern ? CustomIndexBook.ON_LECTERN_TAG : CustomIndexBook.IN_INVENTORY_TAG);
+
+            subTag.putInt(CustomIndexBook.MAX_RANGE_TAG, ((PageItem) ModItems.STACKS_PAGE).getRangeIncrease(null, lectern));
+            subTag.putInt(CustomIndexBook.MAX_LINKS_TAG, ((PageItem) ModItems.TYPES_PAGE).getLinksIncrease(null, lectern));
+
+            nbt.put(lectern ? CustomIndexBook.ON_LECTERN_TAG : CustomIndexBook.IN_INVENTORY_TAG, subTag);
+        } while (!lectern);
+
         for (int i = 0; i < craftingInventory.size(); ++i) {
             var stack = craftingInventory.getStack(i);
             if (stack.getItem() instanceof PageItem pageItem) {

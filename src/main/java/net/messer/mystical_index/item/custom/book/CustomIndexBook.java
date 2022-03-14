@@ -1,28 +1,24 @@
 package net.messer.mystical_index.item.custom.book;
 
 import com.google.common.collect.ImmutableList;
-import eu.pb4.polymer.api.item.PolymerItem;
 import eu.pb4.sgui.api.elements.BookElementBuilder;
 import eu.pb4.sgui.api.gui.BookGui;
 import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.block.ModBlocks;
 import net.messer.mystical_index.block.custom.IndexLecternBlock;
-import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.util.BigStack;
 import net.messer.mystical_index.util.ContentsIndex;
 import net.messer.mystical_index.util.ParticleSystem;
 import net.messer.mystical_index.util.request.InsertionRequest;
 import net.messer.mystical_index.util.request.LibraryIndex;
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.LecternBlock;
+import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.StackReference;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
-import net.minecraft.item.Items;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -38,9 +34,14 @@ import java.util.UUID;
 
 public class CustomIndexBook extends CustomInventoryBook {
     private static final int LINES_PER_PAGE = 12;
-    public static final String LECTERN_TAG_NAME = new Identifier(MysticalIndex.MOD_ID, "index_nbt").toString();
     public static final double LECTERN_PICKUP_RADIUS = 2d;
     public static final UUID EXTRACTED_DROP_UUID = UUID.randomUUID();
+
+    public static final String MAX_RANGE_TAG = "max_range";
+    public static final String MAX_LINKS_TAG = "max_links";
+    public static final String IN_INVENTORY_TAG = "in_inventory";
+    public static final String ON_LECTERN_TAG = "on_lectern";
+
     private static final List<Text> HEADER = List.of(new Text[]{
             new TranslatableText("gui.mystical_index.index_screen_header"),
             new LiteralText("")
@@ -48,6 +49,14 @@ public class CustomIndexBook extends CustomInventoryBook {
 
     public CustomIndexBook(Settings settings) {
         super(settings);
+    }
+
+    public int getMaxRange(ItemStack book, boolean lectern) {
+        return book.getOrCreateSubNbt(lectern ? ON_LECTERN_TAG : IN_INVENTORY_TAG).getInt(MAX_RANGE_TAG);
+    }
+
+    public int getMaxLinks(ItemStack book, boolean lectern) {
+        return book.getOrCreateSubNbt(lectern ? ON_LECTERN_TAG : IN_INVENTORY_TAG).getInt(MAX_LINKS_TAG);
     }
 
     @Override
@@ -69,7 +78,7 @@ public class CustomIndexBook extends CustomInventoryBook {
     }
 
     public void tryInsertItemStack(ItemStack itemStack, PlayerEntity player) {
-        LibraryIndex index = LibraryIndex.get(player.getWorld(), player.getBlockPos(), LibraryIndex.ITEM_SEARCH_RANGE);
+        LibraryIndex index = LibraryIndex.fromRange(player.getWorld(), player.getBlockPos(), LibraryIndex.ITEM_SEARCH_RANGE);
 
         InsertionRequest request = new InsertionRequest(itemStack);
         request.setSourcePosition(player.getPos());
@@ -112,7 +121,7 @@ public class CustomIndexBook extends CustomInventoryBook {
     }
 
     public static BookElementBuilder getMenuItem(ServerWorld world, BlockPos pos, int range) {
-        LibraryIndex index = LibraryIndex.get(world, pos, range);
+        LibraryIndex index = LibraryIndex.fromRange(world, pos, range);
         ContentsIndex contents = index.getContents().sorted(Comparator.comparingInt(BigStack::getAmount).reversed());
         List<Text> entries = contents.getTextList();
         BookElementBuilder bookBuilder = new BookElementBuilder().signed();
@@ -175,21 +184,40 @@ public class CustomIndexBook extends CustomInventoryBook {
         return new BookGui(player, getMenuItem(player, pos, LibraryIndex.ITEM_SEARCH_RANGE));
     }
 
-//    public static ItemStack getFromLecternBook(ItemStack book) {
-//        if (book.getOrCreateNbt().contains(CustomIndexBook.LECTERN_TAG_NAME)) {
-//            ItemStack newItem = new ItemStack(ModItems.CUSTOM_INDEX);
-//            newItem.setNbt(book.getOrCreateNbt().getCompound(CustomIndexBook.LECTERN_TAG_NAME));
-//            return newItem;
-//        }
-//        return book;
-//    }
-//
-//    public static ItemStack toLecternBook(ItemStack index, ServerWorld world, BlockPos pos) {
-//        ItemStack itemStack = getMenuItem(world, pos, LibraryIndex.LECTERN_SEARCH_RANGE).asStack();
-//        itemStack.getOrCreateNbt().put(
-//                LECTERN_TAG_NAME,
-//                index.getOrCreateNbt()
-//        );
-//        return itemStack;
-//    }
+    @Override
+    public Rarity getRarity(ItemStack stack) {
+        return Rarity.RARE;
+    }
+
+    @Override
+    public void appendTooltip(ItemStack book, @Nullable World world, List<Text> tooltip, TooltipContext context) {
+        var lectern = true;
+        do {
+            lectern = !lectern;
+
+            tooltip.add(new LiteralText(""));
+            tooltip.add(new TranslatableText(lectern ?
+                        "item.mystical_index.custom_index.tooltip.on_lectern" :
+                        "item.mystical_index.custom_index.tooltip.in_inventory")
+                    .formatted(Formatting.GRAY));
+            tooltip.add(lectern ?
+                    new TranslatableText("item.mystical_index.custom_index.tooltip.automatic")
+                    .formatted(Formatting.GREEN) :
+                    new TranslatableText("item.mystical_index.custom_index.tooltip.manual")
+                    .formatted(Formatting.RED));
+            tooltip.add(new TranslatableText("item.mystical_index.custom_index.tooltip.range",
+                        getMaxRange(book, lectern))
+                    .formatted(Formatting.GOLD));
+            tooltip.add(new TranslatableText(lectern ?
+                        "item.mystical_index.custom_index.tooltip.extenders" :
+                        "item.mystical_index.custom_index.tooltip.links",
+                        getMaxLinks(book, lectern))
+                    .formatted(Formatting.GOLD));
+        } while (!lectern);
+
+        tooltip.add(new LiteralText(""));
+        tooltip.add(new TranslatableText("item.mystical_index.custom_book.tooltip.capacity")
+                .formatted(Formatting.GRAY));
+        forEachPageType(book, pageItem -> pageItem.appendProperties(book, tooltip));
+    }
 }
