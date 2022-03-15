@@ -1,13 +1,11 @@
 package net.messer.mystical_index.item.custom.book;
 
 import com.google.common.collect.ImmutableList;
-import eu.pb4.polymer.api.other.PolymerSoundEvent;
 import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.util.BigStack;
 import net.messer.mystical_index.util.ContentsIndex;
 import net.messer.mystical_index.util.request.ExtractionRequest;
 import net.minecraft.client.item.TooltipContext;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.StackReference;
 import net.minecraft.item.Item;
@@ -15,9 +13,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
-import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
 import net.minecraft.screen.slot.Slot;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.LiteralText;

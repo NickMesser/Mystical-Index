@@ -3,14 +3,14 @@ package net.messer.mystical_index.util.request;
 import com.google.common.collect.ImmutableList;
 import net.messer.mystical_index.block.ModTags;
 import net.messer.mystical_index.util.ContentsIndex;
-import net.messer.mystical_index.util.IndexCache;
 import net.messer.mystical_index.util.ParticleSystem;
-import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class LibraryIndex implements IIndexInteractable {
@@ -39,6 +39,10 @@ public class LibraryIndex implements IIndexInteractable {
     }
 
     public static LibraryIndex fromRange(World world, BlockPos pos, int searchRange) {
+        return fromRange(world, pos, searchRange, true);
+    }
+
+    public static LibraryIndex fromRange(World world, BlockPos pos, int searchRange, boolean particles) {
 //        // Check if we have an index cached for this location
 //        Optional<LibraryIndex> cachedIndex = IndexCache.get(pos, world, searchRange);
 //        if (cachedIndex.isPresent())
@@ -52,7 +56,7 @@ public class LibraryIndex implements IIndexInteractable {
                     BlockPos testPos = pos.add(x, y, z);
                     if (ModTags.INDEX_INTRACTABLE.contains(world.getBlockState(testPos).getBlock()) &&
                             world.getBlockEntity(testPos) instanceof IIndexInteractable entity) {
-                        result.add(entity, ParticleSystem::registrationParticles);
+                        result.add(entity, particles ? ParticleSystem::registrationParticles : i -> {});
                     }
                 }
             }

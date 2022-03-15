@@ -1,21 +1,16 @@
 package net.messer.mystical_index.block.entity;
 
 import eu.pb4.polymer.api.utils.PolymerObject;
-import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.block.ModBlockEntities;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.custom.book.CustomIndexBook;
 import net.messer.mystical_index.util.LecternTracker;
 import net.messer.mystical_index.util.ParticleSystem;
-import net.messer.mystical_index.util.request.IIndexInteractable;
 import net.messer.mystical_index.util.request.LibraryIndex;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.LecternBlock;
-import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.block.entity.LecternBlockEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.*;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
@@ -24,17 +19,13 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
-import java.util.ArrayList;
-import java.util.Objects;
-
 public class IndexLecternBlockEntity extends LecternBlockEntity implements PolymerObject {
-    private static final String LINKED_LIBRARIES_TAG = "linked_libraries";
-
     private static final int CIRCLE_PERIOD = 200;
     private static final int CIRCLE_INTERVAL = 2;
     private static final int FLAME_INTERVAL = 4;
     private static final int SOUND_INTERVAL = 24;
 
+    private boolean firstTick = true;
     private LibraryIndex linkedLibraries = new LibraryIndex();
 
     public IndexLecternBlockEntity(BlockPos pos, BlockState state) {
@@ -57,9 +48,19 @@ public class IndexLecternBlockEntity extends LecternBlockEntity implements Polym
         return linkedLibraries;
     }
 
+    public void loadLinkedLibraries() {
+        setLinkedLibraries(LibraryIndex.fromRange(world, pos, getMaxRange(true), true));
+    }
+
     public static void serverTick(World world, BlockPos pos, BlockState state, IndexLecternBlockEntity be) {
         if (world instanceof ServerWorld serverWorld) {
             if (state.get(LecternBlock.HAS_BOOK)) {
+                if (be.firstTick) {
+                    be.loadLinkedLibraries();
+
+                    be.firstTick = false;
+                }
+
                 Vec3d centerPos = Vec3d.ofCenter(pos, 0.5);
                 if (
                         serverWorld.getServer().getTicks() % CIRCLE_INTERVAL == 0 &&
@@ -108,37 +109,5 @@ public class IndexLecternBlockEntity extends LecternBlockEntity implements Polym
     @Override
     public BlockEntityType<?> getType() {
         return ModBlockEntities.INDEX_LECTERN_BLOCK_ENTITY;
-    }
-
-    @Override
-    protected void writeNbt(NbtCompound nbt) {
-        super.writeNbt(nbt);
-
-        var nbtList = new NbtList();
-        linkedLibraries.interactables.stream()
-                .map(i -> i instanceof BlockEntity ibe ? ibe.getPos() : null)
-                .filter(Objects::nonNull)
-                .forEach(blockPos -> {
-                    var posList = new NbtList();
-                    posList.add(NbtInt.of(blockPos.getX()));
-                    posList.add(NbtInt.of(blockPos.getY()));
-                    posList.add(NbtInt.of(blockPos.getZ()));
-                    nbtList.add(posList);
-                });
-        nbt.put(LINKED_LIBRARIES_TAG, nbtList);
-    }
-
-    @Override
-    public void readNbt(NbtCompound nbt) {
-        super.readNbt(nbt);
-
-        var nbtList = nbt.getList(LINKED_LIBRARIES_TAG, NbtElement.LIST_TYPE);
-        for (int i = 0; i < nbtList.size(); i++) {
-            var posList = nbtList.getList(i);
-            if (world.getBlockEntity(
-                    new BlockPos(posList.getInt(0), posList.getInt(1), posList.getInt(2))
-                    ) instanceof IIndexInteractable interactable)
-                linkedLibraries.interactables.add(interactable);
-        }
     }
 }

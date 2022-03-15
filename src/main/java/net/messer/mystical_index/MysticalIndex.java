@@ -6,6 +6,7 @@ import net.fabricmc.api.ModInitializer;
 import net.messer.config.MysticalConfig;
 import net.messer.mystical_index.block.ModBlockEntities;
 import net.messer.mystical_index.block.ModBlocks;
+import net.messer.mystical_index.events.EventListeners;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.ModRecipes;
 import net.minecraft.entity.player.PlayerEntity;
@@ -13,7 +14,6 @@ import net.minecraft.network.packet.s2c.play.PlaySoundIdS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.Vec3d;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,9 +32,10 @@ public class MysticalIndex implements ModInitializer {
 
 		ModItems.registerModItems();
 		ModBlocks.registerModBlocks();
+		ModBlockEntities.registerBlockEntities();
 		ModRecipes.registerModRecipes();
 
-		ModBlockEntities.registerBlockEntities();
+		EventListeners.register();
 	}
 
 	public static void playSoundOnServer(PlayerEntity player, SoundEvent sound, SoundCategory category, Vec3d pos) {

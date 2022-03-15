@@ -7,7 +7,6 @@ import net.messer.mystical_index.util.LecternTracker;
 import net.messer.mystical_index.util.ParticleSystem;
 import net.messer.mystical_index.util.request.ExtractionRequest;
 import net.messer.mystical_index.util.request.LibraryIndex;
-import net.minecraft.block.entity.LecternBlockEntity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.c2s.play.ChatMessageC2SPacket;
@@ -82,12 +81,14 @@ public abstract class ServerPlayNetworkHandlerMixin {
                             world.spawnEntity(itemEntity);
                         }
 
-                        world.playSound(null, itemPos.getX(), itemPos.getY(), itemPos.getZ(),
-                                SoundEvents.BLOCK_AMETHYST_BLOCK_STEP, SoundCategory.BLOCKS,
-                                0.5f, 1f + world.getRandom().nextFloat() * 0.4f);
-                        world.spawnParticles(
-                                ParticleTypes.SOUL_FIRE_FLAME, itemPos.getX(), itemPos.getY(), itemPos.getZ(),
-                                5, 0, 0, 0, 0.1);
+                        if (request.hasAffected()) {
+                            world.playSound(null, itemPos.getX(), itemPos.getY(), itemPos.getZ(),
+                                    SoundEvents.BLOCK_AMETHYST_BLOCK_STEP, SoundCategory.BLOCKS,
+                                    0.5f, 1f + world.getRandom().nextFloat() * 0.4f);
+                            world.spawnParticles(
+                                    ParticleTypes.SOUL_FIRE_FLAME, itemPos.getX(), itemPos.getY(), itemPos.getZ(),
+                                    5, 0, 0, 0, 0.1);
+                        }
 
                         player.sendMessage(request.getMessage(), false);
                     });

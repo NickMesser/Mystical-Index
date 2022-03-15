@@ -4,17 +4,18 @@ import eu.pb4.polymer.api.block.PolymerBlock;
 import net.messer.mystical_index.block.ModBlockEntities;
 import net.messer.mystical_index.block.entity.IndexLecternBlockEntity;
 import net.messer.mystical_index.events.MixinHooks;
-import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.custom.book.CustomIndexBook;
 import net.messer.mystical_index.util.LecternTracker;
 import net.messer.mystical_index.util.ParticleSystem;
 import net.messer.mystical_index.util.request.InsertionRequest;
 import net.messer.mystical_index.util.request.LibraryIndex;
-import net.minecraft.block.*;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.LecternBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.block.entity.LecternBlockEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -53,14 +54,6 @@ public class IndexLecternBlock extends LecternBlock implements PolymerBlock {
     }
 
     @Override
-    public void onBlockAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean notify) {
-        super.onBlockAdded(state, world, pos, oldState, notify);
-        if (world.getBlockEntity(pos) instanceof IndexLecternBlockEntity blockEntity) {
-            blockEntity.setLinkedLibraries(LibraryIndex.fromRange(world, pos, blockEntity.getMaxRange(true)));
-        }
-    }
-
-    @Override
     public void afterBreak(World world, PlayerEntity player, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, ItemStack stack) {
         if (blockEntity instanceof IndexLecternBlockEntity lectern) {
             LecternTracker.removeIndexLectern(lectern);
@@ -75,11 +68,12 @@ public class IndexLecternBlock extends LecternBlock implements PolymerBlock {
                 VoxelShapes.matchesAnywhere(VoxelShapes.cuboid(
                                 entity.getBoundingBox().offset(-pos.getX(), -pos.getY(), -pos.getZ())),
                         MixinHooks.LECTERN_INPUT_AREA_SHAPE, BooleanBiFunction.AND) &&
-                world instanceof ServerWorld serverWorld) {
+                world instanceof ServerWorld serverWorld &&
+                serverWorld.getBlockEntity(pos) instanceof IndexLecternBlockEntity lectern) {
 
             ItemStack itemStack = itemEntity.getStack();
 
-            LibraryIndex index = LibraryIndex.fromRange(world, pos, LibraryIndex.LECTERN_SEARCH_RANGE); // TODO changes here once index can store library positions
+            LibraryIndex index = lectern.getLinkedLibraries();
 
             InsertionRequest request = new InsertionRequest(itemStack);
             request.setSourcePosition(Vec3d.ofCenter(pos));

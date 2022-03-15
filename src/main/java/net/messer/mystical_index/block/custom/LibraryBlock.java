@@ -4,6 +4,8 @@ package net.messer.mystical_index.block.custom;
 import eu.pb4.polymer.api.block.PolymerBlock;
 import net.messer.mystical_index.block.entity.LibraryBlockEntity;
 import net.messer.mystical_index.util.IndexCache;
+import net.messer.mystical_index.util.LecternTracker;
+import net.messer.mystical_index.util.request.IIndexInteractable;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.LivingEntity;
@@ -66,17 +68,19 @@ public class LibraryBlock extends BlockWithEntity implements BlockEntityProvider
 
     @Override
     public void onPlaced(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
-        IndexCache.markDirty(); // TODO try to register with lectern, check if pos within lecternpos + range and - range, if so, add if not already present
+        IndexCache.markDirty();
     }
 
     @Override
     public void onBlockAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean notify) {
         IndexCache.markDirty();
+        LecternTracker.tryRegisterToLectern((IIndexInteractable) world.getBlockEntity(pos));
     }
 
     @Override
     public void afterBreak(World world, PlayerEntity player, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, ItemStack stack) {
         IndexCache.markDirty();
+        LecternTracker.unRegisterFromLectern((IIndexInteractable) blockEntity);
     }
 
     @Override
