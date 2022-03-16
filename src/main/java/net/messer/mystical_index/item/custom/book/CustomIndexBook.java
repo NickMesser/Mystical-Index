@@ -6,6 +6,7 @@ import net.messer.mystical_index.util.ParticleSystem;
 import net.messer.mystical_index.util.request.IIndexInteractable;
 import net.messer.mystical_index.util.request.InsertionRequest;
 import net.messer.mystical_index.util.request.LibraryIndex;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.LecternBlock;
@@ -15,7 +16,14 @@ import net.minecraft.inventory.StackReference;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtInt;
+import net.minecraft.nbt.NbtList;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.screen.slot.Slot;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvent;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
@@ -24,10 +32,12 @@ import net.minecraft.util.ClickType;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Rarity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 public class CustomIndexBook extends CustomInventoryBook {
@@ -50,6 +60,18 @@ public class CustomIndexBook extends CustomInventoryBook {
         super(settings);
     }
 
+    private static NbtList blockPosToList(BlockPos pos) {
+        var list = new NbtList();
+        list.add(0, NbtInt.of(pos.getX()));
+        list.add(1, NbtInt.of(pos.getY()));
+        list.add(2, NbtInt.of(pos.getZ()));
+        return list;
+    }
+
+    private static BlockPos blockPosFromList(NbtList list) {
+        return new BlockPos(list.getInt(0), list.getInt(1), list.getInt(2));
+    }
+
     public int getMaxRange(ItemStack book, boolean lectern) {
         return book.getOrCreateSubNbt(lectern ? ON_LECTERN_TAG : IN_INVENTORY_TAG).getInt(MAX_RANGE_TAG);
     }
@@ -58,6 +80,7 @@ public class CustomIndexBook extends CustomInventoryBook {
         return book.getOrCreateSubNbt(lectern ? ON_LECTERN_TAG : IN_INVENTORY_TAG).getInt(MAX_LINKS_TAG);
     }
 
+    @SuppressWarnings("ConstantConditions")
     public LibraryIndex getIndex(ItemStack book, World world) {
         var index = new LibraryIndex();
         var nbtList = book.getOrCreateNbt().getList(LINKED_LIBRARIES_TAG, NbtElement.LIST_TYPE);
@@ -65,7 +88,7 @@ public class CustomIndexBook extends CustomInventoryBook {
             var posList = nbtList.getList(i);
             if (world.getBlockEntity(
                     new BlockPos(posList.getInt(0), posList.getInt(1), posList.getInt(2))
-            ) instanceof IIndexInteractable interactable)
+                        ) instanceof IIndexInteractable interactable)
                 index.interactables.add(interactable);
         }
         return index;
@@ -104,18 +127,52 @@ public class CustomIndexBook extends CustomInventoryBook {
         BlockPos blockPos;
         World world = context.getWorld();
         BlockState blockState = world.getBlockState(blockPos = context.getBlockPos());
+
         if (blockState.isOf(Blocks.LECTERN) && !blockState.get(LecternBlock.HAS_BOOK)) {
             var newState = ModBlocks.INDEX_LECTERN.getStateWithProperties(blockState);
+
             world.setBlockState(blockPos, newState);
             ItemStack stack = context.getStack().copy();
             context.getStack().decrement(1);
+
             return IndexLecternBlock.putBookIfAbsent(
                     context.getPlayer(), world,
                     blockPos, newState,
                     stack
             ) ? ActionResult.success(true) : ActionResult.PASS;
-        } else if (blockState.isOf(ModBlocks.LIBRARY)) {
+        } else if (blockState.isOf(ModBlocks.LIBRARY) && context.getPlayer() != null && context.getPlayer().isSneaking()) {
+            var book = context.getStack();
+            var nbt = book.getOrCreateNbt();
+            var librariesList = nbt.getList(LINKED_LIBRARIES_TAG, NbtElement.LIST_TYPE);
+            var serializedPos = blockPosToList(blockPos);
+            var pos = Vec3d.ofCenter(blockPos);
 
+            if (librariesList.contains(serializedPos)) {
+                librariesList.remove(serializedPos);
+                world.playSound(null, pos.getX(), pos.getY(), pos.getZ(),
+                        SoundEvents.ENTITY_ENDER_EYE_DEATH, SoundCategory.BLOCKS,
+                        0.5f, 0.2f + world.getRandom().nextFloat() * 0.4f);
+                ParticleSystem.blockParticles(world, pos, ParticleTypes.ENCHANTED_HIT);
+            } else {
+                if (librariesList.size() >= getMaxLinks(book, false)) {
+                    world.playSound(null, pos.getX(), pos.getY(), pos.getZ(),
+                            SoundEvents.ENTITY_ENDER_EYE_DEATH, SoundCategory.BLOCKS,
+                            1f, 1.8f + world.getRandom().nextFloat() * 0.2f);
+                    ParticleSystem.blockParticles(world, pos, ParticleTypes.CRIT);
+
+                    return ActionResult.success(true);
+                }
+
+                librariesList.add(serializedPos);
+                world.playSound(null, pos.getX(), pos.getY(), pos.getZ(),
+                        SoundEvents.BLOCK_AMETHYST_BLOCK_STEP, SoundCategory.BLOCKS,
+                        1f, 0.4f + world.getRandom().nextFloat() * 0.4f); // TODO particles when holding book to show linked
+                ParticleSystem.blockParticles(world, pos, ParticleTypes.SOUL_FIRE_FLAME);
+            } // TODO respect max links, and counter in tooltip
+
+            nbt.put(LINKED_LIBRARIES_TAG, librariesList);
+
+            return ActionResult.success(true);
         }
         return ActionResult.PASS;
     }

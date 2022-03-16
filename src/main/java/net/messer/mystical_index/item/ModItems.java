@@ -90,9 +90,14 @@ public class ModItems {
                 }
 
                 @Override
-                public void appendProperties(ItemStack stack, List<Text> properties) {
+                public void appendProperties(ItemStack book, List<Text> properties) {
                     properties.add(new TranslatableText("item.mystical_index.page.tooltip.properties.index")
                             .formatted(Formatting.YELLOW));
+                }
+
+                @Override
+                public boolean bookCanHaveMultiple(ItemStack page) {
+                    return false;
                 }
 
                 @Override

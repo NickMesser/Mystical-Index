@@ -23,6 +23,7 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 public class CustomBookRecipe extends SpecialCraftingRecipe implements PolymerRecipe {
@@ -42,7 +43,7 @@ public class CustomBookRecipe extends SpecialCraftingRecipe implements PolymerRe
     public boolean matches(CraftingInventory craftingInventory, World world) {
         var binding = false;
         var catalyst = 0;
-        var pages = 0;
+        var pages = new ArrayList<PageItem>();
         for (int i = 0; i < craftingInventory.size(); ++i) {
             var itemStack = craftingInventory.getStack(i);
             if (itemStack.isEmpty()) continue;
@@ -60,13 +61,18 @@ public class CustomBookRecipe extends SpecialCraftingRecipe implements PolymerRe
                 catalyst = CATALYSTS.get(itemStack.getItem());
                 continue;
             }
-            if (itemStack.getItem() instanceof PageItem) {
-                pages += 1;
+            if (itemStack.getItem() instanceof PageItem page) {
+                var incompatiblePages = page.incompatiblePages(itemStack);
+                if (!page.bookCanHaveMultiple(itemStack) && (pages.contains(page) ||
+                        pages.stream().anyMatch(i1 -> incompatiblePages.stream().anyMatch(i1::equals)))) {
+                    return false;
+                }
+                pages.add(page);
                 continue;
             }
             return false;
         }
-        return binding && catalyst > 0 && pages <= catalyst;
+        return binding && catalyst > 0 && pages.size() <= catalyst;
     }
 
     @Override

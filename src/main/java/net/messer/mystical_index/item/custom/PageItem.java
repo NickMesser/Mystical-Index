@@ -67,7 +67,15 @@ public abstract class PageItem extends Item implements PolymerItem {
     public void bookInventoryTick(ItemStack book, World world, Entity entity, int slot, boolean selected) {
     }
 
-    public void appendProperties(ItemStack stack, List<Text> properties) {
+    public void appendProperties(ItemStack book, List<Text> properties) {
+    }
+
+    public boolean bookCanHaveMultiple(ItemStack page) {
+        return true;
+    }
+
+    public List<PageItem> incompatiblePages(ItemStack page) {
+        return List.of();
     }
 
     @Override

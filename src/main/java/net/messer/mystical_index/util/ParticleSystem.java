@@ -3,6 +3,7 @@ package net.messer.mystical_index.util;
 import net.messer.mystical_index.util.request.IIndexInteractable;
 import net.messer.mystical_index.util.request.Request;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.Vec3d;
@@ -62,11 +63,15 @@ public class ParticleSystem {
     }
 
     public static void registrationParticles(IIndexInteractable interactable) {
-        if (interactable instanceof BlockEntity blockEntity &&
-                blockEntity.getWorld() instanceof ServerWorld serverWorld) {
-            Vec3d pos = Vec3d.ofCenter(blockEntity.getPos());
+        if (interactable instanceof BlockEntity blockEntity) {
+            blockParticles(blockEntity.getWorld(), Vec3d.ofCenter(blockEntity.getPos()), ParticleTypes.SOUL_FIRE_FLAME);
+        }
+    }
+
+    public static void blockParticles(World world, Vec3d pos, ParticleEffect effect) {
+        if (world instanceof ServerWorld serverWorld) {
             serverWorld.spawnParticles(
-                    ParticleTypes.SOUL_FIRE_FLAME, pos.getX(), pos.getY(), pos.getZ(),
+                    effect, pos.getX(), pos.getY(), pos.getZ(),
                     5, 0.5, 0.5, 0.5, 0
             );
         }
