@@ -4,9 +4,11 @@ import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.item.custom.PageItem;
 import net.messer.mystical_index.item.custom.book.*;
+import net.messer.mystical_index.util.Colors;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
@@ -47,8 +49,8 @@ public class ModItems {
                 }
 
                 @Override
-                public int getRangeIncrease(ItemStack page, boolean lectern) {
-                    return lectern ? 2 : 20;
+                public int getRangeIncrease(ItemStack page, boolean autoIndexing) {
+                    return autoIndexing ? 2 : 20;
                 }
 
                 @Override
@@ -65,8 +67,8 @@ public class ModItems {
                 }
 
                 @Override
-                public int getLinksIncrease(ItemStack page, boolean lectern) {
-                    return lectern ? 1 : 2;
+                public int getLinksIncrease(ItemStack page, boolean autoIndexing) {
+                    return autoIndexing ? 1 : 2;
                 }
 
                 @Override
@@ -75,12 +77,14 @@ public class ModItems {
                 }
             });
 
-    public static final Item INDEX_PAGE = registerTickingPageItem("index_page",
+    public static final Item AUTO_INDEX_PAGE = registerTickingPageItem("auto_index_page",
             new PageItem() {
                 @Override
                 public ItemStack onCraftToBook(ItemStack page, ItemStack book) {
                     var indexBook = new ItemStack(CUSTOM_INDEX);
-                    indexBook.setNbt(book.getOrCreateNbt());
+                    var nbt = book.getOrCreateNbt();
+                    nbt.putString(CustomIndexBook.INDEXING_TYPE_TAG, CustomIndexBook.INDEXING_TYPE_AUTO_TAG);
+                    indexBook.setNbt(nbt);
                     return indexBook;
                 }
 
@@ -91,8 +95,23 @@ public class ModItems {
 
                 @Override
                 public void appendProperties(ItemStack book, List<Text> properties) {
-                    properties.add(new TranslatableText("item.mystical_index.page.tooltip.properties.index")
-                            .formatted(Formatting.YELLOW));
+                    properties.add(new TranslatableText("item.mystical_index.custom_index.tooltip.automatic")
+                            .formatted(Formatting.BLUE));
+
+                    if (book != null) {
+                        var bookItem = (CustomIndexBook) book.getItem();
+
+                        var linksUsed = bookItem.getLinks(book);
+                        var linksMax = bookItem.getMaxLinks(book, true);
+                        double linksUsedRatio = (double) linksUsed / linksMax;
+
+                        properties.add(new TranslatableText("item.mystical_index.custom_index.tooltip.extenders",
+                                linksUsed, linksMax)
+                                .formatted(Colors.colorByRatio(linksUsedRatio)));
+                        properties.add(new TranslatableText("item.mystical_index.custom_index.tooltip.range",
+                                bookItem.getMaxRange(book, true))
+                                .formatted(Formatting.YELLOW));
+                    }
                 }
 
                 @Override

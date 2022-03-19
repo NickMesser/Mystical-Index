@@ -6,11 +6,11 @@ import net.messer.mystical_index.util.ParticleSystem;
 import net.messer.mystical_index.util.request.IIndexInteractable;
 import net.messer.mystical_index.util.request.InsertionRequest;
 import net.messer.mystical_index.util.request.LibraryIndex;
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.LecternBlock;
 import net.minecraft.client.item.TooltipContext;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.StackReference;
 import net.minecraft.item.ItemStack;
@@ -20,9 +20,7 @@ import net.minecraft.nbt.NbtInt;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.screen.slot.Slot;
-import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
@@ -37,7 +35,6 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 public class CustomIndexBook extends CustomInventoryBook {
@@ -45,16 +42,20 @@ public class CustomIndexBook extends CustomInventoryBook {
     public static final double LECTERN_PICKUP_RADIUS = 2d;
     public static final UUID EXTRACTED_DROP_UUID = UUID.randomUUID();
 
+    public static final String INDEXING_TYPE_TAG = "indexing_type";
+    public static final String INDEXING_TYPE_MANUAL_TAG = "manual";
+    public static final String INDEXING_TYPE_AUTO_TAG = "auto";
+
     public static final String MAX_RANGE_TAG = "max_range";
     public static final String MAX_LINKS_TAG = "max_links";
-    public static final String IN_INVENTORY_TAG = "in_inventory";
-    public static final String ON_LECTERN_TAG = "on_lectern";
-    public static final String LINKED_LIBRARIES_TAG = "linked_libraries";
+    public static final String MANUAL_INDEXING_TAG = "manual_indexing";
+    public static final String AUTO_INDEXING_TAG = "auto_indexing";
+    public static final String LINKED_BLOCKS_TAG = "linked_blocks";
 
-    private static final List<Text> HEADER = List.of(new Text[]{
-            new TranslatableText("gui.mystical_index.index_screen_header"),
-            new LiteralText("")
-    });
+//    private static final List<Text> HEADER = List.of(new Text[]{
+//            new TranslatableText("gui.mystical_index.index_screen_header"),
+//            new LiteralText("")
+//    });
 
     public CustomIndexBook(Settings settings) {
         super(settings);
@@ -72,18 +73,28 @@ public class CustomIndexBook extends CustomInventoryBook {
         return new BlockPos(list.getInt(0), list.getInt(1), list.getInt(2));
     }
 
-    public int getMaxRange(ItemStack book, boolean lectern) {
-        return book.getOrCreateSubNbt(lectern ? ON_LECTERN_TAG : IN_INVENTORY_TAG).getInt(MAX_RANGE_TAG);
+    public int getMaxRange(ItemStack book, boolean autoIndexing) {
+//        return book.getOrCreateNbt().getInt(MAX_RANGE_TAG);
+        return book.getOrCreateSubNbt(autoIndexing ? AUTO_INDEXING_TAG : MANUAL_INDEXING_TAG).getInt(MAX_RANGE_TAG);
     }
 
-    public int getMaxLinks(ItemStack book, boolean lectern) {
-        return book.getOrCreateSubNbt(lectern ? ON_LECTERN_TAG : IN_INVENTORY_TAG).getInt(MAX_LINKS_TAG);
+    public int getMaxLinks(ItemStack book, boolean autoIndexing) {
+//        return book.getOrCreateNbt().getInt(MAX_LINKS_TAG);
+        return book.getOrCreateSubNbt(autoIndexing ? AUTO_INDEXING_TAG : MANUAL_INDEXING_TAG).getInt(MAX_LINKS_TAG);
+    }
+
+    public int getLinks(ItemStack book) {
+        return book.getOrCreateNbt().getList(LINKED_BLOCKS_TAG, NbtElement.LIST_TYPE).size();
+    }
+
+    public boolean getAutoIndexing(ItemStack book) {
+        return book.getOrCreateNbt().getString(INDEXING_TYPE_TAG).equals(INDEXING_TYPE_AUTO_TAG);
     }
 
     @SuppressWarnings("ConstantConditions")
     public LibraryIndex getIndex(ItemStack book, World world) {
         var index = new LibraryIndex();
-        var nbtList = book.getOrCreateNbt().getList(LINKED_LIBRARIES_TAG, NbtElement.LIST_TYPE);
+        var nbtList = book.getOrCreateNbt().getList(LINKED_BLOCKS_TAG, NbtElement.LIST_TYPE);
         for (int i = 0; i < nbtList.size(); i++) {
             var posList = nbtList.getList(i);
             if (world.getBlockEntity(
@@ -127,7 +138,10 @@ public class CustomIndexBook extends CustomInventoryBook {
         BlockPos blockPos;
         World world = context.getWorld();
         BlockState blockState = world.getBlockState(blockPos = context.getBlockPos());
+        var book = context.getStack();
+        var autoIndexing = getAutoIndexing(book);
 
+        // Try to put book on lectern
         if (blockState.isOf(Blocks.LECTERN) && !blockState.get(LecternBlock.HAS_BOOK)) {
             var newState = ModBlocks.INDEX_LECTERN.getStateWithProperties(blockState);
 
@@ -140,10 +154,15 @@ public class CustomIndexBook extends CustomInventoryBook {
                     blockPos, newState,
                     stack
             ) ? ActionResult.success(true) : ActionResult.PASS;
-        } else if (blockState.isOf(ModBlocks.LIBRARY) && context.getPlayer() != null && context.getPlayer().isSneaking()) {
-            var book = context.getStack();
+        }
+        // Try linking library or extender to book
+        else if ((
+                    (blockState.isOf(ModBlocks.LIBRARY) && !autoIndexing) ||
+                    (blockState.isOf(ModBlocks.LIBRARY) && autoIndexing) // TODO make this extender instead of library
+                ) && context.getPlayer() != null && context.getPlayer().isSneaking()) {
+
             var nbt = book.getOrCreateNbt();
-            var librariesList = nbt.getList(LINKED_LIBRARIES_TAG, NbtElement.LIST_TYPE);
+            var librariesList = nbt.getList(LINKED_BLOCKS_TAG, NbtElement.LIST_TYPE);
             var serializedPos = blockPosToList(blockPos);
             var pos = Vec3d.ofCenter(blockPos);
 
@@ -154,7 +173,7 @@ public class CustomIndexBook extends CustomInventoryBook {
                         0.5f, 0.2f + world.getRandom().nextFloat() * 0.4f);
                 ParticleSystem.blockParticles(world, pos, ParticleTypes.ENCHANTED_HIT);
             } else {
-                if (librariesList.size() >= getMaxLinks(book, false)) {
+                if (librariesList.size() >= getMaxLinks(book, autoIndexing)) {
                     world.playSound(null, pos.getX(), pos.getY(), pos.getZ(),
                             SoundEvents.ENTITY_ENDER_EYE_DEATH, SoundCategory.BLOCKS,
                             1f, 1.8f + world.getRandom().nextFloat() * 0.2f);
@@ -168,16 +187,33 @@ public class CustomIndexBook extends CustomInventoryBook {
                         SoundEvents.BLOCK_AMETHYST_BLOCK_STEP, SoundCategory.BLOCKS,
                         1f, 0.4f + world.getRandom().nextFloat() * 0.4f); // TODO particles when holding book to show linked
                 ParticleSystem.blockParticles(world, pos, ParticleTypes.SOUL_FIRE_FLAME);
-            } // TODO respect max links, and counter in tooltip
+            }
 
-            nbt.put(LINKED_LIBRARIES_TAG, librariesList);
+            nbt.put(LINKED_BLOCKS_TAG, librariesList);
 
             return ActionResult.success(true);
         }
         return ActionResult.PASS;
     }
 
-//    @Override
+    @Override
+    public void inventoryTick(ItemStack book, World world, Entity entity, int slot, boolean selected) {
+        super.inventoryTick(book, world, entity, slot, selected);
+        var server = world.getServer();
+
+        if (!selected || server == null || server.getTicks() % 10 != 0) {
+            return;
+        }
+
+        var positions = book.getOrCreateNbt().getList(LINKED_BLOCKS_TAG, NbtElement.LIST_TYPE);
+
+        for (var pos : positions) {
+            var blockPos = blockPosFromList((NbtList) pos);
+            ParticleSystem.blockParticles(world, Vec3d.ofCenter(blockPos), ParticleTypes.SOUL_FIRE_FLAME);
+        }
+    }
+
+    //    @Override
 //    public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
 //        ItemStack itemStack = player.getStackInHand(hand);
 //        if (player instanceof ServerPlayerEntity serverPlayer) {
@@ -261,29 +297,29 @@ public class CustomIndexBook extends CustomInventoryBook {
 
     @Override
     public void appendTooltip(ItemStack book, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        var lectern = true;
-        do {
-            lectern = !lectern;
-
-            tooltip.add(new LiteralText(""));
-            tooltip.add(new TranslatableText(lectern ?
-                        "item.mystical_index.custom_index.tooltip.on_lectern" :
-                        "item.mystical_index.custom_index.tooltip.in_inventory")
-                    .formatted(Formatting.GRAY));
-            tooltip.add(lectern ?
-                    new TranslatableText("item.mystical_index.custom_index.tooltip.automatic")
-                    .formatted(Formatting.GREEN) :
-                    new TranslatableText("item.mystical_index.custom_index.tooltip.manual")
-                    .formatted(Formatting.RED));
-            tooltip.add(new TranslatableText("item.mystical_index.custom_index.tooltip.range",
-                        getMaxRange(book, lectern))
-                    .formatted(Formatting.GOLD));
-            tooltip.add(new TranslatableText(lectern ?
-                        "item.mystical_index.custom_index.tooltip.extenders" :
-                        "item.mystical_index.custom_index.tooltip.links",
-                        getMaxLinks(book, lectern))
-                    .formatted(Formatting.GOLD));
-        } while (!lectern);
+//        var lectern = true;
+//        do {
+//            lectern = !lectern;
+//
+//            tooltip.add(new LiteralText(""));
+//            tooltip.add(new TranslatableText(lectern ?
+//                        "item.mystical_index.custom_index.tooltip.on_lectern" :
+//                        "item.mystical_index.custom_index.tooltip.in_inventory")
+//                    .formatted(Formatting.GRAY));
+//            tooltip.add(lectern ?
+//                    new TranslatableText("item.mystical_index.custom_index.tooltip.automatic")
+//                    .formatted(Formatting.GREEN) :
+//                    new TranslatableText("item.mystical_index.custom_index.tooltip.manual")
+//                    .formatted(Formatting.RED));
+//            tooltip.add(new TranslatableText("item.mystical_index.custom_index.tooltip.range",
+//                        getMaxRange(book, lectern))
+//                    .formatted(Formatting.GOLD));
+//            tooltip.add(new TranslatableText(lectern ?
+//                        "item.mystical_index.custom_index.tooltip.extenders" :
+//                        "item.mystical_index.custom_index.tooltip.links",
+//                        getMaxLinks(book, lectern))
+//                    .formatted(Formatting.GOLD));
+//        } while (!lectern);
 
         tooltip.add(new LiteralText(""));
         tooltip.add(new TranslatableText("item.mystical_index.custom_book.tooltip.capacity")

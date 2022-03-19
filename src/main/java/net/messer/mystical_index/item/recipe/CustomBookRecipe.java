@@ -84,16 +84,16 @@ public class CustomBookRecipe extends SpecialCraftingRecipe implements PolymerRe
         nbt.putInt(CustomInventoryBook.MAX_STACKS_TAG, ((PageItem) ModItems.STACKS_PAGE).getStacksIncrease(null));
         nbt.putInt(CustomInventoryBook.MAX_TYPES_TAG, ((PageItem) ModItems.TYPES_PAGE).getTypesIncrease(null));
 
-        var lectern = true;
+        var autoIndexing = true;
         do {
-            lectern = !lectern;
-            var subTag = nbt.getCompound(lectern ? CustomIndexBook.ON_LECTERN_TAG : CustomIndexBook.IN_INVENTORY_TAG);
+            autoIndexing = !autoIndexing;
+            var subTag = nbt.getCompound(autoIndexing ? CustomIndexBook.AUTO_INDEXING_TAG : CustomIndexBook.MANUAL_INDEXING_TAG);
 
-            subTag.putInt(CustomIndexBook.MAX_RANGE_TAG, ((PageItem) ModItems.STACKS_PAGE).getRangeIncrease(null, lectern));
-            subTag.putInt(CustomIndexBook.MAX_LINKS_TAG, ((PageItem) ModItems.TYPES_PAGE).getLinksIncrease(null, lectern));
+            subTag.putInt(CustomIndexBook.MAX_RANGE_TAG, ((PageItem) ModItems.STACKS_PAGE).getRangeIncrease(null, autoIndexing));
+            subTag.putInt(CustomIndexBook.MAX_LINKS_TAG, ((PageItem) ModItems.TYPES_PAGE).getLinksIncrease(null, autoIndexing));
 
-            nbt.put(lectern ? CustomIndexBook.ON_LECTERN_TAG : CustomIndexBook.IN_INVENTORY_TAG, subTag);
-        } while (!lectern);
+            nbt.put(autoIndexing ? CustomIndexBook.AUTO_INDEXING_TAG : CustomIndexBook.MANUAL_INDEXING_TAG, subTag);
+        } while (!autoIndexing);
 
         for (int i = 0; i < craftingInventory.size(); ++i) {
             var stack = craftingInventory.getStack(i);
@@ -102,7 +102,16 @@ public class CustomBookRecipe extends SpecialCraftingRecipe implements PolymerRe
                 book = pageItem.onCraftToBook(stack, book);
             }
         }
+
         nbt.put(CustomInventoryBook.PAGES_TAG, pagesList);
+        if (book.getItem() instanceof CustomIndexBook) {
+            nbt.remove(CustomInventoryBook.MAX_STACKS_TAG);
+            nbt.remove(CustomInventoryBook.MAX_TYPES_TAG);
+        } else {
+            nbt.remove(CustomIndexBook.MANUAL_INDEXING_TAG);
+            nbt.remove(CustomIndexBook.AUTO_INDEXING_TAG);
+        }
+
         return book;
     }
 

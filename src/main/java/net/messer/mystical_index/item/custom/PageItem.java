@@ -34,11 +34,11 @@ public abstract class PageItem extends Item implements PolymerItem {
         return 0;
     }
 
-    public int getRangeIncrease(ItemStack page, boolean lectern) {
+    public int getRangeIncrease(ItemStack page, boolean autoIndexing) {
         return 0;
     }
 
-    public int getLinksIncrease(ItemStack page, boolean lectern) {
+    public int getLinksIncrease(ItemStack page, boolean autoIndexing) {
         return 0;
     }
 
@@ -50,16 +50,16 @@ public abstract class PageItem extends Item implements PolymerItem {
         nbt.putInt(CustomInventoryBook.MAX_TYPES_TAG,
                 nbt.getInt(CustomInventoryBook.MAX_TYPES_TAG) + getTypesIncrease(page));
 
-        var lectern = true;
+        var autoIndexing = true;
         do {
-            lectern = !lectern;
-            var subTag = nbt.getCompound(lectern ? CustomIndexBook.ON_LECTERN_TAG : CustomIndexBook.IN_INVENTORY_TAG);
+            autoIndexing = !autoIndexing;
+            var subTag = nbt.getCompound(autoIndexing ? CustomIndexBook.AUTO_INDEXING_TAG : CustomIndexBook.MANUAL_INDEXING_TAG);
 
             subTag.putInt(CustomIndexBook.MAX_RANGE_TAG,
-                    subTag.getInt(CustomIndexBook.MAX_RANGE_TAG) + getRangeIncrease(page, lectern));
+                    subTag.getInt(CustomIndexBook.MAX_RANGE_TAG) + getRangeIncrease(page, autoIndexing));
             subTag.putInt(CustomIndexBook.MAX_LINKS_TAG,
-                    subTag.getInt(CustomIndexBook.MAX_LINKS_TAG) + getLinksIncrease(page, lectern));
-        } while (!lectern);
+                    subTag.getInt(CustomIndexBook.MAX_LINKS_TAG) + getLinksIncrease(page, autoIndexing));
+        } while (!autoIndexing);
 
         return book;
     }
@@ -112,6 +112,6 @@ public abstract class PageItem extends Item implements PolymerItem {
         if (types > 0) tooltip.add(new TranslatableText("item.mystical_index.page.tooltip.types", types)
                 .formatted(Formatting.DARK_GREEN));
 
-        appendProperties(stack, tooltip);
+        appendProperties(null, tooltip);
     }
 }
