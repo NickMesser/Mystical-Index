@@ -2,6 +2,7 @@ package net.messer.mystical_index.block.custom;
 
 
 import eu.pb4.polymer.api.block.PolymerBlock;
+import net.messer.mystical_index.block.ModProperties;
 import net.messer.mystical_index.block.entity.LibraryBlockEntity;
 import net.messer.mystical_index.util.LecternTracker;
 import net.messer.mystical_index.util.request.IIndexInteractable;
@@ -10,8 +11,11 @@ import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
+import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.NamedScreenHandlerFactory;
+import net.minecraft.state.property.IntProperty;
+import net.minecraft.state.property.Properties;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.ItemScatterer;
@@ -22,10 +26,11 @@ import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
 public class LibraryBlock extends BlockWithEntity implements BlockEntityProvider, PolymerBlock {
-
+    public static final IntProperty BOOKS = ModProperties.BOOKS;
 
     public LibraryBlock(Settings settings) {
         super(settings);
+        setDefaultState(getStateManager().getDefaultState().with(BOOKS, 0));
     }
 
     @Override

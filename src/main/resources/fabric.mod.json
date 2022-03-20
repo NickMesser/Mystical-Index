@@ -15,7 +15,6 @@
 
   "license": "GNU",
   "icon": "assets/modid/icon.png",
-  "accessWidener" : "mystical_index.accesswidener",
   "environment": "*",
   "entrypoints": {
     "main": [
