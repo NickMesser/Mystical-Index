@@ -28,8 +28,8 @@ public class SaturationBook extends InventoryBookItem {
     }
 
     @Override
-    protected boolean canInsert(Item item) {
-        return item.isFood() && super.canInsert(item);
+    protected boolean canInsert(ItemStack book, Item item) {
+        return item.isFood() && super.canInsert(book, item);
     }
 
     @Override

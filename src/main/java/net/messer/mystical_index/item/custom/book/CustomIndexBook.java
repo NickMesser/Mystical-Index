@@ -2,7 +2,7 @@ package net.messer.mystical_index.item.custom.book;
 
 import net.messer.mystical_index.block.ModBlocks;
 import net.messer.mystical_index.block.custom.IndexLecternBlock;
-import net.messer.mystical_index.util.ParticleSystem;
+import net.messer.mystical_index.util.WorldEffects;
 import net.messer.mystical_index.util.request.IIndexInteractable;
 import net.messer.mystical_index.util.request.InsertionRequest;
 import net.messer.mystical_index.util.request.LibraryIndex;
@@ -128,7 +128,7 @@ public class CustomIndexBook extends CustomInventoryBook {
 
         InsertionRequest request = new InsertionRequest(itemStack);
         request.setSourcePosition(player.getPos());
-        request.setBlockAffectedCallback(ParticleSystem::insertionParticles);
+        request.setBlockAffectedCallback(WorldEffects::insertionParticles);
 
         index.insertStack(request);
     }
@@ -149,7 +149,7 @@ public class CustomIndexBook extends CustomInventoryBook {
             ItemStack stack = context.getStack().copy();
             context.getStack().decrement(1);
 
-            return IndexLecternBlock.putBookIfAbsent(
+            return IndexLecternBlock.putBookIfAbsent( // TODO add booming sound
                     context.getPlayer(), world,
                     blockPos, newState,
                     stack
@@ -171,13 +171,13 @@ public class CustomIndexBook extends CustomInventoryBook {
                 world.playSound(null, pos.getX(), pos.getY(), pos.getZ(),
                         SoundEvents.ENTITY_ENDER_EYE_DEATH, SoundCategory.BLOCKS,
                         0.5f, 0.2f + world.getRandom().nextFloat() * 0.4f);
-                ParticleSystem.blockParticles(world, pos, ParticleTypes.ENCHANTED_HIT);
+                WorldEffects.blockParticles(world, blockPos, ParticleTypes.ENCHANTED_HIT);
             } else {
                 if (librariesList.size() >= getMaxLinks(book, autoIndexing)) {
                     world.playSound(null, pos.getX(), pos.getY(), pos.getZ(),
                             SoundEvents.ENTITY_ENDER_EYE_DEATH, SoundCategory.BLOCKS,
                             1f, 1.8f + world.getRandom().nextFloat() * 0.2f);
-                    ParticleSystem.blockParticles(world, pos, ParticleTypes.CRIT);
+                    WorldEffects.blockParticles(world, blockPos, ParticleTypes.CRIT);
 
                     return ActionResult.success(true);
                 }
@@ -185,8 +185,8 @@ public class CustomIndexBook extends CustomInventoryBook {
                 librariesList.add(serializedPos);
                 world.playSound(null, pos.getX(), pos.getY(), pos.getZ(),
                         SoundEvents.BLOCK_AMETHYST_BLOCK_STEP, SoundCategory.BLOCKS,
-                        1f, 0.4f + world.getRandom().nextFloat() * 0.4f); // TODO particles when holding book to show linked
-                ParticleSystem.blockParticles(world, pos, ParticleTypes.SOUL_FIRE_FLAME);
+                        1f, 0.4f + world.getRandom().nextFloat() * 0.4f);
+                WorldEffects.blockParticles(world, blockPos, ParticleTypes.SOUL_FIRE_FLAME);
             }
 
             nbt.put(LINKED_BLOCKS_TAG, librariesList);
@@ -209,7 +209,7 @@ public class CustomIndexBook extends CustomInventoryBook {
 
         for (var pos : positions) {
             var blockPos = blockPosFromList((NbtList) pos);
-            ParticleSystem.blockParticles(world, Vec3d.ofCenter(blockPos), ParticleTypes.SOUL_FIRE_FLAME);
+            WorldEffects.blockParticles(world, blockPos, ParticleTypes.SOUL_FIRE_FLAME);
         }
     }
 

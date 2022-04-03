@@ -5,8 +5,7 @@
   "compatibilityLevel": "JAVA_16",
   "mixins": [
     "ItemStackPickupMixin",
-    "ServerPlayNetworkHandlerMixin",
-    "ShearsItemMixin"
+    "ServerPlayNetworkHandlerMixin"
   ],
   "client": [
   ],

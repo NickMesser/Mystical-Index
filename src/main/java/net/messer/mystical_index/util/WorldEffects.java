@@ -6,10 +6,12 @@ import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.intprovider.UniformIntProvider;
 import net.minecraft.world.World;
 
-public class ParticleSystem {
+public class WorldEffects {
     private static final double ITEMS_PER_PARTICLE = 16;
     private static final double PARTICLE_SPACING = 0.4;
 
@@ -62,18 +64,15 @@ public class ParticleSystem {
         world.spawnParticles(ParticleTypes.ENCHANT, particlePos.getX(), particlePos.getY(), particlePos.getZ(), 1, 0, 0, 0, 0);
     }
 
-    public static void registrationParticles(IIndexInteractable interactable) {
+    public static void registrationParticles(IIndexInteractable interactable) { // TODO add subtle sound
         if (interactable instanceof BlockEntity blockEntity) {
-            blockParticles(blockEntity.getWorld(), Vec3d.ofCenter(blockEntity.getPos()), ParticleTypes.SOUL_FIRE_FLAME);
+            blockParticles(blockEntity.getWorld(), blockEntity.getPos(), ParticleTypes.SOUL_FIRE_FLAME);
         }
     }
 
-    public static void blockParticles(World world, Vec3d pos, ParticleEffect effect) {
+    public static void blockParticles(World world, BlockPos pos, ParticleEffect effect) {
         if (world instanceof ServerWorld serverWorld) {
-            serverWorld.spawnParticles(
-                    effect, pos.getX(), pos.getY(), pos.getZ(),
-                    5, 0.5, 0.5, 0.5, 0
-            );
+            ParticleUtilServer.spawnParticle(serverWorld, pos, effect, UniformIntProvider.create(3, 5));
         }
     }
 }

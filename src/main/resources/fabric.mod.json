@@ -19,9 +19,6 @@
   "entrypoints": {
     "main": [
       "net.messer.mystical_index.MysticalIndex"
-    ],
-    "client": [
-      "net.messer.mystical_index.MysticalIndexClient"
     ]
   },
   "mixins": [

@@ -50,7 +50,7 @@ public class LecternTracker {
 
                 if (lPos.getX() - range <= pos.getX() && lPos.getY() - range <= pos.getY() && lPos.getZ() - range <= pos.getZ() &&
                     lPos.getX() + range >= pos.getX() && lPos.getY() + range >= pos.getY() && lPos.getZ() + range >= pos.getZ()) {
-                    lectern.getLinkedLibraries().add(interactable, particles ? ParticleSystem::registrationParticles : i -> {});
+                    lectern.getLinkedLibraries().add(interactable, particles ? WorldEffects::registrationParticles : i -> {});
                 }
             }
         }

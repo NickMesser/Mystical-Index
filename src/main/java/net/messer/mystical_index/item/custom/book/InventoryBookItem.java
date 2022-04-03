@@ -13,6 +13,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.NbtString;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
@@ -37,6 +38,10 @@ public abstract class InventoryBookItem extends BookItem {
 
     public static final String OCCUPIED_STACKS_TAG = "occupied_stacks";
     public static final String OCCUPIED_TYPES_TAG = "occupied_types";
+
+    public static final String FILTERS_TAG = "filters";
+    public static final String ITEM_FILTERS_TAG = "item";
+    public static final String TAG_FILTERS_TAG = "tag";
 
     @Override
     public boolean onStackClicked(ItemStack book, Slot slot, ClickType clickType, PlayerEntity player) {
@@ -114,12 +119,24 @@ public abstract class InventoryBookItem extends BookItem {
                 .findFirst();
     }
 
-    protected boolean canInsert(Item item) {
-        return item.canBeNested();
+    private boolean isFiltered(ItemStack book) {
+        return !book.getOrCreateNbt().getCompound(FILTERS_TAG).isEmpty();
+    }
+
+    protected boolean canInsert(ItemStack book, Item item) {
+        if (!item.canBeNested()) return false;
+
+        var filters = book.getOrCreateNbt().getCompound(FILTERS_TAG);
+        if (filters.isEmpty()) return true;
+
+        var itemFilter = filters.getList(ITEM_FILTERS_TAG, NbtElement.STRING_TYPE);
+        if (itemFilter.contains(NbtString.of(item.toString()))) return false;
+
+        return true;
     }
 
     public int tryAddItem(ItemStack book, ItemStack stack) {
-        if (stack.isEmpty() || !canInsert(stack.getItem())) {
+        if (stack.isEmpty() || !canInsert(book, stack.getItem())) {
             return 0;
         }
         NbtCompound bookNbt = book.getOrCreateNbt();

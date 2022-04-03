@@ -4,7 +4,7 @@ import net.messer.mystical_index.block.entity.IndexLecternBlockEntity;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.custom.book.CustomIndexBook;
 import net.messer.mystical_index.util.LecternTracker;
-import net.messer.mystical_index.util.ParticleSystem;
+import net.messer.mystical_index.util.WorldEffects;
 import net.messer.mystical_index.util.request.ExtractionRequest;
 import net.messer.mystical_index.util.request.LibraryIndex;
 import net.minecraft.entity.ItemEntity;
@@ -48,7 +48,7 @@ public abstract class ServerPlayNetworkHandlerMixin {
                     LibraryIndex index = LibraryIndex.fromRange(player.getWorld(), player.getBlockPos(), LibraryIndex.ITEM_SEARCH_RANGE);
                     ExtractionRequest request = ExtractionRequest.get(message);
                     request.setSourcePosition(player.getPos().add(0, 1, 0));
-                    request.setBlockAffectedCallback(ParticleSystem::extractionParticles);
+                    request.setBlockAffectedCallback(WorldEffects::extractionParticles);
 
                     List<ItemStack> extracted = index.extractItems(request);
 
@@ -68,7 +68,7 @@ public abstract class ServerPlayNetworkHandlerMixin {
                         LibraryIndex index = lectern.getLinkedLibraries();
                         ExtractionRequest request = ExtractionRequest.get(message);
                         request.setSourcePosition(Vec3d.ofCenter(blockPos, 0.5));
-                        request.setBlockAffectedCallback(ParticleSystem::extractionParticles);
+                        request.setBlockAffectedCallback(WorldEffects::extractionParticles);
 
                         List<ItemStack> extracted = index.extractItems(request);
 

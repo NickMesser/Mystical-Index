@@ -3,7 +3,7 @@ package net.messer.mystical_index.util.request;
 import com.google.common.collect.ImmutableList;
 import net.messer.mystical_index.block.ModTags;
 import net.messer.mystical_index.util.ContentsIndex;
-import net.messer.mystical_index.util.ParticleSystem;
+import net.messer.mystical_index.util.WorldEffects;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -56,7 +56,7 @@ public class LibraryIndex implements IIndexInteractable {
                     BlockPos testPos = pos.add(x, y, z);
                     if (ModTags.INDEX_INTRACTABLE.contains(world.getBlockState(testPos).getBlock()) &&
                             world.getBlockEntity(testPos) instanceof IIndexInteractable entity) {
-                        result.add(entity, particles ? ParticleSystem::registrationParticles : i -> {});
+                        result.add(entity, particles ? WorldEffects::registrationParticles : i -> {});
                     }
                 }
             }

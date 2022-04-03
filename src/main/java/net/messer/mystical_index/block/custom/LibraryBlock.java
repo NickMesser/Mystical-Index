@@ -14,6 +14,7 @@ import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.NamedScreenHandlerFactory;
+import net.minecraft.state.StateManager;
 import net.minecraft.state.property.IntProperty;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.ActionResult;
@@ -31,6 +32,12 @@ public class LibraryBlock extends BlockWithEntity implements BlockEntityProvider
     public LibraryBlock(Settings settings) {
         super(settings);
         setDefaultState(getStateManager().getDefaultState().with(BOOKS, 0));
+    }
+
+    @Override
+    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+        super.appendProperties(builder);
+        builder.add(BOOKS);
     }
 
     @Override
@@ -59,16 +66,16 @@ public class LibraryBlock extends BlockWithEntity implements BlockEntityProvider
 
     @Override
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-        if (world.isClient) {
-            return ActionResult.SUCCESS;
-        } else {
-            NamedScreenHandlerFactory screenHandlerFactory = state.createScreenHandlerFactory(world, pos);
-
-            if (screenHandlerFactory != null){
-                player.openHandledScreen(screenHandlerFactory);
-            }
+        if (hand != Hand.MAIN_HAND) {
+            return ActionResult.FAIL;
         }
-        return ActionResult.SUCCESS;
+        NamedScreenHandlerFactory screenHandlerFactory = state.createScreenHandlerFactory(world, pos);
+
+        if (screenHandlerFactory != null) {
+            player.openHandledScreen(screenHandlerFactory);
+        }
+
+        return ActionResult.success(true);
     }
 
     @Override

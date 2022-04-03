@@ -6,7 +6,7 @@ import net.messer.mystical_index.block.entity.IndexLecternBlockEntity;
 import net.messer.mystical_index.events.MixinHooks;
 import net.messer.mystical_index.item.custom.book.CustomIndexBook;
 import net.messer.mystical_index.util.LecternTracker;
-import net.messer.mystical_index.util.ParticleSystem;
+import net.messer.mystical_index.util.WorldEffects;
 import net.messer.mystical_index.util.request.InsertionRequest;
 import net.messer.mystical_index.util.request.LibraryIndex;
 import net.minecraft.block.Block;
@@ -77,7 +77,7 @@ public class IndexLecternBlock extends LecternBlock implements PolymerBlock {
 
             InsertionRequest request = new InsertionRequest(itemStack);
             request.setSourcePosition(Vec3d.ofCenter(pos));
-            request.setBlockAffectedCallback(ParticleSystem::insertionParticles);
+            request.setBlockAffectedCallback(WorldEffects::insertionParticles);
 
             index.insertStack(request);
 

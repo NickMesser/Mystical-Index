@@ -5,7 +5,7 @@ import net.messer.mystical_index.block.ModBlockEntities;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.custom.book.CustomIndexBook;
 import net.messer.mystical_index.util.LecternTracker;
-import net.messer.mystical_index.util.ParticleSystem;
+import net.messer.mystical_index.util.WorldEffects;
 import net.messer.mystical_index.util.request.LibraryIndex;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.LecternBlock;
@@ -69,19 +69,19 @@ public class IndexLecternBlockEntity extends LecternBlockEntity implements Polym
                                 CustomIndexBook.LECTERN_PICKUP_RADIUS, false
                         ) != null
                 ) {
-                    ParticleSystem.drawParticleCircle(
+                    WorldEffects.drawParticleCircle(
                             serverWorld, centerPos, CIRCLE_PERIOD,
                             0, CustomIndexBook.LECTERN_PICKUP_RADIUS
                     );
-                    ParticleSystem.drawParticleCircle(
+                    WorldEffects.drawParticleCircle(
                             serverWorld, centerPos, -CIRCLE_PERIOD,
                             0, CustomIndexBook.LECTERN_PICKUP_RADIUS
                     );
-                    ParticleSystem.drawParticleCircle(
+                    WorldEffects.drawParticleCircle(
                             serverWorld, centerPos, CIRCLE_PERIOD,
                             CIRCLE_PERIOD / 2, CustomIndexBook.LECTERN_PICKUP_RADIUS
                     );
-                    ParticleSystem.drawParticleCircle(
+                    WorldEffects.drawParticleCircle(
                             serverWorld, centerPos, -CIRCLE_PERIOD,
                             CIRCLE_PERIOD / 2, CustomIndexBook.LECTERN_PICKUP_RADIUS
                     );
