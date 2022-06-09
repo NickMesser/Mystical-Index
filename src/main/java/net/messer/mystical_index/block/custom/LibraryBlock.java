@@ -62,16 +62,13 @@ public class LibraryBlock extends BlockWithEntity implements BlockEntityProvider
 
     @Override
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-        if (hand != Hand.MAIN_HAND) {
-            return ActionResult.FAIL;
-        }
         NamedScreenHandlerFactory screenHandlerFactory = state.createScreenHandlerFactory(world, pos);
 
         if (screenHandlerFactory != null) {
             player.openHandledScreen(screenHandlerFactory);
         }
 
-        return ActionResult.success(true);
+        return ActionResult.success(world.isClient);
     }
 
     @Override

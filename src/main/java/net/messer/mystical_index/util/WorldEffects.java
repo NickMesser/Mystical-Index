@@ -1,16 +1,19 @@
 package net.messer.mystical_index.util;
 
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.messer.mystical_index.client.NetworkListeners;
 import net.messer.mystical_index.util.request.IndexInteractable;
 import net.messer.mystical_index.util.request.Request;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.util.ParticleUtil;
-import net.minecraft.client.world.ClientWorld;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.intprovider.UniformIntProvider;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 
 public class WorldEffects {
@@ -74,7 +77,14 @@ public class WorldEffects {
 
     public static void blockParticles(World world, BlockPos pos, ParticleEffect effect) {
         if (world instanceof ServerWorld serverWorld) {
-            ServerParticleUtil.spawnParticle(serverWorld, pos, effect, UniformIntProvider.create(3, 5));
+            var buf = PacketByteBufs.create();
+
+            buf.writeBlockPos(pos);
+            buf.writeIdentifier(Registry.PARTICLE_TYPE.getId(effect.getType()));
+
+            for (ServerPlayerEntity player : PlayerLookup.tracking(serverWorld, pos)) {
+                ServerPlayNetworking.send(player, NetworkListeners.BLOCK_PARTICLES, buf);
+            }
         }
     }
 }

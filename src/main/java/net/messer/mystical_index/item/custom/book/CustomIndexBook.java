@@ -154,7 +154,7 @@ public class CustomIndexBook extends CustomInventoryBook {
                     context.getPlayer(), world,
                     blockPos, newState,
                     stack
-            ) ? ActionResult.success(true) : ActionResult.PASS;
+            ) ? ActionResult.success(world.isClient) : ActionResult.PASS;
         }
         // Try linking library or extender to book
         else if (blockState.isOf(ModBlocks.LIBRARY) && context.getPlayer() != null && context.getPlayer().isSneaking()) {
@@ -177,7 +177,7 @@ public class CustomIndexBook extends CustomInventoryBook {
                             1f, 1.8f + world.getRandom().nextFloat() * 0.2f);
                     WorldEffects.blockParticles(world, blockPos, ParticleTypes.CRIT);
 
-                    return ActionResult.success(true);
+                    return ActionResult.success(world.isClient);
                 }
 
                 librariesList.add(serializedPos);
@@ -189,7 +189,7 @@ public class CustomIndexBook extends CustomInventoryBook {
 
             nbt.put(LINKED_BLOCKS_TAG, librariesList);
 
-            return ActionResult.success(true);
+            return ActionResult.success(world.isClient);
         }
         return ActionResult.PASS;
     }
@@ -291,6 +291,11 @@ public class CustomIndexBook extends CustomInventoryBook {
     @Override
     public Rarity getRarity(ItemStack stack) {
         return Rarity.RARE;
+    }
+
+    @Override
+    public boolean hasGlint(ItemStack book) {
+        return getLinks(book) > 0;
     }
 
     @Override

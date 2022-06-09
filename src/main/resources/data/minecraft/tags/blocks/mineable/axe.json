@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "mystical_index:library"
+    "mystical_index:library",
+    "mystical_index:index_lectern"
   ]
 }

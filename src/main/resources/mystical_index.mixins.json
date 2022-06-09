@@ -1,7 +1,7 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "net.messer.mixin",
+  "package": "net.messer.mystical_index.mixin",
   "compatibilityLevel": "JAVA_16",
   "mixins": [
     "ItemStackPickupMixin",

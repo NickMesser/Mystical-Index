@@ -1,4 +1,4 @@
-package net.messer.mixin;
+package net.messer.mystical_index.mixin;
 
 import net.messer.mystical_index.block.entity.IndexLecternBlockEntity;
 import net.messer.mystical_index.item.ModItems;
