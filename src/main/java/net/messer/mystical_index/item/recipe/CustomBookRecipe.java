@@ -1,7 +1,6 @@
 package net.messer.mystical_index.item.recipe;
 
 import com.google.common.collect.Maps;
-import eu.pb4.polymer.api.item.PolymerRecipe;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.ModRecipes;
 import net.messer.mystical_index.item.custom.PageItem;
@@ -26,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class CustomBookRecipe extends SpecialCraftingRecipe implements PolymerRecipe {
+public class CustomBookRecipe extends SpecialCraftingRecipe {
     private static final Ingredient BINDING = Ingredient.ofItems(Items.LEATHER);
     private static final Map<Item, Integer> CATALYSTS = Util.make(Maps.newHashMap(), hashMap -> {
         hashMap.put(Items.AMETHYST_SHARD, 2);
@@ -128,10 +127,5 @@ public class CustomBookRecipe extends SpecialCraftingRecipe implements PolymerRe
     @Override
     public RecipeSerializer<?> getSerializer() {
         return ModRecipes.CUSTOM_BOOK;
-    }
-
-    @Override
-    public @Nullable Recipe<?> getPolymerRecipe(Recipe<?> input) {
-        return null;
     }
 }

@@ -1,6 +1,5 @@
 package net.messer.mystical_index.block.entity;
 
-import eu.pb4.polymer.api.utils.PolymerObject;
 import net.messer.mystical_index.block.ModBlockEntities;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.custom.book.CustomIndexBook;
@@ -19,7 +18,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
-public class IndexLecternBlockEntity extends LecternBlockEntity implements PolymerObject { // TODO seperate IndexingBlockEntity
+public class IndexLecternBlockEntity extends LecternBlockEntity { // TODO seperate IndexingBlockEntity
     private static final int CIRCLE_PERIOD = 200;
     private static final int CIRCLE_INTERVAL = 2;
     private static final int FLAME_INTERVAL = 4;

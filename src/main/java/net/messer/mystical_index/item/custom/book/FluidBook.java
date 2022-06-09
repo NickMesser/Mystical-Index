@@ -159,9 +159,4 @@ public class FluidBook extends BookItem {
         var fluidInventory = new SingleFluidStackingInventory(stack);
         return fluidInventory.IsFluidEmpty();
     }
-
-    @Override
-    public Item getPolymerItem(ItemStack itemStack, @Nullable ServerPlayerEntity player) {
-        return Items.ENCHANTED_BOOK;
-    }
 }

@@ -1,10 +1,10 @@
 package net.messer.mystical_index.block.entity;
 
 import com.google.common.collect.ImmutableList;
-import eu.pb4.polymer.api.utils.PolymerObject;
 import net.messer.mystical_index.block.ModBlockEntities;
+import net.messer.mystical_index.block.custom.LibraryBlock;
 import net.messer.mystical_index.item.custom.book.InventoryBookItem;
-import net.messer.mystical_index.item.inventory.ILibraryInventory;
+import net.messer.mystical_index.item.inventory.LibraryInventory;
 import net.messer.mystical_index.screen.LibraryInventoryScreenHandler;
 import net.messer.mystical_index.util.ContentsIndex;
 import net.messer.mystical_index.util.request.ExtractionRequest;
@@ -23,16 +23,26 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandlerFactory, ILibraryInventory, PolymerObject, IndexInteractable {
+public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandlerFactory, LibraryInventory, IndexInteractable {
     private final DefaultedList<ItemStack> storedBooks = DefaultedList.ofSize(5, ItemStack.EMPTY); // todo put size into state
 
     @Override
     public DefaultedList<ItemStack> getItems() {
         return storedBooks;
+    }
+
+    @Override
+    public void updateBlockState(int books) {
+        BlockState state = getCachedState();
+        World world = getWorld();
+        if (state.get(LibraryBlock.BOOKS) != books && world != null) {
+            world.setBlockState(getPos(), state.with(LibraryBlock.BOOKS, books));
+        }
     }
 
     public ContentsIndex getContents() {
@@ -56,7 +66,7 @@ public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandle
     @Nullable
     @Override
     public ScreenHandler createMenu(int syncId, PlayerInventory inv, PlayerEntity player) {
-        return new LibraryInventoryScreenHandler(syncId,inv,this);
+        return new LibraryInventoryScreenHandler(syncId, inv, this);
     }
 
     @Override

@@ -1,0 +1,6 @@
+{
+  "parent": "mystical_index:block/library",
+  "textures": {
+    "side": "mystical_index:block/library_5"
+  }
+}

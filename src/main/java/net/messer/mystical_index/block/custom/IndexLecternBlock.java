@@ -1,6 +1,5 @@
 package net.messer.mystical_index.block.custom;
 
-import eu.pb4.polymer.api.block.PolymerBlock;
 import net.messer.mystical_index.block.ModBlockEntities;
 import net.messer.mystical_index.block.entity.IndexLecternBlockEntity;
 import net.messer.mystical_index.events.MixinHooks;
@@ -9,7 +8,6 @@ import net.messer.mystical_index.util.LecternTracker;
 import net.messer.mystical_index.util.WorldEffects;
 import net.messer.mystical_index.util.request.InsertionRequest;
 import net.messer.mystical_index.util.request.LibraryIndex;
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.LecternBlock;
@@ -38,19 +36,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 @SuppressWarnings("deprecation")
-public class IndexLecternBlock extends LecternBlock implements PolymerBlock {
+public class IndexLecternBlock extends LecternBlock {
     public IndexLecternBlock(Settings settings) {
         super(settings);
-    }
-
-    @Override
-    public Block getPolymerBlock(BlockState state) {
-        return Blocks.LECTERN;
-    }
-
-    @Override
-    public BlockState getPolymerBlockState(BlockState state) {
-        return getPolymerBlock(state).getStateWithProperties(state);
     }
 
     @Override

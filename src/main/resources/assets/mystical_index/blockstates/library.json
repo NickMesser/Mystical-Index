@@ -1,5 +1,10 @@
 {
   "variants": {
-    "": {"model": "mystical_index:block/library"}
+    "books=0": {"model": "mystical_index:block/library_empty"},
+    "books=1": {"model": "mystical_index:block/library_1"},
+    "books=2": {"model": "mystical_index:block/library_2"},
+    "books=3": {"model": "mystical_index:block/library_3"},
+    "books=4": {"model": "mystical_index:block/library_4"},
+    "books=5": {"model": "mystical_index:block/library_5"}
   }
 }

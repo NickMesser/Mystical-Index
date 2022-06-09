@@ -275,16 +275,16 @@ public abstract class InventoryBookItem extends BookItem {
     }
 
     public static void playRemoveOneSound(PlayerEntity player) {
-        MysticalIndex.playSoundOnServer(
+        MysticalIndex.playUISound(
                 player, SoundEvents.ITEM_BUNDLE_REMOVE_ONE, SoundCategory.PLAYERS, player.getEyePos());
-        MysticalIndex.playSoundOnServer(
+        MysticalIndex.playUISound(
                 player, SoundEvents.ITEM_BOOK_PAGE_TURN, SoundCategory.PLAYERS, player.getEyePos(), 0.4f);
     }
 
     public static void playInsertSound(PlayerEntity player) {
-        MysticalIndex.playSoundOnServer(
+        MysticalIndex.playUISound(
                 player, SoundEvents.ITEM_BUNDLE_INSERT, SoundCategory.PLAYERS, player.getEyePos());
-        MysticalIndex.playSoundOnServer(
+        MysticalIndex.playUISound(
                 player, SoundEvents.ITEM_BOOK_PAGE_TURN, SoundCategory.PLAYERS, player.getEyePos(), 0.4f);
     }
 

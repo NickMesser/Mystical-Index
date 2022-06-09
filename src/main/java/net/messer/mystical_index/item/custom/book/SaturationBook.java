@@ -48,9 +48,4 @@ public class SaturationBook extends InventoryBookItem {
 
         super.inventoryTick(book, world, entity, slot, selected);
     }
-
-    @Override
-    public Item getPolymerItem(ItemStack itemStack, @Nullable ServerPlayerEntity player) {
-        return Items.KNOWLEDGE_BOOK;
-    }
 }

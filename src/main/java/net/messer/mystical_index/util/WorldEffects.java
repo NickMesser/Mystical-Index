@@ -3,6 +3,8 @@ package net.messer.mystical_index.util;
 import net.messer.mystical_index.util.request.IndexInteractable;
 import net.messer.mystical_index.util.request.Request;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.client.util.ParticleUtil;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.world.ServerWorld;

@@ -1,6 +1,5 @@
 package net.messer.mystical_index.item.custom;
 
-import eu.pb4.polymer.api.item.PolymerItem;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.messer.mystical_index.item.custom.book.CustomIndexBook;
 import net.messer.mystical_index.item.custom.book.CustomInventoryBook;
@@ -9,8 +8,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
@@ -21,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class PageItem extends Item implements PolymerItem {
+public abstract class PageItem extends Item {
     public PageItem() {
         super(new FabricItemSettings().group(ItemGroup.TOOLS));
     }
@@ -83,19 +80,15 @@ public abstract class PageItem extends Item implements PolymerItem {
         return Rarity.UNCOMMON;
     }
 
-    @Override
-    public Item getPolymerItem(ItemStack itemStack, @Nullable ServerPlayerEntity player) {
-        return Items.FILLED_MAP;
-    }
-
     public abstract int getColor();
 
-    @Override
-    public ItemStack getPolymerItemStack(ItemStack itemStack, @Nullable ServerPlayerEntity player) {
-        var returnStack = PolymerItem.super.getPolymerItemStack(itemStack, player);
-        returnStack.getOrCreateSubNbt("display").putInt("MapColor", getColor());
-        return returnStack;
-    }
+    // TODO display color on item texture somehow
+//    @Override
+//    public ItemStack getPolymerItemStack(ItemStack itemStack, @Nullable ServerPlayerEntity player) {
+//        var returnStack = PolymerItem.super.getPolymerItemStack(itemStack, player);
+//        returnStack.getOrCreateSubNbt("display").putInt("MapColor", getColor());
+//        return returnStack;
+//    }
 
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {

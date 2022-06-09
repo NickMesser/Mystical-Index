@@ -63,11 +63,6 @@ public class CustomInventoryBook extends InventoryBookItem {
     }
 
     @Override
-    public Item getPolymerItem(ItemStack itemStack, @Nullable ServerPlayerEntity player) {
-        return Items.BOOK;
-    }
-
-    @Override
     public int getMaxTypes(ItemStack book) {
         return book.getOrCreateNbt().getInt(MAX_TYPES_TAG);
     }

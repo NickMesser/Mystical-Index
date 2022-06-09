@@ -1,8 +1,6 @@
 package net.messer.mystical_index.block.custom;
 
 
-import eu.pb4.polymer.api.block.PolymerBlock;
-import net.messer.mystical_index.block.ModProperties;
 import net.messer.mystical_index.block.entity.LibraryBlockEntity;
 import net.messer.mystical_index.util.LecternTracker;
 import net.messer.mystical_index.util.request.IndexInteractable;
@@ -24,8 +22,8 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
-public class LibraryBlock extends BlockWithEntity implements BlockEntityProvider, PolymerBlock {
-    public static final IntProperty BOOKS = ModProperties.BOOKS;
+public class LibraryBlock extends BlockWithEntity implements BlockEntityProvider {
+    public static final IntProperty BOOKS = IntProperty.of("books", 0, 5);
 
     public LibraryBlock(Settings settings) {
         super(settings);
@@ -89,9 +87,4 @@ public class LibraryBlock extends BlockWithEntity implements BlockEntityProvider
     public void afterBreak(World world, PlayerEntity player, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, ItemStack stack) {
         LecternTracker.unRegisterFromLectern((IndexInteractable) blockEntity);
     }
-
-    @Override
-    public Block getPolymerBlock(BlockState state) {
-        return Blocks.BOOKSHELF;
-    } // TODO use alternative block for empty shelf, loom mb? otherwise think of alternative to shearing
 }

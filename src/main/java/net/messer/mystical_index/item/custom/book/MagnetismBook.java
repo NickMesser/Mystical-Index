@@ -133,9 +133,4 @@ public class MagnetismBook extends BookItem {
 
         stack.getNbt().put("Filtered Items", nbtList);
     }
-
-    @Override
-    public Item getPolymerItem(ItemStack itemStack, @Nullable ServerPlayerEntity player) {
-        return Items.KNOWLEDGE_BOOK;
-    }
 }

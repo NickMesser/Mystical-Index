@@ -110,7 +110,7 @@ public class ModItems {
                                 .formatted(Colors.colorByRatio(linksUsedRatio)));
                         properties.add(new TranslatableText("item.mystical_index.custom_index.tooltip.link_range",
                                 bookItem.getMaxRange(book, false))
-                                .formatted(Colors.colorByRatio(linksUsedRatio)));
+                                .formatted(Formatting.YELLOW));
                         properties.add(new TranslatableText("item.mystical_index.custom_index.tooltip.range",
                                 bookItem.getMaxRange(book, true))
                                 .formatted(Formatting.YELLOW));

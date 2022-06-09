@@ -12,11 +12,6 @@ public class BuildingBook extends InventoryBookItem {
     }
 
     @Override
-    public Item getPolymerItem(ItemStack itemStack, @Nullable ServerPlayerEntity player) {
-        return Items.ENCHANTED_BOOK;
-    }
-
-    @Override
     public int getMaxTypes(ItemStack book) {
         return 1;
     }
