@@ -20,6 +20,7 @@
   "item.mystical_index.custom_index.tooltip.manual": " Manual Indexing",
   "item.mystical_index.custom_index.tooltip.automatic": " Automatic Indexing",
   "item.mystical_index.custom_index.tooltip.range": "  %d Max Range",
+  "item.mystical_index.custom_index.tooltip.link_range": "  %d Max Linked Range",
   "item.mystical_index.custom_index.tooltip.links": "  %d/%d Links",
   "item.mystical_index.custom_index.tooltip.extenders": "  %d/%d Extenders",
   "item.mystical_index.page.tooltip.when_applied": "When bound into a book:",

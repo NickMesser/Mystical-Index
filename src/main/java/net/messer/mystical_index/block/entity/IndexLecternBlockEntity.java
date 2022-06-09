@@ -40,16 +40,25 @@ public class IndexLecternBlockEntity extends LecternBlockEntity implements Polym
         return ((CustomIndexBook) ModItems.CUSTOM_INDEX).getMaxLinks(getBook(), lectern);
     }
 
+    public boolean isLinked() {
+        return ((CustomIndexBook) ModItems.CUSTOM_INDEX).getLinks(getBook()) != 0;
+    }
+
     public void setLinkedLibraries(LibraryIndex linkedLibraries) {
         this.linkedLibraries = linkedLibraries;
     }
 
     public LibraryIndex getLinkedLibraries() {
+        if (isLinked()) {
+            return ((CustomIndexBook) ModItems.CUSTOM_INDEX).getIndex(getBook(), getWorld(), getPos());
+        }
         return linkedLibraries;
     }
 
     public void loadLinkedLibraries() {
-        setLinkedLibraries(LibraryIndex.fromRange(world, pos, getMaxRange(true), true));
+        if (!isLinked()) {
+            setLinkedLibraries(LibraryIndex.fromRange(world, pos, getMaxRange(true), true));
+        }
     }
 
     public static void serverTick(World world, BlockPos pos, BlockState state, IndexLecternBlockEntity be) {
@@ -99,7 +108,7 @@ public class IndexLecternBlockEntity extends LecternBlockEntity implements Polym
                     }
                 }
 
-                LecternTracker.addIndexLectern(be);
+                LecternTracker.addIndexLectern(be); // TODO lectern shouldnt index nearby libraries if in linked mode
             } else {
                 LecternTracker.removeIndexLectern(be);
             }

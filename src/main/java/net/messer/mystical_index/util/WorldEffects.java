@@ -72,7 +72,7 @@ public class WorldEffects {
 
     public static void blockParticles(World world, BlockPos pos, ParticleEffect effect) {
         if (world instanceof ServerWorld serverWorld) {
-            ParticleUtilServer.spawnParticle(serverWorld, pos, effect, UniformIntProvider.create(3, 5));
+            ServerParticleUtil.spawnParticle(serverWorld, pos, effect, UniformIntProvider.create(3, 5));
         }
     }
 }

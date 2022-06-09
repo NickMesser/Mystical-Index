@@ -8,7 +8,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.intprovider.UniformIntProvider;
 
-public class ParticleUtilServer {
+public class ServerParticleUtil {
     public static void spawnParticle(ServerWorld world, BlockPos pos, ParticleEffect effect, UniformIntProvider range) {
         for (Direction direction : Direction.values()) {
             int i = range.get(world.random);

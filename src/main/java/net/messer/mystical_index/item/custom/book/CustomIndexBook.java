@@ -42,9 +42,9 @@ public class CustomIndexBook extends CustomInventoryBook {
     public static final double LECTERN_PICKUP_RADIUS = 2d;
     public static final UUID EXTRACTED_DROP_UUID = UUID.randomUUID();
 
-    public static final String INDEXING_TYPE_TAG = "indexing_type";
-    public static final String INDEXING_TYPE_MANUAL_TAG = "manual";
-    public static final String INDEXING_TYPE_AUTO_TAG = "auto";
+//    public static final String INDEXING_TYPE_TAG = "indexing_type";
+//    public static final String INDEXING_TYPE_MANUAL_TAG = "manual";
+//    public static final String INDEXING_TYPE_AUTO_TAG = "auto";
 
     public static final String MAX_RANGE_TAG = "max_range";
     public static final String MAX_LINKS_TAG = "max_links";
@@ -87,20 +87,22 @@ public class CustomIndexBook extends CustomInventoryBook {
         return book.getOrCreateNbt().getList(LINKED_BLOCKS_TAG, NbtElement.LIST_TYPE).size();
     }
 
-    public boolean getAutoIndexing(ItemStack book) {
-        return book.getOrCreateNbt().getString(INDEXING_TYPE_TAG).equals(INDEXING_TYPE_AUTO_TAG);
-    }
+//    public boolean getAutoIndexing(ItemStack book) {
+//        return book.getOrCreateNbt().getString(INDEXING_TYPE_TAG).equals(INDEXING_TYPE_AUTO_TAG);
+//    }
 
     @SuppressWarnings("ConstantConditions")
-    public LibraryIndex getIndex(ItemStack book, World world) {
+    public LibraryIndex getIndex(ItemStack book, World world, BlockPos pos) {
         var index = new LibraryIndex();
         var nbtList = book.getOrCreateNbt().getList(LINKED_BLOCKS_TAG, NbtElement.LIST_TYPE);
         for (int i = 0; i < nbtList.size(); i++) {
             var posList = nbtList.getList(i);
-            if (world.getBlockEntity(
-                    new BlockPos(posList.getInt(0), posList.getInt(1), posList.getInt(2))
-                        ) instanceof IIndexInteractable interactable)
+            var interactablePos = blockPosFromList(posList);
+
+            if (pos.isWithinDistance(interactablePos, getMaxRange(book, false)) &&
+                    world.getBlockEntity(interactablePos) instanceof IIndexInteractable interactable) {
                 index.interactables.add(interactable);
+            }
         }
         return index;
     }
@@ -139,7 +141,6 @@ public class CustomIndexBook extends CustomInventoryBook {
         World world = context.getWorld();
         BlockState blockState = world.getBlockState(blockPos = context.getBlockPos());
         var book = context.getStack();
-        var autoIndexing = getAutoIndexing(book);
 
         // Try to put book on lectern
         if (blockState.isOf(Blocks.LECTERN) && !blockState.get(LecternBlock.HAS_BOOK)) {
@@ -156,10 +157,7 @@ public class CustomIndexBook extends CustomInventoryBook {
             ) ? ActionResult.success(true) : ActionResult.PASS;
         }
         // Try linking library or extender to book
-        else if ((
-                    (blockState.isOf(ModBlocks.LIBRARY) && !autoIndexing) ||
-                    (blockState.isOf(ModBlocks.LIBRARY) && autoIndexing) // TODO make this extender instead of library
-                ) && context.getPlayer() != null && context.getPlayer().isSneaking()) {
+        else if (blockState.isOf(ModBlocks.LIBRARY) && context.getPlayer() != null && context.getPlayer().isSneaking()) {
 
             var nbt = book.getOrCreateNbt();
             var librariesList = nbt.getList(LINKED_BLOCKS_TAG, NbtElement.LIST_TYPE);
@@ -173,7 +171,7 @@ public class CustomIndexBook extends CustomInventoryBook {
                         0.5f, 0.2f + world.getRandom().nextFloat() * 0.4f);
                 WorldEffects.blockParticles(world, blockPos, ParticleTypes.ENCHANTED_HIT);
             } else {
-                if (librariesList.size() >= getMaxLinks(book, autoIndexing)) {
+                if (librariesList.size() >= getMaxLinks(book, true)) {
                     world.playSound(null, pos.getX(), pos.getY(), pos.getZ(),
                             SoundEvents.ENTITY_ENDER_EYE_DEATH, SoundCategory.BLOCKS,
                             1f, 1.8f + world.getRandom().nextFloat() * 0.2f);

@@ -83,7 +83,7 @@ public class ModItems {
                 public ItemStack onCraftToBook(ItemStack page, ItemStack book) {
                     var indexBook = new ItemStack(CUSTOM_INDEX);
                     var nbt = book.getOrCreateNbt();
-                    nbt.putString(CustomIndexBook.INDEXING_TYPE_TAG, CustomIndexBook.INDEXING_TYPE_AUTO_TAG);
+//                    nbt.putString(CustomIndexBook.INDEXING_TYPE_TAG, CustomIndexBook.INDEXING_TYPE_AUTO_TAG);
                     indexBook.setNbt(nbt);
                     return indexBook;
                 }
@@ -105,8 +105,11 @@ public class ModItems {
                         var linksMax = bookItem.getMaxLinks(book, true);
                         double linksUsedRatio = (double) linksUsed / linksMax;
 
-                        properties.add(new TranslatableText("item.mystical_index.custom_index.tooltip.extenders",
+                        properties.add(new TranslatableText("item.mystical_index.custom_index.tooltip.links",
                                 linksUsed, linksMax)
+                                .formatted(Colors.colorByRatio(linksUsedRatio)));
+                        properties.add(new TranslatableText("item.mystical_index.custom_index.tooltip.link_range",
+                                bookItem.getMaxRange(book, false))
                                 .formatted(Colors.colorByRatio(linksUsedRatio)));
                         properties.add(new TranslatableText("item.mystical_index.custom_index.tooltip.range",
                                 bookItem.getMaxRange(book, true))
