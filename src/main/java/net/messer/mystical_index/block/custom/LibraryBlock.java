@@ -5,18 +5,16 @@ import eu.pb4.polymer.api.block.PolymerBlock;
 import net.messer.mystical_index.block.ModProperties;
 import net.messer.mystical_index.block.entity.LibraryBlockEntity;
 import net.messer.mystical_index.util.LecternTracker;
-import net.messer.mystical_index.util.request.IIndexInteractable;
+import net.messer.mystical_index.util.request.IndexInteractable;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.IntProperty;
-import net.minecraft.state.property.Properties;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.ItemScatterer;
@@ -84,12 +82,12 @@ public class LibraryBlock extends BlockWithEntity implements BlockEntityProvider
 
     @Override
     public void onBlockAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean notify) {
-        LecternTracker.tryRegisterToLectern((IIndexInteractable) world.getBlockEntity(pos));
+        LecternTracker.tryRegisterToLectern((IndexInteractable) world.getBlockEntity(pos));
     }
 
     @Override
     public void afterBreak(World world, PlayerEntity player, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, ItemStack stack) {
-        LecternTracker.unRegisterFromLectern((IIndexInteractable) blockEntity);
+        LecternTracker.unRegisterFromLectern((IndexInteractable) blockEntity);
     }
 
     @Override

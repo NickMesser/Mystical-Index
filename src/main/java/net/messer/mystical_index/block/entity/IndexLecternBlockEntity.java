@@ -19,7 +19,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
-public class IndexLecternBlockEntity extends LecternBlockEntity implements PolymerObject {
+public class IndexLecternBlockEntity extends LecternBlockEntity implements PolymerObject { // TODO seperate IndexingBlockEntity
     private static final int CIRCLE_PERIOD = 200;
     private static final int CIRCLE_INTERVAL = 2;
     private static final int FLAME_INTERVAL = 4;
@@ -40,7 +40,7 @@ public class IndexLecternBlockEntity extends LecternBlockEntity implements Polym
         return ((CustomIndexBook) ModItems.CUSTOM_INDEX).getMaxLinks(getBook(), lectern);
     }
 
-    public boolean isLinked() {
+    public boolean hasRangedLinking() {
         return ((CustomIndexBook) ModItems.CUSTOM_INDEX).getLinks(getBook()) != 0;
     }
 
@@ -49,15 +49,16 @@ public class IndexLecternBlockEntity extends LecternBlockEntity implements Polym
     }
 
     public LibraryIndex getLinkedLibraries() {
-        if (isLinked()) {
-            return ((CustomIndexBook) ModItems.CUSTOM_INDEX).getIndex(getBook(), getWorld(), getPos());
-        }
         return linkedLibraries;
     }
 
     public void loadLinkedLibraries() {
-        if (!isLinked()) {
+        if (hasRangedLinking()) {
+            // Set linked libraries from range if no specific links are set.
             setLinkedLibraries(LibraryIndex.fromRange(world, pos, getMaxRange(true), true));
+        } else {
+            // Set linked libraries to specific links taken from the book.
+            setLinkedLibraries(((CustomIndexBook) ModItems.CUSTOM_INDEX).getIndex(getBook(), getWorld(), getPos()));
         }
     }
 
@@ -108,7 +109,7 @@ public class IndexLecternBlockEntity extends LecternBlockEntity implements Polym
                     }
                 }
 
-                LecternTracker.addIndexLectern(be); // TODO lectern shouldnt index nearby libraries if in linked mode
+                LecternTracker.addIndexLectern(be);
             } else {
                 LecternTracker.removeIndexLectern(be);
             }

@@ -5,7 +5,7 @@ import net.minecraft.item.ItemStack;
 
 import java.util.List;
 
-public interface IIndexInteractable {
+public interface IndexInteractable {
     ContentsIndex getContents();
 
     default List<ItemStack> countItems(ExtractionRequest request) {

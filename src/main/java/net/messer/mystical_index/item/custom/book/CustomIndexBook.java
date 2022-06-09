@@ -3,7 +3,7 @@ package net.messer.mystical_index.item.custom.book;
 import net.messer.mystical_index.block.ModBlocks;
 import net.messer.mystical_index.block.custom.IndexLecternBlock;
 import net.messer.mystical_index.util.WorldEffects;
-import net.messer.mystical_index.util.request.IIndexInteractable;
+import net.messer.mystical_index.util.request.IndexInteractable;
 import net.messer.mystical_index.util.request.InsertionRequest;
 import net.messer.mystical_index.util.request.LibraryIndex;
 import net.minecraft.block.BlockState;
@@ -100,7 +100,7 @@ public class CustomIndexBook extends CustomInventoryBook {
             var interactablePos = blockPosFromList(posList);
 
             if (pos.isWithinDistance(interactablePos, getMaxRange(book, false)) &&
-                    world.getBlockEntity(interactablePos) instanceof IIndexInteractable interactable) {
+                    world.getBlockEntity(interactablePos) instanceof IndexInteractable interactable) {
                 index.interactables.add(interactable);
             }
         }

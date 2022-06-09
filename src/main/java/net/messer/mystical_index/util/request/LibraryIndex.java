@@ -13,22 +13,22 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public class LibraryIndex implements IIndexInteractable {
+public class LibraryIndex implements IndexInteractable {
     public static final int ITEM_SEARCH_RANGE = 5; // TODO: config // TODO: higher range for lectern based somehow, extenders?
     public static final int LECTERN_SEARCH_RANGE = 8;
-    public final Set<IIndexInteractable> interactables;
+    public final Set<IndexInteractable> interactables;
 
     public LibraryIndex() {
         this.interactables = new HashSet<>();
     }
 
-    public LibraryIndex(Set<IIndexInteractable> interactables) {
+    public LibraryIndex(Set<IndexInteractable> interactables) {
         this.interactables = interactables;
     }
 
     public ContentsIndex getContents() {
         ContentsIndex result = new ContentsIndex();
-        for (IIndexInteractable entity : interactables) {
+        for (IndexInteractable entity : interactables) {
             result.merge(entity.getContents());
         }
         return result;
@@ -55,7 +55,7 @@ public class LibraryIndex implements IIndexInteractable {
                 for (int y = -searchRange; y <= searchRange; y++) {
                     BlockPos testPos = pos.add(x, y, z);
                     if (ModTags.INDEX_INTRACTABLE.contains(world.getBlockState(testPos).getBlock()) &&
-                            world.getBlockEntity(testPos) instanceof IIndexInteractable entity) {
+                            world.getBlockEntity(testPos) instanceof IndexInteractable entity) {
                         result.add(entity, particles ? WorldEffects::registrationParticles : i -> {});
                     }
                 }
@@ -67,7 +67,7 @@ public class LibraryIndex implements IIndexInteractable {
         return result;
     }
 
-    public void add(IIndexInteractable interactable, Consumer<IIndexInteractable> callback) {
+    public void add(IndexInteractable interactable, Consumer<IndexInteractable> callback) {
         interactables.add(interactable);
         callback.accept(interactable);
     }
@@ -76,7 +76,7 @@ public class LibraryIndex implements IIndexInteractable {
     public List<ItemStack> extractItems(ExtractionRequest request, boolean apply) {
         ImmutableList.Builder<ItemStack> builder = ImmutableList.builder();
 
-        for (IIndexInteractable entity : interactables) {
+        for (IndexInteractable entity : interactables) {
             if (request.isSatisfied()) break;
 
             builder.addAll(entity.extractItems(request, apply));
@@ -87,7 +87,7 @@ public class LibraryIndex implements IIndexInteractable {
 
     @Override
     public void insertStack(InsertionRequest request) {
-        for (IIndexInteractable entity : interactables) {
+        for (IndexInteractable entity : interactables) {
             if (request.isSatisfied()) break;
 
             entity.insertStack(request);

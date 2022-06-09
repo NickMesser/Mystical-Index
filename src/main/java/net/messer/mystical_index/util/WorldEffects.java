@@ -1,6 +1,6 @@
 package net.messer.mystical_index.util;
 
-import net.messer.mystical_index.util.request.IIndexInteractable;
+import net.messer.mystical_index.util.request.IndexInteractable;
 import net.messer.mystical_index.util.request.Request;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.particle.ParticleEffect;
@@ -64,7 +64,7 @@ public class WorldEffects {
         world.spawnParticles(ParticleTypes.ENCHANT, particlePos.getX(), particlePos.getY(), particlePos.getZ(), 1, 0, 0, 0, 0);
     }
 
-    public static void registrationParticles(IIndexInteractable interactable) { // TODO add subtle sound
+    public static void registrationParticles(IndexInteractable interactable) { // TODO add subtle sound
         if (interactable instanceof BlockEntity blockEntity) {
             blockParticles(blockEntity.getWorld(), blockEntity.getPos(), ParticleTypes.SOUL_FIRE_FLAME);
         }

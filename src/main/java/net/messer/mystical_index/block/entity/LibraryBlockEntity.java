@@ -8,7 +8,7 @@ import net.messer.mystical_index.item.inventory.ILibraryInventory;
 import net.messer.mystical_index.screen.LibraryInventoryScreenHandler;
 import net.messer.mystical_index.util.ContentsIndex;
 import net.messer.mystical_index.util.request.ExtractionRequest;
-import net.messer.mystical_index.util.request.IIndexInteractable;
+import net.messer.mystical_index.util.request.IndexInteractable;
 import net.messer.mystical_index.util.request.InsertionRequest;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandlerFactory, ILibraryInventory, PolymerObject, IIndexInteractable {
+public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandlerFactory, ILibraryInventory, PolymerObject, IndexInteractable {
     private final DefaultedList<ItemStack> storedBooks = DefaultedList.ofSize(5, ItemStack.EMPTY); // todo put size into state
 
     @Override
