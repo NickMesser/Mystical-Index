@@ -3,12 +3,10 @@ package net.messer.mystical_index.item.recipe;
 import com.google.common.collect.Maps;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.ModRecipes;
-import net.messer.mystical_index.item.custom.book.BookItem;
+import net.messer.mystical_index.item.custom.book.MysticalBookItem;
 import net.messer.mystical_index.item.custom.page.ActionPageItem;
 import net.messer.mystical_index.item.custom.page.AttributePageItem;
 import net.messer.mystical_index.item.custom.page.PageItem;
-import net.messer.mystical_index.item.custom.book.CustomIndexBook;
-import net.messer.mystical_index.item.custom.book.CustomInventoryBook;
 import net.messer.mystical_index.item.custom.page.TypePageItem;
 import net.minecraft.inventory.CraftingInventory;
 import net.minecraft.item.Item;
@@ -27,7 +25,7 @@ import net.minecraft.world.World;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class CustomBookRecipe extends SpecialCraftingRecipe {
+public class MysticalBookRecipe extends SpecialCraftingRecipe {
     private static final Ingredient BINDING = Ingredient.ofItems(Items.LEATHER);
     // Defines how many pages are supported by each catalyst item.
     private static final Map<Item, Integer> CATALYSTS = Util.make(Maps.newHashMap(), hashMap -> {
@@ -37,7 +35,7 @@ public class CustomBookRecipe extends SpecialCraftingRecipe {
     });
     private static final Ingredient CATALYST = Ingredient.ofItems(CATALYSTS.keySet().toArray(new Item[0]));
 
-    public CustomBookRecipe(Identifier identifier) {
+    public MysticalBookRecipe(Identifier identifier) {
         super(identifier);
     }
 
@@ -117,19 +115,21 @@ public class CustomBookRecipe extends SpecialCraftingRecipe {
 
     @Override
     public ItemStack craft(CraftingInventory craftingInventory) {
-        var book = new ItemStack(ModItems.CUSTOM_BOOK);
+        var book = new ItemStack(ModItems.MYSTICAL_BOOK);
         var nbt = book.getOrCreateNbt();
+        // TODO blend the page colors together, and put into book nbt.
+        var color = -1;
 
         for (int i = 0; i < craftingInventory.size(); ++i) {
             var stack = craftingInventory.getStack(i);
             if (stack.getItem() instanceof TypePageItem pageItem) {
                 pageItem.onCraftToBook(stack, book);
-                nbt.put(BookItem.TYPE_PAGE_TAG, NbtString.of(Registry.ITEM.getId(pageItem).toString()));
+                nbt.put(MysticalBookItem.TYPE_PAGE_TAG, NbtString.of(Registry.ITEM.getId(pageItem).toString()));
                 break;
             }
         }
 
-        var pagesList = nbt.getList(BookItem.ATTRIBUTE_PAGES_TAG, NbtElement.STRING_TYPE);
+        var pagesList = nbt.getList(MysticalBookItem.ATTRIBUTE_PAGES_TAG, NbtElement.STRING_TYPE);
         for (int i = 0; i < craftingInventory.size(); ++i) {
             var stack = craftingInventory.getStack(i);
             if (stack.getItem() instanceof AttributePageItem pageItem) {
@@ -142,7 +142,7 @@ public class CustomBookRecipe extends SpecialCraftingRecipe {
             var stack = craftingInventory.getStack(i);
             if (stack.getItem() instanceof ActionPageItem pageItem) {
                 pageItem.onCraftToBook(stack, book);
-                nbt.put(BookItem.ACTION_PAGE_TAG, NbtString.of(Registry.ITEM.getId(pageItem).toString()));
+                nbt.put(MysticalBookItem.ACTION_PAGE_TAG, NbtString.of(Registry.ITEM.getId(pageItem).toString()));
                 break;
             }
         }
@@ -157,11 +157,11 @@ public class CustomBookRecipe extends SpecialCraftingRecipe {
 
     @Override
     public ItemStack getOutput() {
-        return new ItemStack(ModItems.CUSTOM_BOOK);
+        return new ItemStack(ModItems.MYSTICAL_BOOK);
     }
 
     @Override
     public RecipeSerializer<?> getSerializer() {
-        return ModRecipes.CUSTOM_BOOK;
+        return ModRecipes.MYSTICAL_BOOK;
     }
 }

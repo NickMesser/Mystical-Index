@@ -15,10 +15,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 
 public class ModItems {
-    public static final Item CUSTOM_BOOK = registerItem("custom_book",
-            new CustomInventoryBook(new FabricItemSettings().group(ItemGroup.MISC).maxCount(1)));
-    public static final Item CUSTOM_INDEX = registerItem("custom_index",
-            new CustomIndexBook(new FabricItemSettings().group(ItemGroup.MISC).maxCount(1)));
+    public static final MysticalBookItem MYSTICAL_BOOK = registerItem("mystical_book", new MysticalBookItem(new FabricItemSettings().maxCount(1)));
 
     public static final PageItem ITEM_STORAGE_TYPE_PAGE = registerPageItem("item_storage_type_page", new ItemStorageTypePage());
     public static final PageItem INDEXING_TYPE_PAGE = registerPageItem("indexing_type_page", new IndexingTypePage());
@@ -33,7 +30,7 @@ public class ModItems {
         return item;
     }
 
-    private static Item registerItem(String name, Item item){
+    private static <T extends Item> T registerItem(String name, T item){
         return Registry.register(Registry.ITEM, new Identifier(MysticalIndex.MOD_ID, name), item);
     }
 

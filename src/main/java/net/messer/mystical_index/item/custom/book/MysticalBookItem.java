@@ -6,10 +6,12 @@ import net.messer.mystical_index.util.PageRegistry;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.StackReference;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.nbt.NbtElement;
+import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
@@ -22,13 +24,18 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public abstract class BookItem extends Item {
+public class MysticalBookItem extends Item {
     public static final String TYPE_PAGE_TAG = "type_page";
     public static final String ATTRIBUTE_PAGES_TAG = "attribute_pages";
     public static final String ACTION_PAGE_TAG = "action_page";
+    public static final String COLOR_TAG = "color";
 
-    public BookItem(Settings settings) {
+    public MysticalBookItem(Settings settings) {
         super(settings);
+    }
+
+    public int getColor(ItemStack stack) {
+        return stack.getOrCreateNbt().getInt(COLOR_TAG);
     }
 
     /**
@@ -58,7 +65,7 @@ public abstract class BookItem extends Item {
     }
 
     /**
-     * Similar to {@link BookItem#forPage(ItemStack, String, Function, Object)}, runs a function for the page with the given tag,
+     * Similar to {@link MysticalBookItem#forPage(ItemStack, String, Function, Object)}, runs a function for the page with the given tag,
      * but safely casts it to {@link InteractingPage} first.
      * This opens up page functions that have return values.
      */
@@ -73,7 +80,7 @@ public abstract class BookItem extends Item {
 
     /**
      * <p>
-     * Similar to {@link BookItem#forInteractingPage(ItemStack, String, Function, Object)},
+     * Similar to {@link MysticalBookItem#forInteractingPage(ItemStack, String, Function, Object)},
      * but runs the function for all pages supporting interaction. (Namely type pages and action pages)
      * </p>
      * <p>
@@ -129,21 +136,39 @@ public abstract class BookItem extends Item {
     }
 
     @Override
-    public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
-        super.inventoryTick(stack, world, entity, slot, selected);
-
-        forEachPage(stack, page -> page.book$inventoryTick(stack, world, entity, slot, selected));
+    public boolean onClicked(ItemStack book, ItemStack otherStack, Slot slot, ClickType clickType, PlayerEntity player, StackReference cursorStackReference) {
+        return forInteractingPages(book, result -> result,
+                page -> page.book$onClicked(book, otherStack, slot, clickType, player, cursorStackReference), false);
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        super.appendTooltip(stack, world, tooltip, context);
+    public boolean onStackClicked(ItemStack book, Slot slot, ClickType clickType, PlayerEntity player) {
+        return forInteractingPages(book, result -> result,
+                page -> page.book$onStackClicked(book, slot, clickType, player), false);
+    }
+
+    @Override
+    public void inventoryTick(ItemStack book, World world, Entity entity, int slot, boolean selected) {
+        super.inventoryTick(book, world, entity, slot, selected);
+
+        forEachPage(book, page -> page.book$inventoryTick(book, world, entity, slot, selected));
+    }
+
+    @Override
+    public void appendTooltip(ItemStack book, @Nullable World world, List<Text> tooltip, TooltipContext context) {
+        super.appendTooltip(book, world, tooltip, context);
 
         tooltip.add(new LiteralText(""));
         tooltip.add(new TranslatableText("item.mystical_index.custom_book.tooltip.capacity")
                 .formatted(Formatting.GRAY));
 
-        forEachPage(stack, page -> page.book$appendTooltip(stack, world, tooltip, context));
+        forEachPage(book, page -> page.book$appendTooltip(book, world, tooltip, context));
+    }
+
+    @Override
+    public boolean hasGlint(ItemStack book) {
+        return forInteractingPages(book, result -> result,
+                page -> page.book$hasGlint(book), false);
     }
 
     @Override

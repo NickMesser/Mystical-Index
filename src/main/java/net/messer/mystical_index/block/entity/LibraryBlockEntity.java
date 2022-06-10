@@ -3,7 +3,7 @@ package net.messer.mystical_index.block.entity;
 import com.google.common.collect.ImmutableList;
 import net.messer.mystical_index.block.ModBlockEntities;
 import net.messer.mystical_index.block.custom.LibraryBlock;
-import net.messer.mystical_index.item.custom.book.InventoryBookItem;
+import net.messer.mystical_index.item.custom.book.MysticalBookItem;
 import net.messer.mystical_index.item.inventory.LibraryInventory;
 import net.messer.mystical_index.screen.LibraryInventoryScreenHandler;
 import net.messer.mystical_index.util.ContentsIndex;
@@ -88,7 +88,7 @@ public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandle
         for (ItemStack book : getItems()) {
             if (request.isSatisfied()) break;
 
-            if (book.getItem() instanceof InventoryBookItem)
+            if (book.getItem() instanceof MysticalBookItem)
                 builder.addAll(InventoryBookItem.extractItems(book, request, apply));
         }
 

@@ -2,7 +2,6 @@ package net.messer.mystical_index.mixin;
 
 import net.messer.mystical_index.block.entity.IndexLecternBlockEntity;
 import net.messer.mystical_index.item.ModItems;
-import net.messer.mystical_index.item.custom.book.CustomIndexBook;
 import net.messer.mystical_index.util.LecternTracker;
 import net.messer.mystical_index.util.WorldEffects;
 import net.messer.mystical_index.util.request.ExtractionRequest;
