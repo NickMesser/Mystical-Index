@@ -24,10 +24,10 @@ public abstract class PageItem extends Item {
     public void onCraftToBook(ItemStack page, ItemStack book) {
     }
 
-    public void bookInventoryTick(ItemStack book, World world, Entity entity, int slot, boolean selected) {
+    public void book$inventoryTick(ItemStack book, World world, Entity entity, int slot, boolean selected) {
     }
 
-    public void bookAppendTooltip(ItemStack book, List<Text> properties) {
+    public void book$appendTooltip(ItemStack book, @Nullable World world, List<Text> properties, TooltipContext context) {
     }
 
     @Override
@@ -51,7 +51,5 @@ public abstract class PageItem extends Item {
 
         tooltip.add(new LiteralText(""));
         tooltip.add(new TranslatableText("item.mystical_index.page.tooltip.when_applied").formatted(Formatting.GRAY));
-
-        bookAppendTooltip(null, tooltip);
     }
 }

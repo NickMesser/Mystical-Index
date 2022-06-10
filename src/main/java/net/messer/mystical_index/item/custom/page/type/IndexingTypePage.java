@@ -35,7 +35,7 @@ public class IndexingTypePage extends TypePageItem {
     }
 
     @Override
-    public void bookAppendTooltip(ItemStack book, List<Text> properties) {
+    public void book$appendTooltip(ItemStack book, List<Text> properties) {
         properties.add(new TranslatableText("item.mystical_index.custom_index.tooltip.automatic")
                 .formatted(Formatting.BLUE));
 

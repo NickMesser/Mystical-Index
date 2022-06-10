@@ -211,6 +211,6 @@ public class CustomIndexBook extends CustomInventoryBook {
         tooltip.add(new LiteralText(""));
         tooltip.add(new TranslatableText("item.mystical_index.custom_book.tooltip.capacity")
                 .formatted(Formatting.GRAY));
-        forEachPageType(book, pageItem -> pageItem.bookAppendTooltip(book, tooltip));
+        forEachPage(book, pageItem -> pageItem.book$appendTooltip(book, tooltip));
     }
 }

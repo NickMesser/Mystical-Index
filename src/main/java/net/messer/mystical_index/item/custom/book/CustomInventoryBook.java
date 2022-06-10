@@ -20,7 +20,7 @@ public class CustomInventoryBook extends InventoryBookItem {
 
     @Override
     public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
-        forEachPageType(stack, pageItem -> pageItem.bookInventoryTick(stack, world, entity, slot, selected));
+        forEachPage(stack, pageItem -> pageItem.book$inventoryTick(stack, world, entity, slot, selected));
 
         super.inventoryTick(stack, world, entity, slot, selected);
     }
@@ -29,7 +29,7 @@ public class CustomInventoryBook extends InventoryBookItem {
     public void appendTooltip(ItemStack book, @Nullable World world, List<Text> tooltip, TooltipContext context) {
         super.appendTooltip(book, world, tooltip, context);
 
-        forEachPageType(book, pageItem -> pageItem.bookAppendTooltip(book, tooltip));
+        forEachPage(book, pageItem -> pageItem.book$appendTooltip(book, tooltip));
     }
 
     @Override

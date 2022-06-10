@@ -13,4 +13,8 @@ public class PageRegistry {
         if (item instanceof PageItem pageItem)
             REGISTERED_PAGES.put(itemId, pageItem);
     }
+
+    public static PageItem getPage(Identifier itemId) {
+        return REGISTERED_PAGES.get(itemId);
+    }
 }
