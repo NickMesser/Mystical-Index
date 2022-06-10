@@ -2,12 +2,13 @@ package net.messer.mystical_index.block.custom;
 
 import net.messer.mystical_index.block.ModBlockEntities;
 import net.messer.mystical_index.block.entity.IndexLecternBlockEntity;
-import net.messer.mystical_index.events.MixinHooks;
+import net.messer.mystical_index.client.Particles;
 import net.messer.mystical_index.item.custom.book.CustomIndexBook;
 import net.messer.mystical_index.util.LecternTracker;
 import net.messer.mystical_index.util.WorldEffects;
 import net.messer.mystical_index.util.request.InsertionRequest;
 import net.messer.mystical_index.util.request.LibraryIndex;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.LecternBlock;
@@ -29,14 +30,21 @@ import net.minecraft.util.function.BooleanBiFunction;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.intprovider.UniformIntProvider;
+import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.Random;
 
 @SuppressWarnings("deprecation")
 public class IndexLecternBlock extends LecternBlock {
+    private static final VoxelShape LECTERN_INSIDE_SHAPE = Block.createCuboidShape(2.0, 11.0, 2.0, 14.0, 16.0, 14.0);
+    private static final VoxelShape LECTERN_ABOVE_SHAPE = Block.createCuboidShape(0.0, 16.0, 0.0, 16.0, 32.0, 16.0);
+    public static final VoxelShape LECTERN_INPUT_AREA_SHAPE = VoxelShapes.union(LECTERN_INSIDE_SHAPE, LECTERN_ABOVE_SHAPE);
+
     public IndexLecternBlock(Settings settings) {
         super(settings);
     }
@@ -55,7 +63,7 @@ public class IndexLecternBlock extends LecternBlock {
                 !Objects.equals(itemEntity.getThrower(), CustomIndexBook.EXTRACTED_DROP_UUID) &&
                 VoxelShapes.matchesAnywhere(VoxelShapes.cuboid(
                                 entity.getBoundingBox().offset(-pos.getX(), -pos.getY(), -pos.getZ())),
-                        MixinHooks.LECTERN_INPUT_AREA_SHAPE, BooleanBiFunction.AND) &&
+                        LECTERN_INPUT_AREA_SHAPE, BooleanBiFunction.AND) &&
                 world instanceof ServerWorld serverWorld &&
                 serverWorld.getBlockEntity(pos) instanceof IndexLecternBlockEntity lectern) {
 
@@ -111,5 +119,14 @@ public class IndexLecternBlock extends LecternBlock {
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
         return checkType(type, ModBlockEntities.INDEX_LECTERN_BLOCK_ENTITY, IndexLecternBlockEntity::serverTick);
+    }
+
+    @Override
+    public void randomDisplayTick(BlockState state, World world, BlockPos pos, Random random) {
+        super.randomDisplayTick(state, world, pos, random);
+
+        Particles.spawnParticles(
+                world, Vec3d.ofCenter(pos).add(0, 0.7, 0), ParticleTypes.SOUL_FIRE_FLAME,
+                0.3, 0.3, 0.3, UniformIntProvider.create(1, 1), 0);
     }
 }

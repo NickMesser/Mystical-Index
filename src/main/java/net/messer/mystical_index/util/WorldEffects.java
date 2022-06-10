@@ -62,13 +62,6 @@ public class WorldEffects {
         }
     }
 
-    public static void drawParticleCircle(ServerWorld world, Vec3d pos, int cycleTicks, int cycleOffset, double radius) {
-        int currentTick = world.getServer().getTicks();
-        double animationPos = (currentTick + cycleOffset) % cycleTicks / ((double) cycleTicks) * (2 * Math.PI);
-        Vec3d particlePos = pos.add(radius * Math.cos(animationPos), 0, radius * Math.sin(animationPos));
-        world.spawnParticles(ParticleTypes.ENCHANT, particlePos.getX(), particlePos.getY(), particlePos.getZ(), 1, 0, 0, 0, 0);
-    }
-
     public static void registrationParticles(IndexInteractable interactable) { // TODO add subtle sound
         if (interactable instanceof BlockEntity blockEntity) {
             blockParticles(blockEntity.getWorld(), blockEntity.getPos(), ParticleTypes.SOUL_FIRE_FLAME);

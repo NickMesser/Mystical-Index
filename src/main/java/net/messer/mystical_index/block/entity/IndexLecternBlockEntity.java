@@ -1,10 +1,10 @@
 package net.messer.mystical_index.block.entity;
 
 import net.messer.mystical_index.block.ModBlockEntities;
+import net.messer.mystical_index.client.Particles;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.custom.book.CustomIndexBook;
 import net.messer.mystical_index.util.LecternTracker;
-import net.messer.mystical_index.util.WorldEffects;
 import net.messer.mystical_index.util.request.LibraryIndex;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.LecternBlock;
@@ -16,7 +16,10 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.intprovider.UniformIntProvider;
 import net.minecraft.world.World;
+
+import static net.minecraft.block.LecternBlock.HAS_BOOK;
 
 public class IndexLecternBlockEntity extends LecternBlockEntity { // TODO seperate IndexingBlockEntity
     private static final int CIRCLE_PERIOD = 200;
@@ -24,7 +27,7 @@ public class IndexLecternBlockEntity extends LecternBlockEntity { // TODO sepera
     private static final int FLAME_INTERVAL = 4;
     private static final int SOUND_INTERVAL = 24;
 
-    private boolean firstTick = true;
+    public int tick = 0;
     private LibraryIndex linkedLibraries = new LibraryIndex();
 
     public IndexLecternBlockEntity(BlockPos pos, BlockState state) {
@@ -63,56 +66,56 @@ public class IndexLecternBlockEntity extends LecternBlockEntity { // TODO sepera
 
     public static void serverTick(World world, BlockPos pos, BlockState state, IndexLecternBlockEntity be) {
         if (world instanceof ServerWorld serverWorld) {
-            if (state.get(LecternBlock.HAS_BOOK)) {
-                if (be.firstTick) {
+            if (state.get(HAS_BOOK)) {
+                if (be.tick == 0) {
                     be.loadLinkedLibraries();
-
-                    be.firstTick = false;
-                }
-
-                Vec3d centerPos = Vec3d.ofCenter(pos, 0.5);
-                if (
-                        serverWorld.getServer().getTicks() % CIRCLE_INTERVAL == 0 &&
-                        serverWorld.getClosestPlayer(
-                                pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
-                                CustomIndexBook.LECTERN_PICKUP_RADIUS, false
-                        ) != null
-                ) {
-                    WorldEffects.drawParticleCircle(
-                            serverWorld, centerPos, CIRCLE_PERIOD,
-                            0, CustomIndexBook.LECTERN_PICKUP_RADIUS
-                    );
-                    WorldEffects.drawParticleCircle(
-                            serverWorld, centerPos, -CIRCLE_PERIOD,
-                            0, CustomIndexBook.LECTERN_PICKUP_RADIUS
-                    );
-                    WorldEffects.drawParticleCircle(
-                            serverWorld, centerPos, CIRCLE_PERIOD,
-                            CIRCLE_PERIOD / 2, CustomIndexBook.LECTERN_PICKUP_RADIUS
-                    );
-                    WorldEffects.drawParticleCircle(
-                            serverWorld, centerPos, -CIRCLE_PERIOD,
-                            CIRCLE_PERIOD / 2, CustomIndexBook.LECTERN_PICKUP_RADIUS
-                    );
-
-                    if (serverWorld.getServer().getTicks() % FLAME_INTERVAL == 0) {
-                        serverWorld.spawnParticles(
-                                ParticleTypes.SOUL_FIRE_FLAME, centerPos.getX(), centerPos.getY() + 0.3, centerPos.getZ(),
-                                1, 0.3, 0.3, 0.3, 0);
-                    }
-
-                    if (serverWorld.getServer().getTicks() % SOUND_INTERVAL == 0) {
-                        serverWorld.playSound(null, centerPos.getX(), centerPos.getY(), centerPos.getZ(),
-                                SoundEvents.BLOCK_BEACON_AMBIENT, SoundCategory.BLOCKS,
-                                0.3f, 1.4f + world.getRandom().nextFloat() * 0.4f);
-                    }
                 }
 
                 LecternTracker.addIndexLectern(be);
             } else {
                 LecternTracker.removeIndexLectern(be);
             }
+        } else {
+            if (state.get(HAS_BOOK)) {
+                var centerPos = Vec3d.ofCenter(pos, 0.5);
+                if (
+                        be.tick % CIRCLE_INTERVAL == 0 &&
+                        world.getClosestPlayer(
+                                pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
+                                CustomIndexBook.LECTERN_PICKUP_RADIUS, false
+                        ) != null
+                ) {
+                    Particles.drawParticleCircle(
+                            be.tick,
+                            world, centerPos, CIRCLE_PERIOD,
+                            0, CustomIndexBook.LECTERN_PICKUP_RADIUS
+                    );
+                    Particles.drawParticleCircle(
+                            be.tick,
+                            world, centerPos, -CIRCLE_PERIOD,
+                            0, CustomIndexBook.LECTERN_PICKUP_RADIUS
+                    );
+                    Particles.drawParticleCircle(
+                            be.tick,
+                            world, centerPos, CIRCLE_PERIOD,
+                            CIRCLE_PERIOD / 2, CustomIndexBook.LECTERN_PICKUP_RADIUS
+                    );
+                    Particles.drawParticleCircle(
+                            be.tick,
+                            world, centerPos, -CIRCLE_PERIOD,
+                            CIRCLE_PERIOD / 2, CustomIndexBook.LECTERN_PICKUP_RADIUS
+                    );
+
+                    if (be.tick % SOUND_INTERVAL == 0) {
+                        world.playSound(centerPos.getX(), centerPos.getY(), centerPos.getZ(),
+                                SoundEvents.BLOCK_BEACON_AMBIENT, SoundCategory.BLOCKS,
+                                0.3f, 1.4f + world.getRandom().nextFloat() * 0.4f, true);
+                    }
+                }
+            }
         }
+
+        be.tick++;
     }
 
     @Override

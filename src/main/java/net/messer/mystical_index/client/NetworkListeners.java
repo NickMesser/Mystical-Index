@@ -16,7 +16,7 @@ public class NetworkListeners {
             var effect = Registry.PARTICLE_TYPE.get(buf.readIdentifier());
 
             client.execute(() -> {
-                Particles.spawnParticle(client.world, pos, (ParticleEffect) effect,
+                Particles.spawnParticlesCoveringBlock(client.world, pos, (ParticleEffect) effect,
                         UniformIntProvider.create(3, 5), 0.0);
             });
         });

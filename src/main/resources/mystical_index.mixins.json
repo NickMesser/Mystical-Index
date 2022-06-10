@@ -4,7 +4,6 @@
   "package": "net.messer.mystical_index.mixin",
   "compatibilityLevel": "JAVA_16",
   "mixins": [
-    "ItemStackPickupMixin",
     "ServerPlayNetworkHandlerMixin"
   ],
   "client": [

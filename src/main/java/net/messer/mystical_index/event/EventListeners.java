@@ -1,4 +1,4 @@
-package net.messer.mystical_index.events;
+package net.messer.mystical_index.event;
 
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerBlockEntityEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
