@@ -3,9 +3,13 @@ package net.messer.mystical_index.item.recipe;
 import com.google.common.collect.Maps;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.ModRecipes;
-import net.messer.mystical_index.item.custom.PageItem;
+import net.messer.mystical_index.item.custom.book.BookItem;
+import net.messer.mystical_index.item.custom.page.ActionPageItem;
+import net.messer.mystical_index.item.custom.page.AttributePageItem;
+import net.messer.mystical_index.item.custom.page.PageItem;
 import net.messer.mystical_index.item.custom.book.CustomIndexBook;
 import net.messer.mystical_index.item.custom.book.CustomInventoryBook;
+import net.messer.mystical_index.item.custom.page.TypePageItem;
 import net.minecraft.inventory.CraftingInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -13,25 +17,24 @@ import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtString;
 import net.minecraft.recipe.Ingredient;
-import net.minecraft.recipe.Recipe;
 import net.minecraft.recipe.RecipeSerializer;
 import net.minecraft.recipe.SpecialCraftingRecipe;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Map;
 
 public class CustomBookRecipe extends SpecialCraftingRecipe {
     private static final Ingredient BINDING = Ingredient.ofItems(Items.LEATHER);
+    // Defines how many pages are supported by each catalyst item.
     private static final Map<Item, Integer> CATALYSTS = Util.make(Maps.newHashMap(), hashMap -> {
         hashMap.put(Items.AMETHYST_SHARD, 2);
         hashMap.put(Items.EMERALD, 4);
         hashMap.put(Items.DIAMOND, 6);
-    }); // Defines how many pages are supported by each catalyst item.
+    });
     private static final Ingredient CATALYST = Ingredient.ofItems(CATALYSTS.keySet().toArray(new Item[0]));
 
     public CustomBookRecipe(Identifier identifier) {
@@ -42,7 +45,11 @@ public class CustomBookRecipe extends SpecialCraftingRecipe {
     public boolean matches(CraftingInventory craftingInventory, World world) {
         var binding = false;
         var catalyst = 0;
+        TypePageItem typePage = null;
+        ActionPageItem actionPage = null;
         var pages = new ArrayList<PageItem>();
+
+        // Check binding and catalyst, and store type page.
         for (int i = 0; i < craftingInventory.size(); ++i) {
             var itemStack = craftingInventory.getStack(i);
             if (itemStack.isEmpty()) continue;
@@ -60,55 +67,84 @@ public class CustomBookRecipe extends SpecialCraftingRecipe {
                 catalyst = CATALYSTS.get(itemStack.getItem());
                 continue;
             }
-            if (itemStack.getItem() instanceof PageItem page) {
-                var incompatiblePages = page.incompatiblePages(itemStack);
+            if (itemStack.getItem() instanceof TypePageItem page) {
+                if (typePage != null) {
+                    return false;
+                }
+                typePage = page;
+                pages.add(page);
+                continue;
+            }
+            if (itemStack.getItem() instanceof PageItem) {
+                continue;
+            }
+            return false;
+        }
+
+        // Store action page.
+        for (int i = 0; i < craftingInventory.size(); ++i) {
+            var itemStack = craftingInventory.getStack(i);
+            if (itemStack.isEmpty()) continue;
+            if (itemStack.getItem() instanceof ActionPageItem page) {
+                if (actionPage != null) {
+                    return false;
+                }
+                actionPage = page;
+                pages.add(page);
+            }
+        }
+
+        // Get attribute pages and check if all pages are compatible.
+        for (int i = 0; i < craftingInventory.size(); ++i) {
+            var itemStack = craftingInventory.getStack(i);
+            if (itemStack.isEmpty()) continue;
+            if (itemStack.getItem() instanceof AttributePageItem page) {
+                if (!page.getCompatibleTypes(itemStack).contains(typePage)) {
+                    return false;
+                }
+                var incompatiblePages = page.getIncompatibleAttributes(itemStack);
                 if (!page.bookCanHaveMultiple(itemStack) && (pages.contains(page) ||
                         pages.stream().anyMatch(i1 -> incompatiblePages.stream().anyMatch(i1::equals)))) {
                     return false;
                 }
                 pages.add(page);
-                continue;
             }
-            return false;
         }
-        return binding && catalyst > 0 && pages.size() <= catalyst;
+
+        // Return true if all requirements are met.
+        return binding && catalyst > 0 && typePage != null && pages.size() <= catalyst;
     }
 
     @Override
     public ItemStack craft(CraftingInventory craftingInventory) {
         var book = new ItemStack(ModItems.CUSTOM_BOOK);
         var nbt = book.getOrCreateNbt();
-        var pagesList = nbt.getList(CustomInventoryBook.PAGES_TAG, NbtElement.STRING_TYPE);
-
-        nbt.putInt(CustomInventoryBook.MAX_STACKS_TAG, ((PageItem) ModItems.STACKS_PAGE).getStacksIncrease(null));
-        nbt.putInt(CustomInventoryBook.MAX_TYPES_TAG, ((PageItem) ModItems.TYPES_PAGE).getTypesIncrease(null));
-
-        var autoIndexing = true;
-        do {
-            autoIndexing = !autoIndexing;
-            var subTag = nbt.getCompound(autoIndexing ? CustomIndexBook.AUTO_INDEXING_TAG : CustomIndexBook.MANUAL_INDEXING_TAG);
-
-            subTag.putInt(CustomIndexBook.MAX_RANGE_TAG, ((PageItem) ModItems.STACKS_PAGE).getRangeIncrease(null, autoIndexing));
-            subTag.putInt(CustomIndexBook.MAX_LINKS_TAG, ((PageItem) ModItems.TYPES_PAGE).getLinksIncrease(null, autoIndexing));
-
-            nbt.put(autoIndexing ? CustomIndexBook.AUTO_INDEXING_TAG : CustomIndexBook.MANUAL_INDEXING_TAG, subTag);
-        } while (!autoIndexing);
 
         for (int i = 0; i < craftingInventory.size(); ++i) {
             var stack = craftingInventory.getStack(i);
-            if (stack.getItem() instanceof PageItem pageItem) {
-                pagesList.add(NbtString.of(Registry.ITEM.getId(pageItem).toString()));
-                book = pageItem.onCraftToBook(stack, book);
+            if (stack.getItem() instanceof TypePageItem pageItem) {
+                pageItem.onCraftToBook(stack, book);
+                nbt.put(BookItem.TYPE_PAGE_TAG, NbtString.of(Registry.ITEM.getId(pageItem).toString()));
+                break;
             }
         }
 
-        nbt.put(CustomInventoryBook.PAGES_TAG, pagesList);
-        if (book.getItem() instanceof CustomIndexBook) {
-            nbt.remove(CustomInventoryBook.MAX_STACKS_TAG);
-            nbt.remove(CustomInventoryBook.MAX_TYPES_TAG);
-        } else {
-            nbt.remove(CustomIndexBook.MANUAL_INDEXING_TAG);
-            nbt.remove(CustomIndexBook.AUTO_INDEXING_TAG);
+        var pagesList = nbt.getList(BookItem.ATTRIBUTE_PAGES_TAG, NbtElement.STRING_TYPE);
+        for (int i = 0; i < craftingInventory.size(); ++i) {
+            var stack = craftingInventory.getStack(i);
+            if (stack.getItem() instanceof AttributePageItem pageItem) {
+                pageItem.onCraftToBook(stack, book);
+                pagesList.add(NbtString.of(Registry.ITEM.getId(pageItem).toString()));
+            }
+        }
+
+        for (int i = 0; i < craftingInventory.size(); ++i) {
+            var stack = craftingInventory.getStack(i);
+            if (stack.getItem() instanceof ActionPageItem pageItem) {
+                pageItem.onCraftToBook(stack, book);
+                nbt.put(BookItem.ACTION_PAGE_TAG, NbtString.of(Registry.ITEM.getId(pageItem).toString()));
+                break;
+            }
         }
 
         return book;

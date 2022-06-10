@@ -2,24 +2,17 @@ package net.messer.mystical_index.item;
 
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.messer.mystical_index.MysticalIndex;
-import net.messer.mystical_index.item.custom.PageItem;
 import net.messer.mystical_index.item.custom.book.*;
-import net.messer.mystical_index.item.custom.page.AutoIndexPage;
-import net.messer.mystical_index.item.custom.page.StacksPage;
-import net.messer.mystical_index.item.custom.page.TypesPage;
-import net.messer.mystical_index.util.Colors;
+import net.messer.mystical_index.item.custom.page.PageItem;
+import net.messer.mystical_index.item.custom.page.type.IndexingTypePage;
+import net.messer.mystical_index.item.custom.page.attribute.StacksPage;
+import net.messer.mystical_index.item.custom.page.attribute.TypesPage;
+import net.messer.mystical_index.item.custom.page.type.ItemStorageTypePage;
+import net.messer.mystical_index.util.PageRegistry;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.Rarity;
 import net.minecraft.util.registry.Registry;
-
-import java.util.List;
 
 public class ModItems {
     public static final Item CUSTOM_BOOK = registerItem("custom_book",
@@ -27,14 +20,16 @@ public class ModItems {
     public static final Item CUSTOM_INDEX = registerItem("custom_index",
             new CustomIndexBook(new FabricItemSettings().group(ItemGroup.MISC).maxCount(1)));
 
-    public static final Item STACKS_PAGE = registerItem("stacks_page", new StacksPage());
-    public static final Item TYPES_PAGE = registerItem("types_page", new TypesPage());
-    public static final Item AUTO_INDEX_PAGE = registerTickingPageItem("auto_index_page", new AutoIndexPage());
+    public static final PageItem ITEM_STORAGE_TYPE_PAGE = registerPageItem("item_storage_type_page", new ItemStorageTypePage());
+    public static final PageItem INDEXING_TYPE_PAGE = registerPageItem("indexing_type_page", new IndexingTypePage());
 
-    private static Item registerTickingPageItem(String name, Item item) {
+    public static final PageItem STACKS_PAGE = registerPageItem("stacks_page", new StacksPage());
+    public static final PageItem TYPES_PAGE = registerPageItem("types_page", new TypesPage());
+
+    private static PageItem registerPageItem(String name, PageItem item) {
         var id = new Identifier(MysticalIndex.MOD_ID, name);
         Registry.register(Registry.ITEM, id, item);
-        CustomInventoryBook.registerPage(id, item);
+        PageRegistry.registerPage(id, item);
         return item;
     }
 

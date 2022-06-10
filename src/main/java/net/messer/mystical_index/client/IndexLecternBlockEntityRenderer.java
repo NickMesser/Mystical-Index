@@ -40,7 +40,7 @@ public class IndexLecternBlockEntityRenderer implements BlockEntityRenderer<Inde
         float anim = blockEntity.tick + tickDelta;
 
         matrices.push();
-        double bookHeightOffset = 0.10 + Math.sin(anim * 0.05) * 0.1;
+        double bookHeightOffset = 0.6 + Math.sin(anim * 0.08) * 0.03;
         matrices.translate(0.5, 1.0625 + bookHeightOffset, 0.5);
         float g = blockState.get(LecternBlock.FACING).rotateYClockwise().asRotation();
         matrices.multiply(Vec3f.POSITIVE_Y.getDegreesQuaternion(-g));
