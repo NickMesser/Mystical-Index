@@ -2,6 +2,7 @@ package net.messer.mystical_index.item.custom.book;
 
 import net.messer.mystical_index.item.custom.page.InteractingPage;
 import net.messer.mystical_index.item.custom.page.PageItem;
+import net.messer.mystical_index.item.custom.page.TypePageItem;
 import net.messer.mystical_index.util.PageRegistry;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.Entity;
@@ -36,6 +37,38 @@ public class MysticalBookItem extends Item {
 
     public int getColor(ItemStack stack) {
         return stack.getOrCreateNbt().getInt(COLOR_TAG);
+    }
+
+    /**
+     * Safely get a single page from a tag.
+     */
+    @Nullable
+    private PageItem getPage(ItemStack book, String tag) {
+        try {
+            return PageRegistry.getPage(new Identifier(book.getOrCreateNbt().getString(tag)));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Returns the current type page of the book.
+     */
+    @Nullable
+    public TypePageItem getTypePage(ItemStack book) {
+        return (TypePageItem) getPage(book, TYPE_PAGE_TAG);
+    }
+
+    /**
+     * Checks if the type page of this book is of a certain class, and if so, returns it.
+     */
+    @Nullable
+    public static <T extends TypePageItem> T isType(ItemStack book, Class<T> clazz) {
+        try {
+            return clazz.cast(((MysticalBookItem) book.getItem()).getTypePage(book));
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /**
@@ -157,10 +190,6 @@ public class MysticalBookItem extends Item {
     @Override
     public void appendTooltip(ItemStack book, @Nullable World world, List<Text> tooltip, TooltipContext context) {
         super.appendTooltip(book, world, tooltip, context);
-
-        tooltip.add(new LiteralText(""));
-        tooltip.add(new TranslatableText("item.mystical_index.custom_book.tooltip.capacity")
-                .formatted(Formatting.GRAY));
 
         forEachPage(book, page -> page.book$appendTooltip(book, world, tooltip, context));
     }

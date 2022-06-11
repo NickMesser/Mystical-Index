@@ -38,6 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.Random;
 
+import static net.messer.mystical_index.block.entity.IndexLecternBlockEntity.EXTRACTED_DROP_UUID;
+
 @SuppressWarnings("deprecation")
 public class IndexLecternBlock extends LecternBlock {
     private static final VoxelShape LECTERN_INSIDE_SHAPE = Block.createCuboidShape(2.0, 11.0, 2.0, 14.0, 16.0, 14.0);
@@ -59,7 +61,7 @@ public class IndexLecternBlock extends LecternBlock {
     @Override
     public void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity) {
         if (entity instanceof ItemEntity itemEntity &&
-                !Objects.equals(itemEntity.getThrower(), CustomIndexBook.EXTRACTED_DROP_UUID) &&
+                !Objects.equals(itemEntity.getThrower(), EXTRACTED_DROP_UUID) &&
                 VoxelShapes.matchesAnywhere(VoxelShapes.cuboid(
                                 entity.getBoundingBox().offset(-pos.getX(), -pos.getY(), -pos.getZ())),
                         LECTERN_INPUT_AREA_SHAPE, BooleanBiFunction.AND) &&

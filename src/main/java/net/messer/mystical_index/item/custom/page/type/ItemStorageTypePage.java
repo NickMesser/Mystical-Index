@@ -91,14 +91,14 @@ public class ItemStorageTypePage extends TypePageItem {
     }
 
     public int getMaxTypes(ItemStack book) {
-        return book.getOrCreateNbt().getInt(MAX_TYPES_TAG);
+        return getAttributes(book).getInt(MAX_TYPES_TAG);
     }
 
     public int getMaxStack(ItemStack book) {
-        return book.getOrCreateNbt().getInt(MAX_STACKS_TAG);
+        return getAttributes(book).getInt(MAX_STACKS_TAG);
     }
 
-    public static ContentsIndex getContents(ItemStack book) {
+    public ContentsIndex getContents(ItemStack book) {
         NbtCompound nbtCompound = book.getNbt();
         ContentsIndex result = new ContentsIndex();
         if (nbtCompound != null) {
@@ -111,7 +111,7 @@ public class ItemStorageTypePage extends TypePageItem {
         return result;
     }
 
-    protected static int getFullness(ItemStack book) {
+    protected int getFullness(ItemStack book) {
         int result = 0;
         for (BigStack bigStack : getContents(book).getAll()) {
             result += bigStack.getAmount() * getItemOccupancy(bigStack.getItem());
@@ -119,11 +119,11 @@ public class ItemStorageTypePage extends TypePageItem {
         return result;
     }
 
-    private static int getItemOccupancy(Item item) {
+    private int getItemOccupancy(Item item) {
         return 64 / item.getMaxCount();
     }
 
-    private static Optional<NbtCompound> canMergeStack(ItemStack stack, NbtList items) {
+    private Optional<NbtCompound> canMergeStack(ItemStack stack, NbtList items) {
         return items.stream()
                 .filter(NbtCompound.class::isInstance)
                 .map(NbtCompound.class::cast)
@@ -190,11 +190,11 @@ public class ItemStorageTypePage extends TypePageItem {
         return canBeTakenAmount;
     }
 
-    public static Optional<ItemStack> removeFirstStack(ItemStack book) {
+    public Optional<ItemStack> removeFirstStack(ItemStack book) {
         return removeFirstStack(book, null);
     }
 
-    public static Optional<ItemStack> removeFirstStack(ItemStack book, Integer maxAmount) {
+    public Optional<ItemStack> removeFirstStack(ItemStack book, Integer maxAmount) {
         NbtCompound bookNbt = book.getOrCreateNbt();
         if (!bookNbt.contains("Items")) {
             return Optional.empty();
@@ -227,7 +227,7 @@ public class ItemStorageTypePage extends TypePageItem {
         return Optional.of(itemStack);
     }
 
-    public static List<ItemStack> extractItems(ItemStack book, ExtractionRequest request, boolean apply) {
+    public List<ItemStack> extractItems(ItemStack book, ExtractionRequest request, boolean apply) {
         if (request.isSatisfied())
             return Collections.emptyList();
 
@@ -281,19 +281,19 @@ public class ItemStorageTypePage extends TypePageItem {
         return builder.build();
     }
 
-    public static void saveOccupancy(NbtCompound bookNbt, int stacks, int types) {
+    public void saveOccupancy(NbtCompound bookNbt, int stacks, int types) {
         bookNbt.putInt(OCCUPIED_STACKS_TAG, stacks);
         bookNbt.putInt(OCCUPIED_TYPES_TAG, types);
     }
 
-    public static void playRemoveOneSound(PlayerEntity player) {
+    public void playRemoveOneSound(PlayerEntity player) {
         MysticalIndex.playUISound(
                 player, SoundEvents.ITEM_BUNDLE_REMOVE_ONE, SoundCategory.PLAYERS, player.getEyePos());
         MysticalIndex.playUISound(
                 player, SoundEvents.ITEM_BOOK_PAGE_TURN, SoundCategory.PLAYERS, player.getEyePos(), 0.4f);
     }
 
-    public static void playInsertSound(PlayerEntity player) {
+    public void playInsertSound(PlayerEntity player) {
         MysticalIndex.playUISound(
                 player, SoundEvents.ITEM_BUNDLE_INSERT, SoundCategory.PLAYERS, player.getEyePos());
         MysticalIndex.playUISound(
@@ -319,7 +319,6 @@ public class ItemStorageTypePage extends TypePageItem {
         var typesTotal = getMaxTypes(book);
         double typesFullRatio = (double) typesOccupied / typesTotal;
 
-        super.appendTooltip(book, world, tooltip, context);
         tooltip.add(new LiteralText(""));
         tooltip.add(new TranslatableText("item.mystical_index.custom_book.tooltip.capacity")
                 .formatted(Formatting.GRAY));

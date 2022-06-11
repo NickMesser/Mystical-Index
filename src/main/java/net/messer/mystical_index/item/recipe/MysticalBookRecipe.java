@@ -97,7 +97,7 @@ public class MysticalBookRecipe extends SpecialCraftingRecipe {
             var itemStack = craftingInventory.getStack(i);
             if (itemStack.isEmpty()) continue;
             if (itemStack.getItem() instanceof AttributePageItem page) {
-                if (!page.getCompatibleTypes(itemStack).contains(typePage)) {
+                if (typePage == null || !page.getCompatibleTypes(itemStack).contains(typePage)) {
                     return false;
                 }
                 var incompatiblePages = page.getIncompatibleAttributes(itemStack);

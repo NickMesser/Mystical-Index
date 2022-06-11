@@ -6,6 +6,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
@@ -15,6 +16,8 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import static net.messer.mystical_index.item.custom.page.AttributePageItem.ATTRIBUTES_TAG;
 
 public abstract class PageItem extends Item {
     public PageItem() {
@@ -31,11 +34,15 @@ public abstract class PageItem extends Item {
     }
 
     @Override
-    public Rarity getRarity(ItemStack stack) {
+    public Rarity getRarity(ItemStack page) {
         return Rarity.UNCOMMON;
     }
 
     public abstract int getColor();
+
+    public NbtCompound getAttributes(ItemStack book) {
+        return book.getOrCreateSubNbt(ATTRIBUTES_TAG);
+    }
 
     // TODO display color on item texture somehow
 //    @Override

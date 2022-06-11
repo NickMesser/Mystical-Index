@@ -6,6 +6,8 @@ import net.minecraft.nbt.NbtCompound;
 import java.util.List;
 
 public abstract class AttributePageItem extends PageItem implements TypeDependentPage {
+    public static final String ATTRIBUTES_TAG = "attributes";
+
     public static void increaseIntAttribute(NbtCompound nbt, String attribute, int amount) {
         var attributeValue = nbt.getInt(attribute);
         nbt.putInt(attribute, attributeValue + amount);
@@ -25,6 +27,6 @@ public abstract class AttributePageItem extends PageItem implements TypeDependen
     public void onCraftToBook(ItemStack page, ItemStack book) {
         super.onCraftToBook(page, book);
 
-        appendAttributes(page, book.getOrCreateSubNbt("attributes"));
+        appendAttributes(page, book.getOrCreateSubNbt(ATTRIBUTES_TAG));
     }
 }

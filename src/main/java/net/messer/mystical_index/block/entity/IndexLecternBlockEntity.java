@@ -3,6 +3,7 @@ package net.messer.mystical_index.block.entity;
 import net.messer.mystical_index.block.ModBlockEntities;
 import net.messer.mystical_index.client.Particles;
 import net.messer.mystical_index.item.ModItems;
+import net.messer.mystical_index.item.custom.page.type.IndexingTypePage;
 import net.messer.mystical_index.util.LecternTracker;
 import net.messer.mystical_index.util.request.LibraryIndex;
 import net.minecraft.block.BlockState;
@@ -15,6 +16,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
+import java.util.UUID;
+
 import static net.minecraft.block.LecternBlock.HAS_BOOK;
 
 public class IndexLecternBlockEntity extends LecternBlockEntity { // TODO seperate IndexingBlockEntity
@@ -23,6 +26,9 @@ public class IndexLecternBlockEntity extends LecternBlockEntity { // TODO sepera
     private static final int FLAME_INTERVAL = 4;
     private static final int SOUND_INTERVAL = 24;
 
+    public static final double LECTERN_PICKUP_RADIUS = 2d;
+    public static final UUID EXTRACTED_DROP_UUID = UUID.randomUUID();
+
     public int tick = 0;
     private LibraryIndex linkedLibraries = new LibraryIndex();
 
@@ -30,16 +36,16 @@ public class IndexLecternBlockEntity extends LecternBlockEntity { // TODO sepera
         super(pos, state);
     }
 
-    public int getMaxRange(boolean lectern) {
-        return ((CustomIndexBook) ModItems.CUSTOM_INDEX).getMaxRange(getBook(), lectern);
+    public int getMaxRange(boolean linked) {
+        return ModItems.INDEXING_TYPE_PAGE.getMaxRange(getBook(), linked);
     }
 
-    public int getMaxLinks(boolean lectern) {
-        return ((CustomIndexBook) ModItems.CUSTOM_INDEX).getMaxLinks(getBook(), lectern);
+    public int getMaxLinks() {
+        return ModItems.INDEXING_TYPE_PAGE.getMaxLinks(getBook());
     }
 
     public boolean hasRangedLinking() {
-        return ((CustomIndexBook) ModItems.CUSTOM_INDEX).getLinks(getBook()) != 0;
+        return ModItems.INDEXING_TYPE_PAGE.getLinks(getBook()) != 0;
     }
 
     public void setLinkedLibraries(LibraryIndex linkedLibraries) {
@@ -53,15 +59,15 @@ public class IndexLecternBlockEntity extends LecternBlockEntity { // TODO sepera
     public void loadLinkedLibraries() {
         if (hasRangedLinking()) {
             // Set linked libraries from range if no specific links are set.
-            setLinkedLibraries(LibraryIndex.fromRange(world, pos, getMaxRange(true), true));
+            setLinkedLibraries(LibraryIndex.fromRange(world, pos, getMaxRange(false), true));
         } else {
             // Set linked libraries to specific links taken from the book.
-            setLinkedLibraries(((CustomIndexBook) ModItems.CUSTOM_INDEX).getIndex(getBook(), getWorld(), getPos()));
+            setLinkedLibraries(ModItems.INDEXING_TYPE_PAGE.getIndex(getBook(), getWorld(), getPos()));
         }
     }
 
     public static void serverTick(World world, BlockPos pos, BlockState state, IndexLecternBlockEntity be) {
-        if (world instanceof ServerWorld serverWorld) {
+        if (!world.isClient()) {
             if (state.get(HAS_BOOK)) {
                 if (be.tick == 0) {
                     be.loadLinkedLibraries();
@@ -78,28 +84,28 @@ public class IndexLecternBlockEntity extends LecternBlockEntity { // TODO sepera
                         be.tick % CIRCLE_INTERVAL == 0 &&
                         world.getClosestPlayer(
                                 pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
-                                CustomIndexBook.LECTERN_PICKUP_RADIUS, false
+                                LECTERN_PICKUP_RADIUS, false
                         ) != null
                 ) {
                     Particles.drawParticleCircle(
                             be.tick,
                             world, centerPos, CIRCLE_PERIOD,
-                            0, CustomIndexBook.LECTERN_PICKUP_RADIUS
+                            0, LECTERN_PICKUP_RADIUS
                     );
                     Particles.drawParticleCircle(
                             be.tick,
                             world, centerPos, -CIRCLE_PERIOD,
-                            0, CustomIndexBook.LECTERN_PICKUP_RADIUS
+                            0, LECTERN_PICKUP_RADIUS
                     );
                     Particles.drawParticleCircle(
                             be.tick,
                             world, centerPos, CIRCLE_PERIOD,
-                            CIRCLE_PERIOD / 2, CustomIndexBook.LECTERN_PICKUP_RADIUS
+                            CIRCLE_PERIOD / 2, LECTERN_PICKUP_RADIUS
                     );
                     Particles.drawParticleCircle(
                             be.tick,
                             world, centerPos, -CIRCLE_PERIOD,
-                            CIRCLE_PERIOD / 2, CustomIndexBook.LECTERN_PICKUP_RADIUS
+                            CIRCLE_PERIOD / 2, LECTERN_PICKUP_RADIUS
                     );
 
                     if (be.tick % SOUND_INTERVAL == 0) {

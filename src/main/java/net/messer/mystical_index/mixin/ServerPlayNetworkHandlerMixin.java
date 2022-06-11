@@ -2,6 +2,8 @@ package net.messer.mystical_index.mixin;
 
 import net.messer.mystical_index.block.entity.IndexLecternBlockEntity;
 import net.messer.mystical_index.item.ModItems;
+import net.messer.mystical_index.item.custom.book.MysticalBookItem;
+import net.messer.mystical_index.item.custom.page.type.IndexingTypePage;
 import net.messer.mystical_index.util.LecternTracker;
 import net.messer.mystical_index.util.WorldEffects;
 import net.messer.mystical_index.util.request.ExtractionRequest;
@@ -28,6 +30,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
+import static net.messer.mystical_index.block.entity.IndexLecternBlockEntity.EXTRACTED_DROP_UUID;
+import static net.messer.mystical_index.block.entity.IndexLecternBlockEntity.LECTERN_PICKUP_RADIUS;
+
 @Mixin(ServerPlayNetworkHandler.class)
 public abstract class ServerPlayNetworkHandlerMixin {
     @Shadow
@@ -41,8 +46,15 @@ public abstract class ServerPlayNetworkHandlerMixin {
         String message = packet.getChatMessage();
 
         if (!(message.startsWith("/") || player.isSpectator())) {
-            if (player.getStackInHand(Hand.MAIN_HAND).getItem() == ModItems.CUSTOM_INDEX ||
-                    player.getStackInHand(Hand.OFF_HAND).getItem() == ModItems.CUSTOM_INDEX) {
+            IndexingTypePage page = null;
+            for (Hand hand : Hand.values()) {
+                page = MysticalBookItem.isType(player.getStackInHand(hand), IndexingTypePage.class);
+                if (page != null) {
+                    break;
+                }
+            }
+
+            if (page != null) {
                 server.execute(() -> {
                     LibraryIndex index = LibraryIndex.fromRange(player.getWorld(), player.getBlockPos(), LibraryIndex.ITEM_SEARCH_RANGE);
                     ExtractionRequest request = ExtractionRequest.get(message);
@@ -58,7 +70,7 @@ public abstract class ServerPlayNetworkHandlerMixin {
                 });
                 info.cancel();
             } else { // TODO clean this up
-                IndexLecternBlockEntity lectern = LecternTracker.findNearestLectern(player, CustomIndexBook.LECTERN_PICKUP_RADIUS);
+                IndexLecternBlockEntity lectern = LecternTracker.findNearestLectern(player, LECTERN_PICKUP_RADIUS);
                 if (lectern != null) {
                     server.execute(() -> {
                         ServerWorld world = player.getWorld();
@@ -76,7 +88,7 @@ public abstract class ServerPlayNetworkHandlerMixin {
                             ItemEntity itemEntity = new ItemEntity(world, itemPos.getX(), itemPos.getY(), itemPos.getZ(), stack);
                             itemEntity.setToDefaultPickupDelay();
                             itemEntity.setVelocity(Vec3d.ZERO);
-                            itemEntity.setThrower(CustomIndexBook.EXTRACTED_DROP_UUID);
+                            itemEntity.setThrower(EXTRACTED_DROP_UUID);
                             world.spawnEntity(itemEntity);
                         }
 

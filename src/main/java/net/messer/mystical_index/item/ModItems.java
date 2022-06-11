@@ -17,13 +17,13 @@ import net.minecraft.util.registry.Registry;
 public class ModItems {
     public static final MysticalBookItem MYSTICAL_BOOK = registerItem("mystical_book", new MysticalBookItem(new FabricItemSettings().maxCount(1)));
 
-    public static final PageItem ITEM_STORAGE_TYPE_PAGE = registerPageItem("item_storage_type_page", new ItemStorageTypePage());
-    public static final PageItem INDEXING_TYPE_PAGE = registerPageItem("indexing_type_page", new IndexingTypePage());
+    public static final ItemStorageTypePage ITEM_STORAGE_TYPE_PAGE = registerPageItem("item_storage_type_page", new ItemStorageTypePage());
+    public static final IndexingTypePage INDEXING_TYPE_PAGE = registerPageItem("indexing_type_page", new IndexingTypePage());
 
-    public static final PageItem STACKS_PAGE = registerPageItem("stacks_page", new StacksPage());
-    public static final PageItem TYPES_PAGE = registerPageItem("types_page", new TypesPage());
+    public static final StacksPage STACKS_PAGE = registerPageItem("stacks_page", new StacksPage());
+    public static final TypesPage TYPES_PAGE = registerPageItem("types_page", new TypesPage());
 
-    private static PageItem registerPageItem(String name, PageItem item) {
+    private static <T extends PageItem> T registerPageItem(String name, T item) {
         var id = new Identifier(MysticalIndex.MOD_ID, name);
         Registry.register(Registry.ITEM, id, item);
         PageRegistry.registerPage(id, item);

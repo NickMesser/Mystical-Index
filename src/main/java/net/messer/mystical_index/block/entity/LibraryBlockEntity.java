@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import net.messer.mystical_index.block.ModBlockEntities;
 import net.messer.mystical_index.block.custom.LibraryBlock;
 import net.messer.mystical_index.item.custom.book.MysticalBookItem;
+import net.messer.mystical_index.item.custom.page.type.ItemStorageTypePage;
 import net.messer.mystical_index.item.inventory.LibraryInventory;
 import net.messer.mystical_index.screen.LibraryInventoryScreenHandler;
 import net.messer.mystical_index.util.ContentsIndex;
@@ -47,9 +48,13 @@ public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandle
 
     public ContentsIndex getContents() {
         ContentsIndex contents = new ContentsIndex();
-        for (ItemStack book : getItems())
-            if (book.getItem() instanceof InventoryBookItem inventoryBookItem)
-                contents.merge(inventoryBookItem.getContents(book));
+        for (ItemStack book : getItems()) {
+            if (book.getItem() instanceof MysticalBookItem mysticalBookItem) {
+                if (mysticalBookItem.getTypePage(book) instanceof ItemStorageTypePage itemStorageTypePage) {
+                    contents.merge(itemStorageTypePage.getContents(book));
+                }
+            }
+        }
 
         return contents;
     }
@@ -88,8 +93,11 @@ public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandle
         for (ItemStack book : getItems()) {
             if (request.isSatisfied()) break;
 
-            if (book.getItem() instanceof MysticalBookItem)
-                builder.addAll(InventoryBookItem.extractItems(book, request, apply));
+            if (book.getItem() instanceof MysticalBookItem mysticalBookItem) {
+                if (mysticalBookItem.getTypePage(book) instanceof ItemStorageTypePage itemStorageTypePage) {
+                    builder.addAll(itemStorageTypePage.extractItems(book, request, apply));
+                }
+            }
         }
 
         request.runBlockAffectedCallback(this);
@@ -102,9 +110,11 @@ public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandle
         for (ItemStack book : getItems()) {
             if (request.isSatisfied()) break;
 
-            if (book.getItem() instanceof InventoryBookItem) {
-                int amountInserted = ((InventoryBookItem) book.getItem()).tryAddItem(book, request.getItemStack());
-                request.satisfy(amountInserted);
+            if (book.getItem() instanceof MysticalBookItem mysticalBookItem) {
+                if (mysticalBookItem.getTypePage(book) instanceof ItemStorageTypePage itemStorageTypePage) {
+                    int amountInserted = itemStorageTypePage.tryAddItem(book, request.getItemStack());
+                    request.satisfy(amountInserted);
+                }
             }
         }
 
