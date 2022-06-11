@@ -1,6 +1,7 @@
 package net.messer.mystical_index.item.custom.page;
 
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
+import net.messer.mystical_index.item.custom.book.MysticalBookItem;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.Item;

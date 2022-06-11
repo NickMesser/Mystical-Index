@@ -40,7 +40,7 @@ public class ItemStorageTypePage extends TypePageItem {
 
     @Override
     public int getColor() {
-        return 0x00aaaa;
+        return 0x88ff88;
     }
 
     @Override
@@ -57,6 +57,8 @@ public class ItemStorageTypePage extends TypePageItem {
 
     @Override
     public void onCraftToBook(ItemStack page, ItemStack book) {
+        super.onCraftToBook(page, book);
+
         NbtCompound attributes = getAttributes(book);
 
         attributes.putInt(MAX_STACKS_TAG, 1);

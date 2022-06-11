@@ -8,6 +8,7 @@ import net.messer.mystical_index.item.custom.page.ActionPageItem;
 import net.messer.mystical_index.item.custom.page.AttributePageItem;
 import net.messer.mystical_index.item.custom.page.PageItem;
 import net.messer.mystical_index.item.custom.page.TypePageItem;
+import net.messer.mystical_index.util.Colors;
 import net.minecraft.inventory.CraftingInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -118,12 +119,14 @@ public class MysticalBookRecipe extends SpecialCraftingRecipe {
         var book = new ItemStack(ModItems.MYSTICAL_BOOK);
         var nbt = book.getOrCreateNbt();
         // TODO blend the page colors together, and put into book nbt.
-        var color = -1;
+        var typeColor = -1;
+        var otherColors = new ArrayList<Integer>();
 
         for (int i = 0; i < craftingInventory.size(); ++i) {
             var stack = craftingInventory.getStack(i);
             if (stack.getItem() instanceof TypePageItem pageItem) {
                 pageItem.onCraftToBook(stack, book);
+                typeColor = pageItem.getColor();
                 nbt.put(MysticalBookItem.TYPE_PAGE_TAG, NbtString.of(Registry.ITEM.getId(pageItem).toString()));
                 break;
             }
@@ -134,6 +137,7 @@ public class MysticalBookRecipe extends SpecialCraftingRecipe {
             var stack = craftingInventory.getStack(i);
             if (stack.getItem() instanceof AttributePageItem pageItem) {
                 pageItem.onCraftToBook(stack, book);
+                otherColors.add(pageItem.getColor());
                 pagesList.add(NbtString.of(Registry.ITEM.getId(pageItem).toString()));
             }
         }
@@ -142,9 +146,16 @@ public class MysticalBookRecipe extends SpecialCraftingRecipe {
             var stack = craftingInventory.getStack(i);
             if (stack.getItem() instanceof ActionPageItem pageItem) {
                 pageItem.onCraftToBook(stack, book);
+                otherColors.add(pageItem.getColor());
                 nbt.put(MysticalBookItem.ACTION_PAGE_TAG, NbtString.of(Registry.ITEM.getId(pageItem).toString()));
                 break;
             }
+        }
+
+        if (otherColors.isEmpty()) {
+            ((MysticalBookItem) book.getItem()).setColor(book, typeColor);
+        } else {
+            ((MysticalBookItem) book.getItem()).setColor(book, Colors.mixColors(otherColors));
         }
 
         return book;

@@ -3,6 +3,7 @@ package net.messer.mystical_index.item.custom.book;
 import net.messer.mystical_index.item.custom.page.InteractingPage;
 import net.messer.mystical_index.item.custom.page.PageItem;
 import net.messer.mystical_index.item.custom.page.TypePageItem;
+import net.messer.mystical_index.util.Colors;
 import net.messer.mystical_index.util.PageRegistry;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.Entity;
@@ -37,6 +38,10 @@ public class MysticalBookItem extends Item {
 
     public int getColor(ItemStack stack) {
         return stack.getOrCreateNbt().getInt(COLOR_TAG);
+    }
+
+    public void setColor(ItemStack stack, int color) {
+        stack.getOrCreateNbt().putInt(COLOR_TAG, color);
     }
 
     /**

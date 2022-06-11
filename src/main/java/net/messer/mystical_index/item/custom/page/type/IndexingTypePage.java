@@ -31,7 +31,6 @@ import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.ClickType;
 import net.minecraft.util.Formatting;
-import net.minecraft.util.Rarity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
@@ -48,17 +47,12 @@ public class IndexingTypePage extends TypePageItem {
 
     @Override
     public int getColor() {
-        return 0xb33939;
+        return 0x888800;
     }
 
     @Override
     public Text getTypeDisplayName() {
         return new TranslatableText("item.mystical_index.page.tooltip.type.indexing").formatted(Formatting.DARK_PURPLE);
-    }
-
-    @Override
-    public Rarity getRarity(ItemStack stack) {
-        return Rarity.RARE;
     }
 
     public static final String LINKED_BLOCKS_TAG = "linked_blocks";
@@ -105,6 +99,8 @@ public class IndexingTypePage extends TypePageItem {
 
     @Override
     public void onCraftToBook(ItemStack page, ItemStack book) {
+        super.onCraftToBook(page, book);
+
         NbtCompound attributes = getAttributes(book);
 
         attributes.putInt(MAX_RANGE_TAG, 2);

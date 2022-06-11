@@ -73,15 +73,18 @@ public class LibraryBlock extends BlockWithEntity implements BlockEntityProvider
 
     @Override
     public void onPlaced(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
+        super.onPlaced(world, pos, state, placer, itemStack);
     }
 
     @Override
     public void onBlockAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean notify) {
         LecternTracker.tryRegisterToLectern((IndexInteractable) world.getBlockEntity(pos));
+        super.onBlockAdded(state, world, pos, oldState, notify);
     }
 
     @Override
     public void afterBreak(World world, PlayerEntity player, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, ItemStack stack) {
         LecternTracker.unRegisterFromLectern((IndexInteractable) blockEntity);
+        super.afterBreak(world, player, pos, state, blockEntity, stack);
     }
 }

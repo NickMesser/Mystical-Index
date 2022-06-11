@@ -11,6 +11,6 @@ public class RangePage extends IndexingTypePage.IndexingAttributePage {
 
     @Override
     public int getColor() {
-        return 0;
+        return 0xff0000;
     }
 }

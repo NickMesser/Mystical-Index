@@ -11,6 +11,6 @@ public class StacksPage extends ItemStorageTypePage.ItemStorageAttributePage {
 
     @Override
     public int getColor() {
-        return 0x49a337;
+        return 0xffff00;
     }
 }

@@ -11,6 +11,6 @@ public class TypesPage extends ItemStorageTypePage.ItemStorageAttributePage {
 
     @Override
     public int getColor() {
-        return 0x40b3af;
+        return 0x00ffff;
     }
 }
