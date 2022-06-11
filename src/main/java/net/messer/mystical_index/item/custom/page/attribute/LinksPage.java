@@ -11,6 +11,6 @@ public class LinksPage extends IndexingTypePage.IndexingAttributePage {
 
     @Override
     public int getColor() {
-        return 0x00ff00;
+        return 0x0000ff;
     }
 }

@@ -358,11 +358,11 @@ public class ItemStorageTypePage extends TypePageItem {
         }
 
         public int getStacksMultiplier(ItemStack page) {
-            return 0;
+            return 1;
         }
 
         public int getTypesMultiplier(ItemStack page) {
-            return 0;
+            return 1;
         }
 
         @Override
@@ -378,9 +378,9 @@ public class ItemStorageTypePage extends TypePageItem {
             var stacks = getStacksMultiplier(stack);
             var types = getTypesMultiplier(stack);
 
-            if (stacks > 0) tooltip.add(new TranslatableText("item.mystical_index.page.tooltip.type.item_storage.stacks", stacks * 64)
+            if (stacks != 1) tooltip.add(new TranslatableText("item.mystical_index.page.tooltip.type.item_storage.stacks", stacks)
                     .formatted(Formatting.DARK_GREEN));
-            if (types > 0) tooltip.add(new TranslatableText("item.mystical_index.page.tooltip.type.item_storage.types", types)
+            if (types != 1) tooltip.add(new TranslatableText("item.mystical_index.page.tooltip.type.item_storage.types", types)
                     .formatted(Formatting.DARK_GREEN));
         }
     }

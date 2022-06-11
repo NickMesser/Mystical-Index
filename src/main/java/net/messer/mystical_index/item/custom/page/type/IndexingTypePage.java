@@ -47,7 +47,7 @@ public class IndexingTypePage extends TypePageItem {
 
     @Override
     public int getColor() {
-        return 0x888800;
+        return 0xaa00aa;
     }
 
     @Override
@@ -64,7 +64,7 @@ public class IndexingTypePage extends TypePageItem {
         NbtCompound attributes = getAttributes(book);
 
         attributes.putInt(MAX_RANGE_TAG, 1);
-        attributes.putInt(MAX_LINKS_TAG, 1);
+        attributes.putInt(MAX_LINKS_TAG, 2);
         attributes.putInt(MAX_RANGE_LINKED_TAG, 20);
     }
 
@@ -242,11 +242,11 @@ public class IndexingTypePage extends TypePageItem {
         }
 
         public int getRangeMultiplier(ItemStack page, boolean linked) {
-            return 0;
+            return 1;
         }
 
         public int getLinksMultiplier(ItemStack page) {
-            return 0;
+            return 1;
         }
 
         @Override
@@ -254,6 +254,22 @@ public class IndexingTypePage extends TypePageItem {
             multiplyIntAttribute(nbt, MAX_RANGE_TAG, getRangeMultiplier(page, false));
             multiplyIntAttribute(nbt, MAX_LINKS_TAG, getLinksMultiplier(page));
             multiplyIntAttribute(nbt, MAX_RANGE_LINKED_TAG, getRangeMultiplier(page, true));
+        }
+
+        @Override
+        public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
+            super.appendTooltip(stack, world, tooltip, context);
+
+            var range = getRangeMultiplier(stack, false);
+            var links = getLinksMultiplier(stack);
+            var linkedRange = getRangeMultiplier(stack, true);
+
+            if (range != 1) tooltip.add(new TranslatableText("item.mystical_index.page.tooltip.type.indexing.range", range)
+                    .formatted(Formatting.DARK_GREEN));
+            if (links != 1) tooltip.add(new TranslatableText("item.mystical_index.page.tooltip.type.indexing.links", links)
+                    .formatted(Formatting.DARK_GREEN));
+            if (linkedRange != 1) tooltip.add(new TranslatableText("item.mystical_index.page.tooltip.type.indexing.linked_range", linkedRange)
+                    .formatted(Formatting.DARK_GREEN));
         }
     }
 }
