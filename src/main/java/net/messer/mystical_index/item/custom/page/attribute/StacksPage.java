@@ -5,8 +5,8 @@ import net.minecraft.item.ItemStack;
 
 public class StacksPage extends ItemStorageTypePage.ItemStorageAttributePage {
     @Override
-    public int getStacksIncrease(ItemStack page) {
-        return 1;
+    public int getStacksMultiplier(ItemStack page) {
+        return 2;
     }
 
     @Override

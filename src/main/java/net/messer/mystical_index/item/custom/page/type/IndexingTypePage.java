@@ -57,6 +57,17 @@ public class IndexingTypePage extends TypePageItem {
 
     public static final String LINKED_BLOCKS_TAG = "linked_blocks";
 
+    @Override
+    public void onCraftToBook(ItemStack page, ItemStack book) {
+        super.onCraftToBook(page, book);
+
+        NbtCompound attributes = getAttributes(book);
+
+        attributes.putInt(MAX_RANGE_TAG, 1);
+        attributes.putInt(MAX_LINKS_TAG, 1);
+        attributes.putInt(MAX_RANGE_LINKED_TAG, 20);
+    }
+
     private static NbtList blockPosToList(BlockPos pos) {
         var list = new NbtList();
         list.add(0, NbtInt.of(pos.getX()));
@@ -70,11 +81,11 @@ public class IndexingTypePage extends TypePageItem {
     }
 
     public int getMaxRange(ItemStack book, boolean linked) {
-        return book.getOrCreateNbt().getInt(linked ? MAX_RANGE_LINKED_TAG : MAX_RANGE_TAG);
+        return getAttributes(book).getInt(linked ? MAX_RANGE_LINKED_TAG : MAX_RANGE_TAG);
     }
 
     public int getMaxLinks(ItemStack book) {
-        return book.getOrCreateNbt().getInt(MAX_LINKS_TAG);
+        return getAttributes(book).getInt(MAX_LINKS_TAG);
     }
 
     public int getLinks(ItemStack book) {
@@ -95,17 +106,6 @@ public class IndexingTypePage extends TypePageItem {
             }
         }
         return index;
-    }
-
-    @Override
-    public void onCraftToBook(ItemStack page, ItemStack book) {
-        super.onCraftToBook(page, book);
-
-        NbtCompound attributes = getAttributes(book);
-
-        attributes.putInt(MAX_RANGE_TAG, 2);
-        attributes.putInt(MAX_LINKS_TAG, 2);
-        attributes.putInt(MAX_RANGE_LINKED_TAG, 20);
     }
 
     @Override
@@ -220,13 +220,13 @@ public class IndexingTypePage extends TypePageItem {
         double linksUsedRatio = (double) linksUsed / linksMax;
 
         properties.add(new TranslatableText("item.mystical_index.mystical_book.tooltip.type.indexing.range",
-                getMaxRange(book, true))
+                getMaxRange(book, false))
                 .formatted(Formatting.YELLOW));
         properties.add(new TranslatableText("item.mystical_index.mystical_book.tooltip.type.indexing.links",
                 linksUsed, linksMax)
                 .formatted(Colors.colorByRatio(linksUsedRatio)));
         properties.add(new TranslatableText("item.mystical_index.mystical_book.tooltip.type.indexing.linked_range",
-                getMaxRange(book, false))
+                getMaxRange(book, true))
                 .formatted(Formatting.YELLOW));
     }
 
@@ -241,19 +241,19 @@ public class IndexingTypePage extends TypePageItem {
             return List.of(INDEXING_TYPE_PAGE);
         }
 
-        public int getRangeIncrease(ItemStack page, boolean linked) {
+        public int getRangeMultiplier(ItemStack page, boolean linked) {
             return 0;
         }
 
-        public int getLinksIncrease(ItemStack page) {
+        public int getLinksMultiplier(ItemStack page) {
             return 0;
         }
 
         @Override
         public void appendAttributes(ItemStack page, NbtCompound nbt) {
-            increaseIntAttribute(nbt, MAX_RANGE_TAG, getRangeIncrease(page, false));
-            increaseIntAttribute(nbt, MAX_LINKS_TAG, getLinksIncrease(page));
-            increaseIntAttribute(nbt, MAX_RANGE_LINKED_TAG, getRangeIncrease(page, true));
+            multiplyIntAttribute(nbt, MAX_RANGE_TAG, getRangeMultiplier(page, false));
+            multiplyIntAttribute(nbt, MAX_LINKS_TAG, getLinksMultiplier(page));
+            multiplyIntAttribute(nbt, MAX_RANGE_LINKED_TAG, getRangeMultiplier(page, true));
         }
     }
 }

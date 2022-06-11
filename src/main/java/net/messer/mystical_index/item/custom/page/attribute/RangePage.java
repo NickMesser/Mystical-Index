@@ -5,8 +5,8 @@ import net.minecraft.item.ItemStack;
 
 public class RangePage extends IndexingTypePage.IndexingAttributePage {
     @Override
-    public int getRangeIncrease(ItemStack page, boolean linked) {
-        return linked ? 20 : 2;
+    public int getRangeMultiplier(ItemStack page, boolean linked) {
+        return 2;
     }
 
     @Override

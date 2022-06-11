@@ -357,26 +357,26 @@ public class ItemStorageTypePage extends TypePageItem {
             return List.of(ITEM_STORAGE_TYPE_PAGE);
         }
 
-        public int getStacksIncrease(ItemStack page) {
+        public int getStacksMultiplier(ItemStack page) {
             return 0;
         }
 
-        public int getTypesIncrease(ItemStack page) {
+        public int getTypesMultiplier(ItemStack page) {
             return 0;
         }
 
         @Override
         public void appendAttributes(ItemStack page, NbtCompound nbt) {
-            increaseIntAttribute(nbt, MAX_STACKS_TAG, getStacksIncrease(page));
-            increaseIntAttribute(nbt, MAX_TYPES_TAG, getTypesIncrease(page));
+            multiplyIntAttribute(nbt, MAX_STACKS_TAG, getStacksMultiplier(page));
+            multiplyIntAttribute(nbt, MAX_TYPES_TAG, getTypesMultiplier(page));
         }
 
         @Override
         public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
             super.appendTooltip(stack, world, tooltip, context);
 
-            var stacks = getStacksIncrease(stack);
-            var types = getTypesIncrease(stack);
+            var stacks = getStacksMultiplier(stack);
+            var types = getTypesMultiplier(stack);
 
             if (stacks > 0) tooltip.add(new TranslatableText("item.mystical_index.page.tooltip.type.item_storage.stacks", stacks * 64)
                     .formatted(Formatting.DARK_GREEN));
