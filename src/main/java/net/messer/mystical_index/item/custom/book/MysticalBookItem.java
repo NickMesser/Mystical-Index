@@ -192,6 +192,12 @@ public class MysticalBookItem extends Item {
         super.appendTooltip(book, world, tooltip, context);
 
         forEachPage(book, page -> page.book$appendTooltip(book, world, tooltip, context));
+
+        tooltip.add(new LiteralText(""));
+        tooltip.add(new TranslatableText("item.mystical_index.mystical_book.tooltip.properties")
+                .formatted(Formatting.GRAY));
+
+        forEachPage(book, page -> page.book$appendPropertiesTooltip(book, world, tooltip, context));
     }
 
     @Override

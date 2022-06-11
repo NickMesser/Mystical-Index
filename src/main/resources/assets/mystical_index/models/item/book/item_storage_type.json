@@ -1,7 +1,7 @@
 {
   "parent": "item/generated",
   "textures": {
-    "layer0": "item/filled_map",
-    "layer1": "item/filled_map_markings"
+    "layer0": "mystical_index:item/book/item_storage_type",
+    "layer1": "mystical_index:item/book/item_storage_type_overlay"
   }
 }

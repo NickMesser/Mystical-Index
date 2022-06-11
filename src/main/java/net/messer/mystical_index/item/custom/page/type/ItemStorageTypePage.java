@@ -19,7 +19,6 @@ import net.minecraft.nbt.NbtString;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ClickType;
@@ -44,12 +43,25 @@ public class ItemStorageTypePage extends TypePageItem {
         return 0;
     }
 
+    @Override
+    public Text getTypeDisplayName() {
+        return new TranslatableText("item.mystical_index.page.tooltip.type.item_storage").formatted(Formatting.DARK_AQUA);
+    }
+
     public static final String OCCUPIED_STACKS_TAG = "occupied_stacks";
     public static final String OCCUPIED_TYPES_TAG = "occupied_types";
 
     public static final String FILTERS_TAG = "filters";
     public static final String ITEM_FILTERS_TAG = "item";
     public static final String TAG_FILTERS_TAG = "tag";
+
+    @Override
+    public void onCraftToBook(ItemStack page, ItemStack book) {
+        NbtCompound attributes = getAttributes(book);
+
+        attributes.putInt(MAX_STACKS_TAG, 1);
+        attributes.putInt(MAX_TYPES_TAG, 2);
+    }
 
     @Override
     public boolean book$onStackClicked(ItemStack book, Slot slot, ClickType clickType, PlayerEntity player) {
@@ -309,7 +321,10 @@ public class ItemStorageTypePage extends TypePageItem {
         for (Text text : getContents(book).getTextList()) {
             tooltip.add(text.copy().formatted(Formatting.GRAY));
         }
+    }
 
+    @Override
+    public void book$appendPropertiesTooltip(ItemStack book, @Nullable World world, List<Text> tooltip, TooltipContext context) {
         var nbt = book.getOrCreateNbt();
 
         var stacksOccupied = nbt.getInt(OCCUPIED_STACKS_TAG);
@@ -319,14 +334,11 @@ public class ItemStorageTypePage extends TypePageItem {
         var typesTotal = getMaxTypes(book);
         double typesFullRatio = (double) typesOccupied / typesTotal;
 
-        tooltip.add(new LiteralText(""));
-        tooltip.add(new TranslatableText("item.mystical_index.custom_book.tooltip.capacity")
-                .formatted(Formatting.GRAY));
-        tooltip.add(new TranslatableText("item.mystical_index.custom_book.tooltip.stacks",
+        tooltip.add(new TranslatableText("item.mystical_index.mystical_book.tooltip.type.item_storage.stacks",
                 stacksOccupied, stacksTotal)
                 .formatted(stacksFullRatio < 0.75 ? Formatting.GREEN :
                         stacksFullRatio == 1 ? Formatting.RED : Formatting.GOLD));
-        tooltip.add(new TranslatableText("item.mystical_index.custom_book.tooltip.types",
+        tooltip.add(new TranslatableText("item.mystical_index.mystical_book.tooltip.type.item_storage.types",
                 typesOccupied, typesTotal)
                 .formatted(typesFullRatio < 0.75 ? Formatting.GREEN :
                         typesFullRatio == 1 ? Formatting.RED : Formatting.GOLD));
@@ -340,7 +352,7 @@ public class ItemStorageTypePage extends TypePageItem {
     public static abstract class ItemStorageAttributePage extends AttributePageItem {
         @Override
         public List<TypePageItem> getCompatibleTypes(ItemStack page) {
-            return List.of((TypePageItem) ITEM_STORAGE_TYPE_PAGE);
+            return List.of(ITEM_STORAGE_TYPE_PAGE);
         }
 
         public int getStacksIncrease(ItemStack page) {
@@ -364,9 +376,9 @@ public class ItemStorageTypePage extends TypePageItem {
             var stacks = getStacksIncrease(stack);
             var types = getTypesIncrease(stack);
 
-            if (stacks > 0) tooltip.add(new TranslatableText("item.mystical_index.page.tooltip.stacks", stacks * 64)
+            if (stacks > 0) tooltip.add(new TranslatableText("item.mystical_index.page.tooltip.type.item_storage.stacks", stacks * 64)
                     .formatted(Formatting.DARK_GREEN));
-            if (types > 0) tooltip.add(new TranslatableText("item.mystical_index.page.tooltip.types", types)
+            if (types > 0) tooltip.add(new TranslatableText("item.mystical_index.page.tooltip.type.item_storage.types", types)
                     .formatted(Formatting.DARK_GREEN));
         }
     }

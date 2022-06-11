@@ -2,15 +2,16 @@ package net.messer.mystical_index.item;
 
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.messer.mystical_index.MysticalIndex;
-import net.messer.mystical_index.item.custom.book.*;
+import net.messer.mystical_index.item.custom.book.MysticalBookItem;
 import net.messer.mystical_index.item.custom.page.PageItem;
-import net.messer.mystical_index.item.custom.page.type.IndexingTypePage;
+import net.messer.mystical_index.item.custom.page.attribute.LinksPage;
+import net.messer.mystical_index.item.custom.page.attribute.RangePage;
 import net.messer.mystical_index.item.custom.page.attribute.StacksPage;
 import net.messer.mystical_index.item.custom.page.attribute.TypesPage;
+import net.messer.mystical_index.item.custom.page.type.IndexingTypePage;
 import net.messer.mystical_index.item.custom.page.type.ItemStorageTypePage;
 import net.messer.mystical_index.util.PageRegistry;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 
@@ -18,10 +19,12 @@ public class ModItems {
     public static final MysticalBookItem MYSTICAL_BOOK = registerItem("mystical_book", new MysticalBookItem(new FabricItemSettings().maxCount(1)));
 
     public static final ItemStorageTypePage ITEM_STORAGE_TYPE_PAGE = registerPageItem("item_storage_type_page", new ItemStorageTypePage());
-    public static final IndexingTypePage INDEXING_TYPE_PAGE = registerPageItem("indexing_type_page", new IndexingTypePage());
-
     public static final StacksPage STACKS_PAGE = registerPageItem("stacks_page", new StacksPage());
     public static final TypesPage TYPES_PAGE = registerPageItem("types_page", new TypesPage());
+
+    public static final IndexingTypePage INDEXING_TYPE_PAGE = registerPageItem("indexing_type_page", new IndexingTypePage());
+    public static final RangePage RANGE_PAGE = registerPageItem("range_page", new RangePage());
+    public static final LinksPage LINKS_PAGE = registerPageItem("links_page", new LinksPage());
 
     private static <T extends PageItem> T registerPageItem(String name, T item) {
         var id = new Identifier(MysticalIndex.MOD_ID, name);

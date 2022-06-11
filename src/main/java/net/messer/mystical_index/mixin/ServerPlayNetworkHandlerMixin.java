@@ -1,7 +1,6 @@
 package net.messer.mystical_index.mixin;
 
 import net.messer.mystical_index.block.entity.IndexLecternBlockEntity;
-import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.custom.book.MysticalBookItem;
 import net.messer.mystical_index.item.custom.page.type.IndexingTypePage;
 import net.messer.mystical_index.util.LecternTracker;
@@ -46,17 +45,22 @@ public abstract class ServerPlayNetworkHandlerMixin {
         String message = packet.getChatMessage();
 
         if (!(message.startsWith("/") || player.isSpectator())) {
+            ItemStack book = null;
             IndexingTypePage page = null;
             for (Hand hand : Hand.values()) {
-                page = MysticalBookItem.isType(player.getStackInHand(hand), IndexingTypePage.class);
+                book = player.getStackInHand(hand);
+                page = MysticalBookItem.isType(book, IndexingTypePage.class);
                 if (page != null) {
                     break;
                 }
             }
 
             if (page != null) {
+                IndexingTypePage finalPage = page;
+                ItemStack finalBook = book;
                 server.execute(() -> {
-                    LibraryIndex index = LibraryIndex.fromRange(player.getWorld(), player.getBlockPos(), LibraryIndex.ITEM_SEARCH_RANGE);
+                    LibraryIndex index = LibraryIndex.fromRange(player.getWorld(), player.getBlockPos(),
+                            finalPage.getMaxRange(finalBook, false));
                     ExtractionRequest request = ExtractionRequest.get(message);
                     request.setSourcePosition(player.getPos().add(0, 1, 0));
                     request.setBlockAffectedCallback(WorldEffects::extractionParticles);

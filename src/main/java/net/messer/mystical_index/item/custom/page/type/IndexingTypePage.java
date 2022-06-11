@@ -39,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static net.messer.mystical_index.item.ModItems.*;
+import static net.messer.mystical_index.item.ModItems.INDEXING_TYPE_PAGE;
 
 public class IndexingTypePage extends TypePageItem {
     public static final String MAX_RANGE_TAG = "max_range";
@@ -48,7 +48,12 @@ public class IndexingTypePage extends TypePageItem {
 
     @Override
     public int getColor() {
-        return 11745593;
+        return 0xb33939;
+    }
+
+    @Override
+    public Text getTypeDisplayName() {
+        return new TranslatableText("item.mystical_index.page.tooltip.type.indexing").formatted(Formatting.DARK_PURPLE);
     }
 
     @Override
@@ -96,6 +101,15 @@ public class IndexingTypePage extends TypePageItem {
             }
         }
         return index;
+    }
+
+    @Override
+    public void onCraftToBook(ItemStack page, ItemStack book) {
+        NbtCompound attributes = getAttributes(book);
+
+        attributes.putInt(MAX_RANGE_TAG, 2);
+        attributes.putInt(MAX_LINKS_TAG, 2);
+        attributes.putInt(MAX_RANGE_LINKED_TAG, 20);
     }
 
     @Override
@@ -204,25 +218,20 @@ public class IndexingTypePage extends TypePageItem {
     }
 
     @Override
-    public void book$appendTooltip(ItemStack book, @Nullable World world, List<Text> properties, TooltipContext context) {
-        properties.add(new TranslatableText("item.mystical_index.custom_index.tooltip.automatic")
-                .formatted(Formatting.BLUE));
+    public void book$appendPropertiesTooltip(ItemStack book, @Nullable World world, List<Text> properties, TooltipContext context) {
+        var linksUsed = getLinks(book);
+        var linksMax = getMaxLinks(book);
+        double linksUsedRatio = (double) linksUsed / linksMax;
 
-        if (book != null) {
-            var linksUsed = getLinks(book);
-            var linksMax = getMaxLinks(book);
-            double linksUsedRatio = (double) linksUsed / linksMax;
-
-            properties.add(new TranslatableText("item.mystical_index.custom_index.tooltip.links",
-                    linksUsed, linksMax)
-                    .formatted(Colors.colorByRatio(linksUsedRatio)));
-            properties.add(new TranslatableText("item.mystical_index.custom_index.tooltip.link_range",
-                    getMaxRange(book, false))
-                    .formatted(Formatting.YELLOW));
-            properties.add(new TranslatableText("item.mystical_index.custom_index.tooltip.range",
-                    getMaxRange(book, true))
-                    .formatted(Formatting.YELLOW));
-        }
+        properties.add(new TranslatableText("item.mystical_index.mystical_book.tooltip.type.indexing.range",
+                getMaxRange(book, true))
+                .formatted(Formatting.YELLOW));
+        properties.add(new TranslatableText("item.mystical_index.mystical_book.tooltip.type.indexing.links",
+                linksUsed, linksMax)
+                .formatted(Colors.colorByRatio(linksUsedRatio)));
+        properties.add(new TranslatableText("item.mystical_index.mystical_book.tooltip.type.indexing.linked_range",
+                getMaxRange(book, false))
+                .formatted(Formatting.YELLOW));
     }
 
     @Override

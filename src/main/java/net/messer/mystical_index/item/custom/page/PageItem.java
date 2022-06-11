@@ -33,6 +33,9 @@ public abstract class PageItem extends Item {
     public void book$appendTooltip(ItemStack book, @Nullable World world, List<Text> properties, TooltipContext context) {
     }
 
+    public void book$appendPropertiesTooltip(ItemStack book, @Nullable World world, List<Text> properties, TooltipContext context) {
+    }
+
     @Override
     public Rarity getRarity(ItemStack page) {
         return Rarity.UNCOMMON;
