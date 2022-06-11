@@ -47,12 +47,17 @@ public class IndexingTypePage extends TypePageItem {
 
     @Override
     public int getColor() {
-        return 0xaa00aa;
+        return 0xaa22aa;
     }
 
     @Override
     public Text getTypeDisplayName() {
         return new TranslatableText("item.mystical_index.page.tooltip.type.indexing").formatted(Formatting.DARK_PURPLE);
+    }
+
+    @Override
+    public Text getBookDisplayName() {
+        return new TranslatableText("item.mystical_index.mystical_book.type.indexing");
     }
 
     public static final String LINKED_BLOCKS_TAG = "linked_blocks";

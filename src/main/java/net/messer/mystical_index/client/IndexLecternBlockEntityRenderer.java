@@ -16,6 +16,7 @@ import net.minecraft.client.render.entity.model.EntityModelLayers;
 import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3f;
 
 @Environment(value = EnvType.CLIENT)
@@ -31,19 +32,22 @@ public class IndexLecternBlockEntityRenderer implements BlockEntityRenderer<Inde
     }
 
     @Override
-    public void render(IndexLecternBlockEntity blockEntity, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay) {
-        BlockState blockState = blockEntity.getCachedState();
+    public void render(IndexLecternBlockEntity be, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay) {
+        BlockState blockState = be.getCachedState();
         if (!blockState.get(LecternBlock.HAS_BOOK)) {
             return;
         }
 
-        float anim = blockEntity.tick + tickDelta;
+        float anim = be.tick + tickDelta;
+        float rotationDelta = (be.bookRotationTarget - be.bookRotation) * 0.1f;
+        float bookRotation = be.bookRotation + rotationDelta * tickDelta;
 
         matrices.push();
         double bookHeightOffset = 0.06 + Math.sin(anim * 0.08) * 0.03;
         matrices.translate(0.5, 1.0625 + bookHeightOffset, 0.5);
         float g = blockState.get(LecternBlock.FACING).rotateYClockwise().asRotation();
         matrices.multiply(Vec3f.POSITIVE_Y.getDegreesQuaternion(-g));
+        matrices.multiply(Vec3f.POSITIVE_Y.getRadialQuaternion(-bookRotation));
         matrices.multiply(Vec3f.POSITIVE_Z.getDegreesQuaternion(67.5f));
         matrices.translate(0.0, -0.125, 0.0);
         this.book.setPageAngles(0.0f, 0.1f, 0.9f, 1.2f);

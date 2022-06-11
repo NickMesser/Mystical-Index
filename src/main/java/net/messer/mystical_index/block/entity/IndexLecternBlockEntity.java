@@ -11,6 +11,7 @@ import net.minecraft.block.entity.LecternBlockEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
@@ -28,6 +29,8 @@ public class IndexLecternBlockEntity extends LecternBlockEntity { // TODO sepera
     public static final UUID EXTRACTED_DROP_UUID = UUID.randomUUID();
 
     public int tick = 0;
+    public float bookRotation = 0;
+    public float bookRotationTarget = 0;
     private LibraryIndex linkedLibraries = new LibraryIndex();
 
     public IndexLecternBlockEntity(BlockPos pos, BlockState state) {
@@ -43,7 +46,7 @@ public class IndexLecternBlockEntity extends LecternBlockEntity { // TODO sepera
     }
 
     public boolean hasRangedLinking() {
-        return ModItems.INDEXING_TYPE_PAGE.getLinks(getBook()) != 0;
+        return ModItems.INDEXING_TYPE_PAGE.getLinks(getBook()) == 0;
     }
 
     public void setLinkedLibraries(LibraryIndex linkedLibraries) {
@@ -64,6 +67,10 @@ public class IndexLecternBlockEntity extends LecternBlockEntity { // TODO sepera
         }
     }
 
+    public static float fixRadians(float radians) {
+        return (float) Math.IEEEremainder(radians, Math.PI * 2);
+    }
+
     public static void serverTick(World world, BlockPos pos, BlockState state, IndexLecternBlockEntity be) {
         if (!world.isClient()) {
             if (state.get(HAS_BOOK)) {
@@ -78,40 +85,53 @@ public class IndexLecternBlockEntity extends LecternBlockEntity { // TODO sepera
         } else {
             if (state.get(HAS_BOOK)) {
                 var centerPos = Vec3d.ofCenter(pos, 0.5);
-                if (
-                        be.tick % CIRCLE_INTERVAL == 0 &&
-                        world.getClosestPlayer(
-                                pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
-                                LECTERN_PICKUP_RADIUS, false
-                        ) != null
-                ) {
-                    Particles.drawParticleCircle(
-                            be.tick,
-                            world, centerPos, CIRCLE_PERIOD,
-                            0, LECTERN_PICKUP_RADIUS
-                    );
-                    Particles.drawParticleCircle(
-                            be.tick,
-                            world, centerPos, -CIRCLE_PERIOD,
-                            0, LECTERN_PICKUP_RADIUS
-                    );
-                    Particles.drawParticleCircle(
-                            be.tick,
-                            world, centerPos, CIRCLE_PERIOD,
-                            CIRCLE_PERIOD / 2, LECTERN_PICKUP_RADIUS
-                    );
-                    Particles.drawParticleCircle(
-                            be.tick,
-                            world, centerPos, -CIRCLE_PERIOD,
-                            CIRCLE_PERIOD / 2, LECTERN_PICKUP_RADIUS
-                    );
+                var closestPlayer = world.getClosestPlayer(
+                        pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
+                        LECTERN_PICKUP_RADIUS, false
+                );
 
-                    if (be.tick % SOUND_INTERVAL == 0) {
-                        world.playSound(centerPos.getX(), centerPos.getY(), centerPos.getZ(),
-                                SoundEvents.BLOCK_BEACON_AMBIENT, SoundCategory.BLOCKS,
-                                0.3f, 1.4f + world.getRandom().nextFloat() * 0.4f, true);
+                float rotationDelta = (be.bookRotationTarget - be.bookRotation) * 0.1f;
+                be.bookRotation = be.bookRotation + rotationDelta;
+
+                if (closestPlayer == null) {
+                    be.bookRotationTarget = 0;
+                } else {
+                    double xOffset = closestPlayer.getX() - ((double) pos.getX() + 0.5);
+                    double zOffset = closestPlayer.getZ() - ((double) pos.getZ() + 0.5);
+                    be.bookRotationTarget = MathHelper.clamp((float) MathHelper.atan2(zOffset, xOffset), -0.4f, 0.4f);
+
+                    if (be.tick % CIRCLE_INTERVAL == 0) {
+                        Particles.drawParticleCircle(
+                                be.tick,
+                                world, centerPos, CIRCLE_PERIOD,
+                                0, LECTERN_PICKUP_RADIUS
+                        );
+                        Particles.drawParticleCircle(
+                                be.tick,
+                                world, centerPos, -CIRCLE_PERIOD,
+                                0, LECTERN_PICKUP_RADIUS
+                        );
+                        Particles.drawParticleCircle(
+                                be.tick,
+                                world, centerPos, CIRCLE_PERIOD,
+                                CIRCLE_PERIOD / 2, LECTERN_PICKUP_RADIUS
+                        );
+                        Particles.drawParticleCircle(
+                                be.tick,
+                                world, centerPos, -CIRCLE_PERIOD,
+                                CIRCLE_PERIOD / 2, LECTERN_PICKUP_RADIUS
+                        );
+
+                        if (be.tick % SOUND_INTERVAL == 0) {
+                            world.playSound(centerPos.getX(), centerPos.getY(), centerPos.getZ(),
+                                    SoundEvents.BLOCK_BEACON_AMBIENT, SoundCategory.BLOCKS,
+                                    0.3f, 1.4f + world.getRandom().nextFloat() * 0.4f, true);
+                        }
                     }
                 }
+
+                be.bookRotation = fixRadians(be.bookRotation);
+                be.bookRotationTarget = fixRadians(be.bookRotationTarget);
             }
         }
 

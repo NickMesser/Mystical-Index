@@ -48,6 +48,11 @@ public class ItemStorageTypePage extends TypePageItem {
         return new TranslatableText("item.mystical_index.page.tooltip.type.item_storage").formatted(Formatting.DARK_AQUA);
     }
 
+    @Override
+    public Text getBookDisplayName() {
+        return new TranslatableText("item.mystical_index.mystical_book.type.item_storage");
+    }
+
     public static final String OCCUPIED_STACKS_TAG = "occupied_stacks";
     public static final String OCCUPIED_TYPES_TAG = "occupied_types";
 

@@ -17,6 +17,8 @@ public abstract class TypePageItem extends PageItem implements InteractingPage {
 
     public abstract Text getTypeDisplayName();
 
+    public abstract Text getBookDisplayName();
+
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
         super.appendTooltip(stack, world, tooltip, context);

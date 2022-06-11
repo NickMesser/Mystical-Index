@@ -1,6 +1,7 @@
 {
   "parent": "item/generated",
   "textures": {
-    "layer0": "mystical_index:item/book/indexing_type"
+    "layer0": "mystical_index:item/book/indexing_type",
+    "layer1": "mystical_index:item/book/indexing_type_overlay"
   }
 }

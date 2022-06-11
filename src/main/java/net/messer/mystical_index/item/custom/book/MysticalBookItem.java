@@ -212,6 +212,15 @@ public class MysticalBookItem extends Item {
     }
 
     @Override
+    public Text getName(ItemStack book) {
+        var page = getTypePage(book);
+        if (page != null) {
+            return page.getBookDisplayName();
+        }
+        return super.getName(book);
+    }
+
+    @Override
     public boolean canBeNested() {
         return false;
     }

@@ -4,6 +4,8 @@
   "chat.mystical_index.no_match": "No match",
   "chat.mystical_index.extracted": "Extracted %s of %s",
   "item.mystical_index.mystical_book": "Mystical Book",
+  "item.mystical_index.mystical_book.type.item_storage": "Book of Item Storage",
+  "item.mystical_index.mystical_book.type.indexing": "Book of Indexing",
   "item.mystical_index.mystical_book.tooltip.properties": "Properties:",
   "item.mystical_index.mystical_book.tooltip.type.item_storage.stacks": " %d/%d Entries used",
   "item.mystical_index.mystical_book.tooltip.type.item_storage.types": " %d/%d Types",
