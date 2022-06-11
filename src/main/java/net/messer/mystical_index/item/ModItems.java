@@ -27,7 +27,7 @@ public class ModItems {
     public static final LinksPage LINKS_PAGE = registerPageItem("links_page", new LinksPage());
 
     private static <T extends PageItem> T registerPageItem(String name, T item) {
-        var id = new Identifier(MysticalIndex.MOD_ID, name);
+        var id = MysticalIndex.id(name);
         Registry.register(Registry.ITEM, id, item);
         PageRegistry.registerPage(id, item);
         return item;

@@ -242,7 +242,7 @@ public class IndexingTypePage extends TypePageItem {
     public static abstract class IndexingAttributePage extends AttributePageItem {
         @Override
         public List<TypePageItem> getCompatibleTypes(ItemStack page) {
-            return List.of((TypePageItem) INDEXING_TYPE_PAGE);
+            return List.of(INDEXING_TYPE_PAGE);
         }
 
         public int getRangeIncrease(ItemStack page, boolean linked) {

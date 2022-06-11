@@ -40,7 +40,7 @@ public class ItemStorageTypePage extends TypePageItem {
 
     @Override
     public int getColor() {
-        return 0;
+        return 0x00aaaa;
     }
 
     @Override

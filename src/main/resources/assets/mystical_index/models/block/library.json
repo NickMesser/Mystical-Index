@@ -5,8 +5,8 @@
     "south": "#side",
     "east": "#side",
     "west": "#side",
-    "up": "minecraft:block/oak_planks",
-    "down": "minecraft:block/oak_planks",
-    "particles": "mystical_index:block/oak_planks"
+    "up": "block/oak_planks",
+    "down": "block/oak_planks",
+    "particle": "block/oak_planks"
   }
 }
