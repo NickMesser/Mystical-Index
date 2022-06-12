@@ -1,8 +1,8 @@
 package net.messer.mystical_index.item.custom.page.type;
 
 import net.messer.mystical_index.block.ModBlocks;
-import net.messer.mystical_index.block.custom.MysticalLecternBlock;
 import net.messer.mystical_index.block.entity.MysticalLecternBlockEntity;
+import net.messer.mystical_index.client.Particles;
 import net.messer.mystical_index.item.custom.page.AttributePageItem;
 import net.messer.mystical_index.item.custom.page.TypePageItem;
 import net.messer.mystical_index.util.Colors;
@@ -13,8 +13,6 @@ import net.messer.mystical_index.util.request.InsertionRequest;
 import net.messer.mystical_index.util.request.LibraryIndex;
 import net.messer.mystical_index.util.state.PageLecternState;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.LecternBlock;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
@@ -44,8 +42,8 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.UUID;
 
-import static net.messer.mystical_index.block.entity.MysticalLecternBlockEntity.EXTRACTED_DROP_UUID;
 import static net.messer.mystical_index.item.ModItems.INDEXING_TYPE_PAGE;
 
 public class IndexingTypePage extends TypePageItem {
@@ -68,6 +66,13 @@ public class IndexingTypePage extends TypePageItem {
     }
 
     public static final String LINKED_BLOCKS_TAG = "linked_blocks";
+
+    private static final int CIRCLE_PERIOD = 200;
+    private static final int CIRCLE_INTERVAL = 2;
+    private static final int FLAME_INTERVAL = 4;
+    private static final int SOUND_INTERVAL = 24;
+
+    public static final UUID EXTRACTED_DROP_UUID = UUID.randomUUID();
 
     @Override
     public void onCraftToBook(ItemStack page, ItemStack book) {
@@ -102,6 +107,10 @@ public class IndexingTypePage extends TypePageItem {
 
     public int getLinks(ItemStack book) {
         return book.getOrCreateNbt().getList(LINKED_BLOCKS_TAG, NbtElement.LIST_TYPE).size();
+    }
+
+    public boolean hasRangedLinking(ItemStack book) {
+        return getLinks(book) == 0;
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -233,7 +242,7 @@ public class IndexingTypePage extends TypePageItem {
 
     @Override
     public PageLecternState lectern$getState(MysticalLecternBlockEntity lectern) {
-        return new IndexingLecternState(lectern);
+        return new IndexingLecternState(lectern, this);
     }
 
     @Override
@@ -246,7 +255,7 @@ public class IndexingTypePage extends TypePageItem {
         ServerWorld world = player.getWorld();
         BlockPos blockPos = lectern.getPos();
 
-        LibraryIndex index = lectern.getLinkedLibraries();
+        LibraryIndex index = ((IndexingLecternState) lectern.typeState).getIndex();
         ExtractionRequest request = ExtractionRequest.get(message);
         request.setSourcePosition(Vec3d.ofCenter(blockPos, 0.5));
         request.setBlockAffectedCallback(WorldEffects::extractionParticles);
@@ -275,6 +284,40 @@ public class IndexingTypePage extends TypePageItem {
     }
 
     @Override
+    public void lectern$serverTick(World world, BlockPos pos, BlockState state, MysticalLecternBlockEntity lectern) {
+        var centerPos = Vec3d.ofCenter(pos, 0.5);
+
+        if (lectern.tick % CIRCLE_INTERVAL == 0) {
+            Particles.drawParticleCircle(
+                    lectern.tick,
+                    world, centerPos, CIRCLE_PERIOD,
+                    0, LECTERN_PICKUP_RADIUS
+            );
+            Particles.drawParticleCircle(
+                    lectern.tick,
+                    world, centerPos, -CIRCLE_PERIOD,
+                    0, LECTERN_PICKUP_RADIUS
+            );
+            Particles.drawParticleCircle(
+                    lectern.tick,
+                    world, centerPos, CIRCLE_PERIOD,
+                    CIRCLE_PERIOD / 2, LECTERN_PICKUP_RADIUS
+            );
+            Particles.drawParticleCircle(
+                    lectern.tick,
+                    world, centerPos, -CIRCLE_PERIOD,
+                    CIRCLE_PERIOD / 2, LECTERN_PICKUP_RADIUS
+            );
+
+            if (lectern.tick % SOUND_INTERVAL == 0) {
+                world.playSound(centerPos.getX(), centerPos.getY(), centerPos.getZ(),
+                        SoundEvents.BLOCK_BEACON_AMBIENT, SoundCategory.BLOCKS,
+                        0.3f, 1.4f + world.getRandom().nextFloat() * 0.4f, true);
+            }
+        }
+    }
+
+    @Override
     public void book$appendPropertiesTooltip(ItemStack book, @Nullable World world, List<Text> properties, TooltipContext context) {
         var linksUsed = getLinks(book);
         var linksMax = getMaxLinks(book);
@@ -297,10 +340,26 @@ public class IndexingTypePage extends TypePageItem {
     }
 
     public static class IndexingLecternState extends PageLecternState {
-        public LibraryIndex index;
+        private final LibraryIndex index;
 
-        public IndexingLecternState(MysticalLecternBlockEntity lectern) {
+        public IndexingLecternState(MysticalLecternBlockEntity lectern, IndexingTypePage page) {
             super(lectern);
+
+            var book = lectern.getBook();
+            var world = lectern.getWorld();
+            var pos = lectern.getPos();
+
+            if (page.hasRangedLinking(book)) {
+                // Set linked libraries from range if no specific links are set.
+                index = LibraryIndex.fromRange(world, pos, page.getMaxRange(book, false), true);
+            } else {
+                // Set linked libraries to specific links taken from the book.
+                index = page.getIndex(book, world, pos);
+            }
+        }
+
+        public LibraryIndex getIndex() {
+            return index;
         }
     }
 

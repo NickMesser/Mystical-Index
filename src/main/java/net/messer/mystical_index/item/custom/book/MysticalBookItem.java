@@ -264,6 +264,10 @@ public class MysticalBookItem extends Item {
         forEachPage(lectern.getBook(), page -> page.lectern$onInterceptedChatMessage(lectern, player, message));
     }
 
+    public void lectern$serverTick(World world, BlockPos pos, BlockState state, MysticalLecternBlockEntity lectern) {
+        forEachPage(lectern.getBook(), page -> page.lectern$serverTick(world, pos, state, lectern));
+    }
+
     @Override
     public Text getName(ItemStack book) {
         var page = getTypePage(book);
