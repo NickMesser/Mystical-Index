@@ -1,6 +1,6 @@
 package net.messer.mystical_index.util;
 
-import net.messer.mystical_index.block.entity.IndexLecternBlockEntity;
+import net.messer.mystical_index.block.entity.MysticalLecternBlockEntity;
 import net.messer.mystical_index.util.request.IndexInteractable;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -12,21 +12,21 @@ import java.util.Set;
 import java.util.WeakHashMap;
 
 public class LecternTracker {
-    public static final Set<IndexLecternBlockEntity> indexLecterns = Collections.newSetFromMap(new WeakHashMap<>());
+    public static final Set<MysticalLecternBlockEntity> indexLecterns = Collections.newSetFromMap(new WeakHashMap<>());
 
-    public static void addIndexLectern(IndexLecternBlockEntity lectern) {
+    public static void addIndexLectern(MysticalLecternBlockEntity lectern) {
         indexLecterns.add(lectern);
     }
 
-    public static void removeIndexLectern(IndexLecternBlockEntity lectern) {
+    public static void removeIndexLectern(MysticalLecternBlockEntity lectern) {
         indexLecterns.remove(lectern);
     }
 
     @Nullable
-    public static IndexLecternBlockEntity findNearestLectern(ServerPlayerEntity player, double maxDistance) {
+    public static MysticalLecternBlockEntity findNearestLectern(ServerPlayerEntity player, double maxDistance) {
         double closestFound = -1.0;
-        IndexLecternBlockEntity result = null;
-        for (IndexLecternBlockEntity lectern : indexLecterns) {
+        MysticalLecternBlockEntity result = null;
+        for (MysticalLecternBlockEntity lectern : indexLecterns) {
             Vec3d pos = Vec3d.ofCenter(lectern.getPos());
             double squaredDistance = player.squaredDistanceTo(pos.getX(), pos.getY(), pos.getZ());
             if (!(maxDistance < 0.0) && !(player.getWorld() == lectern.getWorld() && squaredDistance < maxDistance * maxDistance) || closestFound != -1.0 && !(squaredDistance < closestFound)) continue;
@@ -44,7 +44,7 @@ public class LecternTracker {
         if (interactable instanceof BlockEntity blockEntity) {
             var pos = blockEntity.getPos();
 
-            for (IndexLecternBlockEntity lectern : indexLecterns) {
+            for (MysticalLecternBlockEntity lectern : indexLecterns) {
                 if (lectern.hasRangedLinking()) {
                     var lPos = lectern.getPos();
                     var range = lectern.getMaxRange(true);
@@ -60,7 +60,7 @@ public class LecternTracker {
     }
 
     public static void unRegisterFromLectern(IndexInteractable interactable) {
-        for (IndexLecternBlockEntity lectern : indexLecterns) {
+        for (MysticalLecternBlockEntity lectern : indexLecterns) {
             lectern.getLinkedLibraries().interactables.remove(interactable);
         }
     }

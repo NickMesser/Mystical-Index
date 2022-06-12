@@ -1,13 +1,15 @@
 package net.messer.mystical_index.item.custom.page;
 
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
-import net.messer.mystical_index.item.custom.book.MysticalBookItem;
+import net.messer.mystical_index.block.entity.MysticalLecternBlockEntity;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
@@ -35,6 +37,20 @@ public abstract class PageItem extends Item {
     }
 
     public void book$appendPropertiesTooltip(ItemStack book, @Nullable World world, List<Text> properties, TooltipContext context) {
+    }
+
+    /**
+     * The actual handling of intercepted chat messages should happen here.
+     * This is run on the main server thread.
+     */
+    public void book$onInterceptedChatMessage(ItemStack book, ServerPlayerEntity player, String message) {
+    }
+
+    /**
+     * The actual handling of intercepted chat messages should happen here.
+     * This is run on the main server thread.
+     */
+    public void lectern$onInterceptedChatMessage(MysticalLecternBlockEntity lectern, ServerPlayerEntity player, String message) {
     }
 
     @Override

@@ -6,8 +6,8 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry;
 import net.fabricmc.fabric.api.event.client.ClientSpriteRegistryCallback;
 import net.messer.mystical_index.block.ModBlockEntities;
-import net.messer.mystical_index.client.IndexLecternBlockEntityRenderer;
-import net.messer.mystical_index.client.ModelProviders;
+import net.messer.mystical_index.client.render.MysticalLecternBlockEntityRenderer;
+import net.messer.mystical_index.client.ItemModelProviders;
 import net.messer.mystical_index.client.NetworkListeners;
 import net.minecraft.client.texture.SpriteAtlasTexture;
 
@@ -18,10 +18,10 @@ public class MysticalIndexClient implements ClientModInitializer {
         NetworkListeners.registerListeners();
 
         ClientSpriteRegistryCallback.event(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE).register((atlasTexture, registry) -> {
-            registry.register(IndexLecternBlockEntityRenderer.BOOK_TEXTURE.getTextureId());
+            registry.register(MysticalLecternBlockEntityRenderer.BOOK_TEXTURE.getTextureId());
         });
-        BlockEntityRendererRegistry.register(ModBlockEntities.INDEX_LECTERN_BLOCK_ENTITY, IndexLecternBlockEntityRenderer::new);
+        BlockEntityRendererRegistry.register(ModBlockEntities.MYSTICAL_LECTERN_BLOCK_ENTITY, MysticalLecternBlockEntityRenderer::new);
 
-        ModelProviders.register();
+        ItemModelProviders.register();
     }
 }

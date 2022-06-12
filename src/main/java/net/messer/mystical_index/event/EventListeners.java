@@ -3,7 +3,7 @@ package net.messer.mystical_index.event;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerBlockEntityEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.messer.mystical_index.block.ModBlocks;
-import net.messer.mystical_index.block.entity.IndexLecternBlockEntity;
+import net.messer.mystical_index.block.entity.MysticalLecternBlockEntity;
 import net.messer.mystical_index.block.entity.LibraryBlockEntity;
 import net.messer.mystical_index.util.LecternTracker;
 import net.messer.mystical_index.util.WorldEffects;
@@ -35,7 +35,7 @@ public class EventListeners {
     }
 
     private static void onUnloadBlockEntity(BlockEntity blockEntity, ServerWorld world) {
-        if (blockEntity instanceof IndexLecternBlockEntity lectern) {
+        if (blockEntity instanceof MysticalLecternBlockEntity lectern) {
             LecternTracker.removeIndexLectern(lectern);
         }
     }

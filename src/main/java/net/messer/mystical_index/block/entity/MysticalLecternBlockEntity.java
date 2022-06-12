@@ -3,11 +3,16 @@ package net.messer.mystical_index.block.entity;
 import net.messer.mystical_index.block.ModBlockEntities;
 import net.messer.mystical_index.client.Particles;
 import net.messer.mystical_index.item.ModItems;
+import net.messer.mystical_index.item.custom.book.MysticalBookItem;
 import net.messer.mystical_index.util.LecternTracker;
+import net.messer.mystical_index.util.MathUtil;
 import net.messer.mystical_index.util.request.LibraryIndex;
+import net.messer.mystical_index.util.state.PageLecternState;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.LecternBlock;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.block.entity.LecternBlockEntity;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.BlockPos;
@@ -19,7 +24,7 @@ import java.util.UUID;
 
 import static net.minecraft.block.LecternBlock.HAS_BOOK;
 
-public class IndexLecternBlockEntity extends LecternBlockEntity { // TODO seperate IndexingBlockEntity
+public class MysticalLecternBlockEntity extends LecternBlockEntity { // TODO seperate IndexingBlockEntity
     private static final int CIRCLE_PERIOD = 200;
     private static final int CIRCLE_INTERVAL = 2;
     private static final int FLAME_INTERVAL = 4;
@@ -31,9 +36,10 @@ public class IndexLecternBlockEntity extends LecternBlockEntity { // TODO sepera
     public int tick = 0;
     public float bookRotation = 0;
     public float bookRotationTarget = 0;
-    private LibraryIndex linkedLibraries = new LibraryIndex();
+    public PageLecternState typeState;
+    public PageLecternState actionState;
 
-    public IndexLecternBlockEntity(BlockPos pos, BlockState state) {
+    public MysticalLecternBlockEntity(BlockPos pos, BlockState state) {
         super(pos, state);
     }
 
@@ -67,14 +73,24 @@ public class IndexLecternBlockEntity extends LecternBlockEntity { // TODO sepera
         }
     }
 
-    public static float fixRadians(float radians) {
-        return (float) Math.IEEEremainder(radians, Math.PI * 2);
+    private void initState() {
+        if (world.isClient) {
+            return;
+        }
+
+        var typePage = ((MysticalBookItem) getBook().getItem()).getTypePage(getBook());
+        var actionPage = ((MysticalBookItem) getBook().getItem()).getActionPage(getBook());
+
+        if (typePage != null) typeState = typePage.lectern$getState(this);
+        if (actionPage != null) actionState = actionPage.lectern$getState(this);
     }
 
-    public static void serverTick(World world, BlockPos pos, BlockState state, IndexLecternBlockEntity be) {
+    public static void serverTick(World world, BlockPos pos, BlockState state, MysticalLecternBlockEntity be) {
         if (!world.isClient()) {
             if (state.get(HAS_BOOK)) {
                 if (be.tick == 0) {
+                    be.initState();
+
                     be.loadLinkedLibraries();
                 }
 
@@ -98,7 +114,9 @@ public class IndexLecternBlockEntity extends LecternBlockEntity { // TODO sepera
                 } else {
                     double xOffset = closestPlayer.getX() - ((double) pos.getX() + 0.5);
                     double zOffset = closestPlayer.getZ() - ((double) pos.getZ() + 0.5);
-                    be.bookRotationTarget = MathHelper.clamp((float) MathHelper.atan2(zOffset, xOffset), -0.4f, 0.4f);
+                    float rotationTarget = (float) Math.atan2(zOffset, xOffset);
+                    float rotationOffset = (float) Math.toRadians(state.get(LecternBlock.FACING).rotateYClockwise().asRotation());
+                    be.bookRotationTarget = MathHelper.clamp(MathUtil.fixRadians(rotationTarget - rotationOffset), -0.4f, 0.4f);
 
                     if (be.tick % CIRCLE_INTERVAL == 0) {
                         Particles.drawParticleCircle(
@@ -129,9 +147,6 @@ public class IndexLecternBlockEntity extends LecternBlockEntity { // TODO sepera
                         }
                     }
                 }
-
-                be.bookRotation = fixRadians(be.bookRotation);
-                be.bookRotationTarget = fixRadians(be.bookRotationTarget);
             }
         }
 
@@ -140,6 +155,6 @@ public class IndexLecternBlockEntity extends LecternBlockEntity { // TODO sepera
 
     @Override
     public BlockEntityType<?> getType() {
-        return ModBlockEntities.INDEX_LECTERN_BLOCK_ENTITY;
+        return ModBlockEntities.MYSTICAL_LECTERN_BLOCK_ENTITY;
     }
 }

@@ -5,9 +5,9 @@ import net.minecraft.item.ItemStack;
 
 public class StacksPage extends ItemStorageTypePage.ItemStorageAttributePage {
     @Override
-    public int getStacksMultiplier(ItemStack page) {
+    public double getStacksMultiplier(ItemStack page) {
         return 2;
-    }
+    } // TODO make this percentages, and display as such
 
     @Override
     public int getColor() {

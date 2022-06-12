@@ -3,7 +3,7 @@ package net.messer.mystical_index.block;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.messer.mystical_index.MysticalIndex;
-import net.messer.mystical_index.block.custom.IndexLecternBlock;
+import net.messer.mystical_index.block.custom.MysticalLecternBlock;
 import net.messer.mystical_index.block.custom.LibraryBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.Material;
@@ -17,8 +17,8 @@ public class ModBlocks {
     public static final Block LIBRARY = registerBlock("library",
             new LibraryBlock(FabricBlockSettings.of(Material.WOOD).strength(1.5f)), true);
 
-    public static final Block INDEX_LECTERN = registerBlock("index_lectern",
-            new IndexLecternBlock(FabricBlockSettings.of(Material.WOOD).strength(1.5f)), false);
+    public static final Block MYSTICAL_LECTERN = registerBlock("mystical_lectern",
+            new MysticalLecternBlock(FabricBlockSettings.of(Material.WOOD).strength(1.5f)), false);
 
 
     private static Block registerBlock(String name, Block block, boolean hasItem) {

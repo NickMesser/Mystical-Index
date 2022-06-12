@@ -1,10 +1,16 @@
 package net.messer.mystical_index.item.custom.book;
 
+import net.messer.mystical_index.block.ModBlocks;
+import net.messer.mystical_index.block.custom.MysticalLecternBlock;
+import net.messer.mystical_index.block.entity.MysticalLecternBlockEntity;
+import net.messer.mystical_index.item.custom.page.ActionPageItem;
 import net.messer.mystical_index.item.custom.page.InteractingPage;
 import net.messer.mystical_index.item.custom.page.PageItem;
 import net.messer.mystical_index.item.custom.page.TypePageItem;
-import net.messer.mystical_index.util.Colors;
 import net.messer.mystical_index.util.PageRegistry;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.LecternBlock;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -14,10 +20,12 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.screen.slot.Slot;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.*;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +70,14 @@ public class MysticalBookItem extends Item {
     @Nullable
     public TypePageItem getTypePage(ItemStack book) {
         return (TypePageItem) getPage(book, TYPE_PAGE_TAG);
+    }
+
+    /**
+     * Returns the current action page of the book.
+     */
+    @Nullable
+    public ActionPageItem getActionPage(ItemStack book) {
+        return (ActionPageItem) getPage(book, ACTION_PAGE_TAG);
     }
 
     /**
@@ -169,6 +185,25 @@ public class MysticalBookItem extends Item {
 
     @Override
     public ActionResult useOnBlock(ItemUsageContext context) {
+        BlockPos blockPos;
+        World world = context.getWorld();
+        BlockState blockState = world.getBlockState(blockPos = context.getBlockPos());
+
+        // Try to put book on lectern
+        if (blockState.isOf(Blocks.LECTERN) && !blockState.get(LecternBlock.HAS_BOOK)) {
+            var newState = ModBlocks.MYSTICAL_LECTERN.getStateWithProperties(blockState);
+
+            world.setBlockState(blockPos, newState);
+            ItemStack stack = context.getStack().copy();
+            context.getStack().decrement(1);
+
+            return MysticalLecternBlock.putBookIfAbsent(
+                    context.getPlayer(), world,
+                    blockPos, newState,
+                    stack
+            ) ? ActionResult.success(world.isClient) : ActionResult.PASS;
+        }
+
         return forInteractingPages(context.getStack(), result -> result != ActionResult.PASS,
                 page -> page.book$useOnBlock(context), ActionResult.PASS);
     }
@@ -209,6 +244,24 @@ public class MysticalBookItem extends Item {
     public boolean hasGlint(ItemStack book) {
         return forInteractingPages(book, result -> result,
                 page -> page.book$hasGlint(book), false);
+    }
+
+    public boolean interceptsChatMessage(ItemStack book, ServerPlayerEntity player, String message) {
+        return forInteractingPages(book, result -> result,
+                page -> page.book$interceptsChatMessage(book, player, message), false);
+    }
+
+    public void onInterceptedChatMessage(ItemStack book, ServerPlayerEntity player, String message) {
+        forEachPage(book, page -> page.book$onInterceptedChatMessage(book, player, message));
+    }
+
+    public boolean lectern$interceptsChatMessage(MysticalLecternBlockEntity lectern, ServerPlayerEntity player, String message) {
+        return forInteractingPages(lectern.getBook(), result -> result,
+                page -> page.lectern$interceptsChatMessage(lectern, player, message), false);
+    }
+
+    public void lectern$onInterceptedChatMessage(MysticalLecternBlockEntity lectern, ServerPlayerEntity player, String message) {
+        forEachPage(lectern.getBook(), page -> page.lectern$onInterceptedChatMessage(lectern, player, message));
     }
 
     @Override

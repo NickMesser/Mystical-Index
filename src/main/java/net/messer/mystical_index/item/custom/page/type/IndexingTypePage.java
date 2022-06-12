@@ -1,19 +1,23 @@
 package net.messer.mystical_index.item.custom.page.type;
 
 import net.messer.mystical_index.block.ModBlocks;
-import net.messer.mystical_index.block.custom.IndexLecternBlock;
+import net.messer.mystical_index.block.custom.MysticalLecternBlock;
+import net.messer.mystical_index.block.entity.MysticalLecternBlockEntity;
 import net.messer.mystical_index.item.custom.page.AttributePageItem;
 import net.messer.mystical_index.item.custom.page.TypePageItem;
 import net.messer.mystical_index.util.Colors;
 import net.messer.mystical_index.util.WorldEffects;
+import net.messer.mystical_index.util.request.ExtractionRequest;
 import net.messer.mystical_index.util.request.IndexInteractable;
 import net.messer.mystical_index.util.request.InsertionRequest;
 import net.messer.mystical_index.util.request.LibraryIndex;
+import net.messer.mystical_index.util.state.PageLecternState;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.LecternBlock;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.StackReference;
 import net.minecraft.item.ItemStack;
@@ -24,8 +28,11 @@ import net.minecraft.nbt.NbtInt;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.screen.slot.Slot;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
@@ -38,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static net.messer.mystical_index.block.entity.MysticalLecternBlockEntity.EXTRACTED_DROP_UUID;
 import static net.messer.mystical_index.item.ModItems.INDEXING_TYPE_PAGE;
 
 public class IndexingTypePage extends TypePageItem {
@@ -45,19 +53,18 @@ public class IndexingTypePage extends TypePageItem {
     public static final String MAX_LINKS_TAG = "max_links";
     public static final String MAX_RANGE_LINKED_TAG = "max_range_linked";
 
+    public IndexingTypePage(String id) {
+        super(id);
+    }
+
     @Override
     public int getColor() {
         return 0xaa22aa;
     }
 
     @Override
-    public Text getTypeDisplayName() {
-        return new TranslatableText("item.mystical_index.page.tooltip.type.indexing").formatted(Formatting.DARK_PURPLE);
-    }
-
-    @Override
-    public Text getBookDisplayName() {
-        return new TranslatableText("item.mystical_index.mystical_book.type.indexing");
+    public MutableText getTypeDisplayName() {
+        return super.getTypeDisplayName().formatted(Formatting.DARK_PURPLE);
     }
 
     public static final String LINKED_BLOCKS_TAG = "linked_blocks";
@@ -113,6 +120,17 @@ public class IndexingTypePage extends TypePageItem {
         return index;
     }
 
+
+    public void tryInsertItemStack(ItemStack itemStack, PlayerEntity player) {
+        LibraryIndex index = LibraryIndex.fromRange(player.getWorld(), player.getBlockPos(), LibraryIndex.ITEM_SEARCH_RANGE);
+
+        InsertionRequest request = new InsertionRequest(itemStack);
+        request.setSourcePosition(player.getPos());
+        request.setBlockAffectedCallback(WorldEffects::insertionParticles);
+
+        index.insertStack(request);
+    }
+
     @Override
     public boolean book$onStackClicked(ItemStack book, Slot slot, ClickType clickType, PlayerEntity player) {
         if (clickType != ClickType.RIGHT || !slot.hasStack()) {
@@ -138,23 +156,8 @@ public class IndexingTypePage extends TypePageItem {
         BlockState blockState = world.getBlockState(blockPos = context.getBlockPos());
         var book = context.getStack();
 
-        // Try to put book on lectern
-        if (blockState.isOf(Blocks.LECTERN) && !blockState.get(LecternBlock.HAS_BOOK)) {
-            var newState = ModBlocks.INDEX_LECTERN.getStateWithProperties(blockState);
-
-            world.setBlockState(blockPos, newState);
-            ItemStack stack = context.getStack().copy();
-            context.getStack().decrement(1);
-
-            return IndexLecternBlock.putBookIfAbsent( // TODO add booming sound
-                    context.getPlayer(), world,
-                    blockPos, newState,
-                    stack
-            ) ? ActionResult.success(world.isClient) : ActionResult.PASS;
-        }
-
         // Try linking library to book
-        else if (blockState.isOf(ModBlocks.LIBRARY) && context.getPlayer() != null && context.getPlayer().isSneaking()) {
+        if (blockState.isOf(ModBlocks.LIBRARY) && context.getPlayer() != null && context.getPlayer().isSneaking()) {
 
             var nbt = book.getOrCreateNbt();
             var librariesList = nbt.getList(LINKED_BLOCKS_TAG, NbtElement.LIST_TYPE);
@@ -208,14 +211,67 @@ public class IndexingTypePage extends TypePageItem {
         }
     }
 
-    public void tryInsertItemStack(ItemStack itemStack, PlayerEntity player) {
-        LibraryIndex index = LibraryIndex.fromRange(player.getWorld(), player.getBlockPos(), LibraryIndex.ITEM_SEARCH_RANGE);
+    @Override
+    public boolean book$interceptsChatMessage(ItemStack book, ServerPlayerEntity player, String message) {
+        return true;
+    }
 
-        InsertionRequest request = new InsertionRequest(itemStack);
-        request.setSourcePosition(player.getPos());
-        request.setBlockAffectedCallback(WorldEffects::insertionParticles);
+    @Override
+    public void book$onInterceptedChatMessage(ItemStack book, ServerPlayerEntity player, String message) {
+        LibraryIndex index = LibraryIndex.fromRange(player.getWorld(), player.getBlockPos(), getMaxRange(book, false));
+        ExtractionRequest request = ExtractionRequest.get(message);
+        request.setSourcePosition(player.getPos().add(0, 1, 0));
+        request.setBlockAffectedCallback(WorldEffects::extractionParticles);
 
-        index.insertStack(request);
+        List<ItemStack> extracted = index.extractItems(request);
+
+        for (ItemStack stack : extracted)
+            player.getInventory().offerOrDrop(stack);
+
+        player.sendMessage(request.getMessage(), false);
+    } // TODO merge this and lectern version into one
+
+    @Override
+    public PageLecternState lectern$getState(MysticalLecternBlockEntity lectern) {
+        return new IndexingLecternState(lectern);
+    }
+
+    @Override
+    public boolean lectern$interceptsChatMessage(MysticalLecternBlockEntity lectern, ServerPlayerEntity player, String message) {
+        return true;
+    }
+
+    @Override
+    public void lectern$onInterceptedChatMessage(MysticalLecternBlockEntity lectern, ServerPlayerEntity player, String message) {
+        ServerWorld world = player.getWorld();
+        BlockPos blockPos = lectern.getPos();
+
+        LibraryIndex index = lectern.getLinkedLibraries();
+        ExtractionRequest request = ExtractionRequest.get(message);
+        request.setSourcePosition(Vec3d.ofCenter(blockPos, 0.5));
+        request.setBlockAffectedCallback(WorldEffects::extractionParticles);
+
+        List<ItemStack> extracted = index.extractItems(request);
+
+        Vec3d itemPos = Vec3d.ofCenter(blockPos, 1);
+        for (ItemStack stack : extracted) {
+            ItemEntity itemEntity = new ItemEntity(world, itemPos.getX(), itemPos.getY(), itemPos.getZ(), stack);
+            itemEntity.setToDefaultPickupDelay();
+            itemEntity.setVelocity(Vec3d.ZERO);
+            itemEntity.setThrower(EXTRACTED_DROP_UUID);
+            world.spawnEntity(itemEntity);
+        }
+
+        if (request.hasAffected()) {
+            world.playSound(null, itemPos.getX(), itemPos.getY(), itemPos.getZ(),
+                    SoundEvents.BLOCK_AMETHYST_BLOCK_STEP, SoundCategory.BLOCKS,
+                    0.5f, 1f + world.getRandom().nextFloat() * 0.4f);
+            world.spawnParticles(
+                    ParticleTypes.SOUL_FIRE_FLAME, itemPos.getX(), itemPos.getY(), itemPos.getZ(),
+                    5, 0, 0, 0, 0.1);
+        }
+
+        player.sendMessage(request.getMessage(), false);
     }
 
     @Override
@@ -240,17 +296,25 @@ public class IndexingTypePage extends TypePageItem {
         return getLinks(book) > 0;
     }
 
+    public static class IndexingLecternState extends PageLecternState {
+        public LibraryIndex index;
+
+        public IndexingLecternState(MysticalLecternBlockEntity lectern) {
+            super(lectern);
+        }
+    }
+
     public static abstract class IndexingAttributePage extends AttributePageItem {
         @Override
         public List<TypePageItem> getCompatibleTypes(ItemStack page) {
             return List.of(INDEXING_TYPE_PAGE);
         }
 
-        public int getRangeMultiplier(ItemStack page, boolean linked) {
+        public double getRangeMultiplier(ItemStack page, boolean linked) {
             return 1;
         }
 
-        public int getLinksMultiplier(ItemStack page) {
+        public double getLinksMultiplier(ItemStack page) {
             return 1;
         }
 

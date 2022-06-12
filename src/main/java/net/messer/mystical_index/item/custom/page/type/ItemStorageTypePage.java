@@ -19,6 +19,7 @@ import net.minecraft.nbt.NbtString;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ClickType;
@@ -38,19 +39,18 @@ public class ItemStorageTypePage extends TypePageItem {
     public static final String MAX_STACKS_TAG = "max_stacks";
     public static final String MAX_TYPES_TAG = "max_types";
 
+    public ItemStorageTypePage(String id) {
+        super(id);
+    }
+
     @Override
     public int getColor() {
         return 0x88ff88;
     }
 
     @Override
-    public Text getTypeDisplayName() {
-        return new TranslatableText("item.mystical_index.page.tooltip.type.item_storage").formatted(Formatting.DARK_AQUA);
-    }
-
-    @Override
-    public Text getBookDisplayName() {
-        return new TranslatableText("item.mystical_index.mystical_book.type.item_storage");
+    public MutableText getTypeDisplayName() {
+        return super.getTypeDisplayName().formatted(Formatting.DARK_AQUA);
     }
 
     public static final String OCCUPIED_STACKS_TAG = "occupied_stacks";
@@ -68,45 +68,6 @@ public class ItemStorageTypePage extends TypePageItem {
 
         attributes.putInt(MAX_STACKS_TAG, 1);
         attributes.putInt(MAX_TYPES_TAG, 2);
-    }
-
-    @Override
-    public boolean book$onStackClicked(ItemStack book, Slot slot, ClickType clickType, PlayerEntity player) {
-        if (clickType != ClickType.RIGHT) {
-            return false;
-        }
-        ItemStack itemStack = slot.getStack();
-        if (itemStack.isEmpty()) {
-            playRemoveOneSound(player);
-            removeFirstStack(book).ifPresent(removedStack -> tryAddItem(book, slot.insertStack(removedStack)));
-        } else {
-            int amount = tryAddItem(book, itemStack);
-            if (amount > 0) {
-                playInsertSound(player);
-                itemStack.decrement(amount);
-            }
-        }
-        return true;
-    }
-
-    @Override
-    public boolean book$onClicked(ItemStack book, ItemStack cursorStack, Slot slot, ClickType clickType, PlayerEntity player, StackReference cursorStackReference) {
-        if (clickType != ClickType.RIGHT || !slot.canTakePartial(player)) {
-            return false;
-        }
-        if (cursorStack.isEmpty()) {
-            removeFirstStack(book).ifPresent(itemStack -> {
-                playRemoveOneSound(player);
-                cursorStackReference.set(itemStack);
-            });
-        } else {
-            int amount = tryAddItem(book, cursorStack);
-            if (amount > 0) {
-                playInsertSound(player);
-                cursorStack.decrement(amount);
-            }
-        }
-        return true;
     }
 
     public int getMaxTypes(ItemStack book) {
@@ -324,6 +285,45 @@ public class ItemStorageTypePage extends TypePageItem {
     }
 
     @Override
+    public boolean book$onStackClicked(ItemStack book, Slot slot, ClickType clickType, PlayerEntity player) {
+        if (clickType != ClickType.RIGHT) {
+            return false;
+        }
+        ItemStack itemStack = slot.getStack();
+        if (itemStack.isEmpty()) {
+            playRemoveOneSound(player);
+            removeFirstStack(book).ifPresent(removedStack -> tryAddItem(book, slot.insertStack(removedStack)));
+        } else {
+            int amount = tryAddItem(book, itemStack);
+            if (amount > 0) {
+                playInsertSound(player);
+                itemStack.decrement(amount);
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public boolean book$onClicked(ItemStack book, ItemStack cursorStack, Slot slot, ClickType clickType, PlayerEntity player, StackReference cursorStackReference) {
+        if (clickType != ClickType.RIGHT || !slot.canTakePartial(player)) {
+            return false;
+        }
+        if (cursorStack.isEmpty()) {
+            removeFirstStack(book).ifPresent(itemStack -> {
+                playRemoveOneSound(player);
+                cursorStackReference.set(itemStack);
+            });
+        } else {
+            int amount = tryAddItem(book, cursorStack);
+            if (amount > 0) {
+                playInsertSound(player);
+                cursorStack.decrement(amount);
+            }
+        }
+        return true;
+    }
+
+    @Override
     public void book$appendTooltip(ItemStack book, @Nullable World world, List<Text> tooltip, TooltipContext context) {
         for (Text text : getContents(book).getTextList()) {
             tooltip.add(text.copy().formatted(Formatting.GRAY));
@@ -362,11 +362,11 @@ public class ItemStorageTypePage extends TypePageItem {
             return List.of(ITEM_STORAGE_TYPE_PAGE);
         }
 
-        public int getStacksMultiplier(ItemStack page) {
+        public double getStacksMultiplier(ItemStack page) {
             return 1;
         }
 
-        public int getTypesMultiplier(ItemStack page) {
+        public double getTypesMultiplier(ItemStack page) {
             return 1;
         }
 

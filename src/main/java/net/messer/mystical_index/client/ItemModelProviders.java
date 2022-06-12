@@ -12,7 +12,7 @@ import net.minecraft.util.registry.Registry;
 import static net.messer.mystical_index.item.ModItems.MYSTICAL_BOOK;
 
 @Environment(value = EnvType.CLIENT)
-public class ModelProviders {
+public class ItemModelProviders {
     public static void register() {
         registerBookModel(Registry.ITEM.getId(ModItems.ITEM_STORAGE_TYPE_PAGE), "item_storage_type");
         registerBookModel(Registry.ITEM.getId(ModItems.INDEXING_TYPE_PAGE), "indexing_type");

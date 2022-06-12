@@ -1,8 +1,8 @@
 package net.messer.mystical_index.mixin;
 
-import net.messer.mystical_index.block.entity.IndexLecternBlockEntity;
+import net.messer.mystical_index.block.entity.MysticalLecternBlockEntity;
+import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.custom.book.MysticalBookItem;
-import net.messer.mystical_index.item.custom.page.type.IndexingTypePage;
 import net.messer.mystical_index.util.LecternTracker;
 import net.messer.mystical_index.util.WorldEffects;
 import net.messer.mystical_index.util.request.ExtractionRequest;
@@ -29,8 +29,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
-import static net.messer.mystical_index.block.entity.IndexLecternBlockEntity.EXTRACTED_DROP_UUID;
-import static net.messer.mystical_index.block.entity.IndexLecternBlockEntity.LECTERN_PICKUP_RADIUS;
+import static net.messer.mystical_index.block.entity.MysticalLecternBlockEntity.EXTRACTED_DROP_UUID;
+import static net.messer.mystical_index.block.entity.MysticalLecternBlockEntity.LECTERN_PICKUP_RADIUS;
 
 @Mixin(ServerPlayNetworkHandler.class)
 public abstract class ServerPlayNetworkHandlerMixin {
@@ -46,66 +46,26 @@ public abstract class ServerPlayNetworkHandlerMixin {
 
         if (!(message.startsWith("/") || player.isSpectator())) {
             ItemStack book = null;
-            IndexingTypePage page = null;
             for (Hand hand : Hand.values()) {
                 book = player.getStackInHand(hand);
-                page = MysticalBookItem.isType(book, IndexingTypePage.class);
-                if (page != null) {
+                if (book.isOf(ModItems.MYSTICAL_BOOK)) {
                     break;
                 }
             }
 
-            if (page != null) {
-                IndexingTypePage finalPage = page;
+            if (book != null && book.isOf(ModItems.MYSTICAL_BOOK) &&
+                    ((MysticalBookItem) book.getItem()).interceptsChatMessage(book, player, message)) {
                 ItemStack finalBook = book;
                 server.execute(() -> {
-                    LibraryIndex index = LibraryIndex.fromRange(player.getWorld(), player.getBlockPos(),
-                            finalPage.getMaxRange(finalBook, false));
-                    ExtractionRequest request = ExtractionRequest.get(message);
-                    request.setSourcePosition(player.getPos().add(0, 1, 0));
-                    request.setBlockAffectedCallback(WorldEffects::extractionParticles);
-
-                    List<ItemStack> extracted = index.extractItems(request);
-
-                    for (ItemStack stack : extracted)
-                        player.getInventory().offerOrDrop(stack);
-
-                    player.sendMessage(request.getMessage(), false);
+                    ((MysticalBookItem) finalBook.getItem()).onInterceptedChatMessage(finalBook, player, message);
                 });
                 info.cancel();
-            } else { // TODO clean this up
-                IndexLecternBlockEntity lectern = LecternTracker.findNearestLectern(player, LECTERN_PICKUP_RADIUS);
-                if (lectern != null) {
+            } else {
+                MysticalLecternBlockEntity lectern = LecternTracker.findNearestLectern(player, LECTERN_PICKUP_RADIUS);
+                if (lectern != null &&
+                        ((MysticalBookItem) lectern.getBook().getItem()).lectern$interceptsChatMessage(lectern, player, message)) {
                     server.execute(() -> {
-                        ServerWorld world = player.getWorld();
-                        BlockPos blockPos = lectern.getPos();
-
-                        LibraryIndex index = lectern.getLinkedLibraries();
-                        ExtractionRequest request = ExtractionRequest.get(message);
-                        request.setSourcePosition(Vec3d.ofCenter(blockPos, 0.5));
-                        request.setBlockAffectedCallback(WorldEffects::extractionParticles);
-
-                        List<ItemStack> extracted = index.extractItems(request);
-
-                        Vec3d itemPos = Vec3d.ofCenter(blockPos, 1);
-                        for (ItemStack stack : extracted) {
-                            ItemEntity itemEntity = new ItemEntity(world, itemPos.getX(), itemPos.getY(), itemPos.getZ(), stack);
-                            itemEntity.setToDefaultPickupDelay();
-                            itemEntity.setVelocity(Vec3d.ZERO);
-                            itemEntity.setThrower(EXTRACTED_DROP_UUID);
-                            world.spawnEntity(itemEntity);
-                        }
-
-                        if (request.hasAffected()) {
-                            world.playSound(null, itemPos.getX(), itemPos.getY(), itemPos.getZ(),
-                                    SoundEvents.BLOCK_AMETHYST_BLOCK_STEP, SoundCategory.BLOCKS,
-                                    0.5f, 1f + world.getRandom().nextFloat() * 0.4f);
-                            world.spawnParticles(
-                                    ParticleTypes.SOUL_FIRE_FLAME, itemPos.getX(), itemPos.getY(), itemPos.getZ(),
-                                    5, 0, 0, 0, 0.1);
-                        }
-
-                        player.sendMessage(request.getMessage(), false);
+                        ((MysticalBookItem) lectern.getBook().getItem()).lectern$onInterceptedChatMessage(lectern, player, message);
                     });
                     info.cancel();
                 }

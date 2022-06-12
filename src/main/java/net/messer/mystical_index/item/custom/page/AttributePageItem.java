@@ -8,9 +8,9 @@ import java.util.List;
 public abstract class AttributePageItem extends PageItem implements TypeDependentPage {
     public static final String ATTRIBUTES_TAG = "attributes";
 
-    public static void multiplyIntAttribute(NbtCompound nbt, String attribute, int amount) {
+    public static void multiplyIntAttribute(NbtCompound nbt, String attribute, double amount) {
         var attributeValue = nbt.getInt(attribute);
-        nbt.putInt(attribute, attributeValue * amount);
+        nbt.putInt(attribute, (int) (attributeValue * amount));
     }
 
     public List<AttributePageItem> getIncompatibleAttributes(ItemStack page) {

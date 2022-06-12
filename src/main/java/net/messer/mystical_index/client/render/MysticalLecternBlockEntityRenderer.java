@@ -1,9 +1,9 @@
-package net.messer.mystical_index.client;
+package net.messer.mystical_index.client.render;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.messer.mystical_index.MysticalIndex;
-import net.messer.mystical_index.block.entity.IndexLecternBlockEntity;
+import net.messer.mystical_index.block.entity.MysticalLecternBlockEntity;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.LecternBlock;
 import net.minecraft.client.render.RenderLayer;
@@ -16,23 +16,22 @@ import net.minecraft.client.render.entity.model.EntityModelLayers;
 import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3f;
 
 @Environment(value = EnvType.CLIENT)
-public class IndexLecternBlockEntityRenderer implements BlockEntityRenderer<IndexLecternBlockEntity> {
+public class MysticalLecternBlockEntityRenderer implements BlockEntityRenderer<MysticalLecternBlockEntity> {
     public static final SpriteIdentifier BOOK_TEXTURE =
             new SpriteIdentifier(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE,
                     MysticalIndex.id("entity/index_lectern_book"));
 
     private final BookModel book;
 
-    public IndexLecternBlockEntityRenderer(BlockEntityRendererFactory.Context ctx) {
+    public MysticalLecternBlockEntityRenderer(BlockEntityRendererFactory.Context ctx) {
         this.book = new BookModel(ctx.getLayerModelPart(EntityModelLayers.BOOK));
     }
 
     @Override
-    public void render(IndexLecternBlockEntity be, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay) {
+    public void render(MysticalLecternBlockEntity be, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay) {
         BlockState blockState = be.getCachedState();
         if (!blockState.get(LecternBlock.HAS_BOOK)) {
             return;

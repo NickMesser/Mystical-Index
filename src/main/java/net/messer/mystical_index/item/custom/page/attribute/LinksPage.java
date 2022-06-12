@@ -5,7 +5,7 @@ import net.minecraft.item.ItemStack;
 
 public class LinksPage extends IndexingTypePage.IndexingAttributePage {
     @Override
-    public int getLinksMultiplier(ItemStack page) {
+    public double getLinksMultiplier(ItemStack page) {
         return 2;
     }
 

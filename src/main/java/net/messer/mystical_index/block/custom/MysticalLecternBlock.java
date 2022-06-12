@@ -1,7 +1,7 @@
 package net.messer.mystical_index.block.custom;
 
 import net.messer.mystical_index.block.ModBlockEntities;
-import net.messer.mystical_index.block.entity.IndexLecternBlockEntity;
+import net.messer.mystical_index.block.entity.MysticalLecternBlockEntity;
 import net.messer.mystical_index.client.Particles;
 import net.messer.mystical_index.util.LecternTracker;
 import net.messer.mystical_index.util.WorldEffects;
@@ -38,21 +38,21 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.Random;
 
-import static net.messer.mystical_index.block.entity.IndexLecternBlockEntity.EXTRACTED_DROP_UUID;
+import static net.messer.mystical_index.block.entity.MysticalLecternBlockEntity.EXTRACTED_DROP_UUID;
 
 @SuppressWarnings("deprecation")
-public class IndexLecternBlock extends LecternBlock {
+public class MysticalLecternBlock extends LecternBlock {
     private static final VoxelShape LECTERN_INSIDE_SHAPE = Block.createCuboidShape(2.0, 11.0, 2.0, 14.0, 16.0, 14.0);
     private static final VoxelShape LECTERN_ABOVE_SHAPE = Block.createCuboidShape(0.0, 16.0, 0.0, 16.0, 32.0, 16.0);
     public static final VoxelShape LECTERN_INPUT_AREA_SHAPE = VoxelShapes.union(LECTERN_INSIDE_SHAPE, LECTERN_ABOVE_SHAPE);
 
-    public IndexLecternBlock(Settings settings) {
+    public MysticalLecternBlock(Settings settings) {
         super(settings);
     }
 
     @Override
     public void afterBreak(World world, PlayerEntity player, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, ItemStack stack) {
-        if (blockEntity instanceof IndexLecternBlockEntity lectern) {
+        if (blockEntity instanceof MysticalLecternBlockEntity lectern) {
             LecternTracker.removeIndexLectern(lectern);
         }
         super.afterBreak(world, player, pos, state, blockEntity, stack);
@@ -66,7 +66,7 @@ public class IndexLecternBlock extends LecternBlock {
                                 entity.getBoundingBox().offset(-pos.getX(), -pos.getY(), -pos.getZ())),
                         LECTERN_INPUT_AREA_SHAPE, BooleanBiFunction.AND) &&
                 world instanceof ServerWorld serverWorld &&
-                serverWorld.getBlockEntity(pos) instanceof IndexLecternBlockEntity lectern) {
+                serverWorld.getBlockEntity(pos) instanceof MysticalLecternBlockEntity lectern) {
 
             ItemStack itemStack = itemEntity.getStack();
 
@@ -95,7 +95,7 @@ public class IndexLecternBlock extends LecternBlock {
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
         if (state.get(HAS_BOOK)) {
             var blockEntity = world.getBlockEntity(pos);
-            if (blockEntity instanceof IndexLecternBlockEntity lecternBlockEntity) {
+            if (blockEntity instanceof MysticalLecternBlockEntity lecternBlockEntity) {
                 var book = lecternBlockEntity.getBook();
                 player.getInventory().offerOrDrop(book);
 
@@ -114,12 +114,12 @@ public class IndexLecternBlock extends LecternBlock {
 
     @Override
     public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
-        return new IndexLecternBlockEntity(pos, state);
+        return new MysticalLecternBlockEntity(pos, state);
     }
 
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-        return checkType(type, ModBlockEntities.INDEX_LECTERN_BLOCK_ENTITY, IndexLecternBlockEntity::serverTick);
+        return checkType(type, ModBlockEntities.MYSTICAL_LECTERN_BLOCK_ENTITY, MysticalLecternBlockEntity::serverTick);
     }
 
     @Override
