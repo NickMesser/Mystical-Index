@@ -83,11 +83,11 @@ public class WorldEffects {
         }
     }
 
-    public static void lecternPlonk(World world, Vec3d pos, float pitch) {
+    public static void lecternPlonk(World world, Vec3d pos, float pitch, boolean particles) {
         world.playSound(null, pos.getX(), pos.getY(), pos.getZ(),
                 SoundEvents.BLOCK_AMETHYST_BLOCK_STEP, SoundCategory.BLOCKS,
                 0.5f, pitch + world.getRandom().nextFloat() * 0.4f);
-        ((ServerWorld) world).spawnParticles(
+        if (particles) ((ServerWorld) world).spawnParticles(
                 ParticleTypes.SOUL_FIRE_FLAME, pos.getX(), pos.getY(), pos.getZ(),
                 5, 0, 0, 0, 0.1);
     }

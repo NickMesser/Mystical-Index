@@ -170,7 +170,8 @@ public class IndexingTypePage extends TypePageItem {
         }
 
         var index = getIndex(book, player.world, player.getBlockPos());
-        tryInsertItemStack(index, slot.getStack(), player.getPos());
+        var request = tryInsertItemStack(index, slot.getStack(), player.getPos());
+        if (request.hasAffected()) WorldEffects.lecternPlonk(player.world, player.getPos(), 0.6f, false);
         return true;
     }
 
@@ -181,7 +182,8 @@ public class IndexingTypePage extends TypePageItem {
         }
 
         var index = getIndex(book, player.world, player.getBlockPos());
-        tryInsertItemStack(index, cursorStack, player.getPos());
+        var request = tryInsertItemStack(index, cursorStack, player.getPos());
+        if (request.hasAffected()) WorldEffects.lecternPlonk(player.world, player.getPos(), 0.6f, false);
         return true;
     }
 
@@ -261,6 +263,7 @@ public class IndexingTypePage extends TypePageItem {
             player.getInventory().offerOrDrop(stack);
         }
 
+        if (request.hasAffected()) WorldEffects.lecternPlonk(player.world, player.getPos(), 1f, false);
         player.sendMessage(request.getMessage(), false);
     }
 
@@ -291,7 +294,7 @@ public class IndexingTypePage extends TypePageItem {
             world.spawnEntity(itemEntity);
         }
 
-        if (request.hasAffected()) WorldEffects.lecternPlonk(world, itemPos, 1f);
+        if (request.hasAffected()) WorldEffects.lecternPlonk(world, itemPos, 1f, true);
         player.sendMessage(request.getMessage(), false);
     }
 
@@ -350,7 +353,7 @@ public class IndexingTypePage extends TypePageItem {
             var index = getIndex(lectern.getBook(), world, pos);
 
             var request = tryInsertItemStack(index, itemStack, Vec3d.ofCenter(pos));
-            if (request.hasAffected()) WorldEffects.lecternPlonk(world, entity.getPos(), 0.6f);
+            if (request.hasAffected()) WorldEffects.lecternPlonk(world, entity.getPos(), 0.6f, true);
         }
     }
 
