@@ -8,19 +8,13 @@ import java.util.List;
 public interface IndexInteractable {
     ContentsIndex getContents();
 
-    default List<ItemStack> countItems(ExtractionRequest request) {
-        return extractItems(request, false);
-    }
-
-    default List<ItemStack> extractItems(ExtractionRequest request) {
-        return extractItems(request, true);
-    }
-
+    /**
+     * <b>Use only while processing a request! Otherwise use request.apply() instead.</b>
+     */
     List<ItemStack> extractItems(ExtractionRequest request, boolean apply);
 
-//    default void insertStack(ItemStack itemStack) {
-//        insertStack(itemStack, true);
-//    }
-
+    /**
+     * <b>Use only while processing a request! Otherwise use request.apply() instead.</b>
+     */
     void insertStack(InsertionRequest request);
 }

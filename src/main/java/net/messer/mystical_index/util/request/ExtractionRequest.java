@@ -1,9 +1,11 @@
 package net.messer.mystical_index.util.request;
 
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
@@ -19,6 +21,7 @@ public class ExtractionRequest extends Request {
     private final String[] expression;
     private final BiFunction<Integer, Item, Integer> amountModifier;
     private Item match;
+    private List<ItemStack> stacks = List.of();
 
     private ExtractionRequest(String itemQuery, int amount, BiFunction<Integer, Item, Integer> amountModifier) {
         super(amount);
@@ -60,6 +63,10 @@ public class ExtractionRequest extends Request {
             return new ExtractionRequest(matcher.group("item"), amount, amountModifier);
         }
         return null;
+    }
+
+    public void apply(LibraryIndex index, boolean apply) {
+        stacks = index.extractItems(this, apply);
     }
 
     public boolean hasMatched() {
@@ -108,6 +115,10 @@ public class ExtractionRequest extends Request {
         if (hasMatched())
             return new TranslatableText("chat.mystical_index.extracted", getTotalAmountAffected(), getMatchedItem().getName().getString());
         return new TranslatableText("chat.mystical_index.no_match");
+    }
+
+    public List<ItemStack> getAffectedStacks() {
+        return stacks;
     }
 
     private static boolean matchGlob(String[] expression, String string) {

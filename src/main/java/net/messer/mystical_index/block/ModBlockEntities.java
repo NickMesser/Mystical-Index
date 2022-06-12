@@ -2,8 +2,8 @@ package net.messer.mystical_index.block;
 
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.messer.mystical_index.MysticalIndex;
-import net.messer.mystical_index.block.entity.MysticalLecternBlockEntity;
 import net.messer.mystical_index.block.entity.LibraryBlockEntity;
+import net.messer.mystical_index.block.entity.MysticalLecternBlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.util.registry.Registry;
 

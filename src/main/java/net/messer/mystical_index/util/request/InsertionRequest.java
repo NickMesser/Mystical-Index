@@ -12,6 +12,11 @@ public class InsertionRequest extends Request {
     }
 
     @Override
+    public void apply(LibraryIndex index, boolean apply) {
+        index.insertStack(this); // TODO apply
+    }
+
+    @Override
     public void satisfy(int amount) {
         itemStack.decrement(amount);
         super.satisfy(amount);

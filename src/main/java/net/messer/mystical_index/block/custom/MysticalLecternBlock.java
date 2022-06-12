@@ -3,10 +3,8 @@ package net.messer.mystical_index.block.custom;
 import net.messer.mystical_index.block.ModBlockEntities;
 import net.messer.mystical_index.block.entity.MysticalLecternBlockEntity;
 import net.messer.mystical_index.client.Particles;
+import net.messer.mystical_index.item.custom.book.MysticalBookItem;
 import net.messer.mystical_index.util.LecternTracker;
-import net.messer.mystical_index.util.WorldEffects;
-import net.messer.mystical_index.util.request.InsertionRequest;
-import net.messer.mystical_index.util.request.LibraryIndex;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -15,17 +13,12 @@ import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.tag.ItemTags;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
-import net.minecraft.util.function.BooleanBiFunction;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -35,10 +28,7 @@ import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.Random;
-
-import static net.messer.mystical_index.block.entity.MysticalLecternBlockEntity.EXTRACTED_DROP_UUID;
 
 @SuppressWarnings("deprecation")
 public class MysticalLecternBlock extends LecternBlock {
@@ -60,33 +50,9 @@ public class MysticalLecternBlock extends LecternBlock {
 
     @Override
     public void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity) {
-        if (entity instanceof ItemEntity itemEntity &&
-                !Objects.equals(itemEntity.getThrower(), EXTRACTED_DROP_UUID) &&
-                VoxelShapes.matchesAnywhere(VoxelShapes.cuboid(
-                                entity.getBoundingBox().offset(-pos.getX(), -pos.getY(), -pos.getZ())),
-                        LECTERN_INPUT_AREA_SHAPE, BooleanBiFunction.AND) &&
-                world instanceof ServerWorld serverWorld &&
-                serverWorld.getBlockEntity(pos) instanceof MysticalLecternBlockEntity lectern) {
-
-            ItemStack itemStack = itemEntity.getStack();
-
-            LibraryIndex index = lectern.getLinkedLibraries();
-
-            InsertionRequest request = new InsertionRequest(itemStack);
-            request.setSourcePosition(Vec3d.ofCenter(pos));
-            request.setBlockAffectedCallback(WorldEffects::insertionParticles);
-
-            index.insertStack(request);
-
-            if (request.hasAffected()) {
-                var sourcePos = entity.getPos();
-
-                serverWorld.playSound(null, sourcePos.getX(), sourcePos.getY(), sourcePos.getZ(),
-                        SoundEvents.BLOCK_AMETHYST_BLOCK_STEP, SoundCategory.BLOCKS,
-                        0.5f, 0.6f + world.getRandom().nextFloat() * 0.4f);
-                serverWorld.spawnParticles(
-                        ParticleTypes.SOUL_FIRE_FLAME, sourcePos.getX(), sourcePos.getY(), sourcePos.getZ(),
-                        5, 0, 0, 0, 0.1);
+        if (world.getBlockEntity(pos) instanceof MysticalLecternBlockEntity lectern) {
+            if (state.get(HAS_BOOK) && lectern.getBook().getItem() instanceof MysticalBookItem book) {
+                book.lectern$onEntityCollision(lectern, state, world, pos, entity);
             }
         }
     }

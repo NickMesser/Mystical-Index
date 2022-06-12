@@ -16,6 +16,12 @@ public abstract class Request {
         this.amountUnsatisfied = amount;
     }
 
+    public abstract void apply(LibraryIndex index, boolean apply);
+
+    public void apply(LibraryIndex index) {
+        apply(index, true);
+    }
+
     public void satisfy(int amount) {
         if (amountUnsatisfied != -1) {
             amountUnsatisfied -= amount;

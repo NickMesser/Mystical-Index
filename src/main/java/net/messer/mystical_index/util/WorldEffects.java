@@ -11,6 +11,8 @@ import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
@@ -79,5 +81,23 @@ public class WorldEffects {
                 ServerPlayNetworking.send(player, NetworkListeners.BLOCK_PARTICLES, buf);
             }
         }
+    }
+
+    public static void lecternPlonk(World world, Vec3d pos, float pitch) {
+        world.playSound(null, pos.getX(), pos.getY(), pos.getZ(),
+                SoundEvents.BLOCK_AMETHYST_BLOCK_STEP, SoundCategory.BLOCKS,
+                0.5f, pitch + world.getRandom().nextFloat() * 0.4f);
+        ((ServerWorld) world).spawnParticles(
+                ParticleTypes.SOUL_FIRE_FLAME, pos.getX(), pos.getY(), pos.getZ(),
+                5, 0, 0, 0, 0.1);
+    }
+
+    public static void drawParticleCircle(int tick, World world, Vec3d pos, int cycleTicks, int cycleOffset, double radius) {
+        double animationPos = (tick + cycleOffset) % cycleTicks / ((double) cycleTicks) * (2 * Math.PI);
+        Vec3d particlePos = pos.add(radius * Math.cos(animationPos), 0, radius * Math.sin(animationPos));
+        ((ServerWorld) world).spawnParticles(
+                ParticleTypes.ENCHANT, particlePos.getX(), particlePos.getY(), particlePos.getZ(),
+                0, 0, 0, 0, 0
+        );
     }
 }

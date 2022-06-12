@@ -2,7 +2,6 @@ package net.messer.mystical_index.item.custom.page.type;
 
 import net.messer.mystical_index.block.ModBlocks;
 import net.messer.mystical_index.block.entity.MysticalLecternBlockEntity;
-import net.messer.mystical_index.client.Particles;
 import net.messer.mystical_index.item.custom.page.AttributePageItem;
 import net.messer.mystical_index.item.custom.page.TypePageItem;
 import net.messer.mystical_index.util.Colors;
@@ -27,7 +26,6 @@ import net.minecraft.nbt.NbtList;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.MutableText;
@@ -36,14 +34,19 @@ import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.ClickType;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.function.BooleanBiFunction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
+import static net.messer.mystical_index.block.custom.MysticalLecternBlock.LECTERN_INPUT_AREA_SHAPE;
+import static net.messer.mystical_index.block.entity.MysticalLecternBlockEntity.LECTERN_DETECTION_RADIUS;
 import static net.messer.mystical_index.item.ModItems.INDEXING_TYPE_PAGE;
 
 public class IndexingTypePage extends TypePageItem {
@@ -69,7 +72,6 @@ public class IndexingTypePage extends TypePageItem {
 
     private static final int CIRCLE_PERIOD = 200;
     private static final int CIRCLE_INTERVAL = 2;
-    private static final int FLAME_INTERVAL = 4;
     private static final int SOUND_INTERVAL = 24;
 
     public static final UUID EXTRACTED_DROP_UUID = UUID.randomUUID();
@@ -114,14 +116,14 @@ public class IndexingTypePage extends TypePageItem {
     }
 
     @SuppressWarnings("ConstantConditions")
-    public LibraryIndex getIndex(ItemStack book, World world, BlockPos pos) {
+    private LibraryIndex getLinkedIndex(ItemStack book, World world, BlockPos pos) {
         var index = new LibraryIndex();
         var nbtList = book.getOrCreateNbt().getList(LINKED_BLOCKS_TAG, NbtElement.LIST_TYPE);
         for (int i = 0; i < nbtList.size(); i++) {
             var posList = nbtList.getList(i);
             var interactablePos = blockPosFromList(posList);
 
-            if (pos.isWithinDistance(interactablePos, getMaxRange(book, false)) &&
+            if (pos.isWithinDistance(interactablePos, getMaxRange(book, true)) &&
                     world.getBlockEntity(interactablePos) instanceof IndexInteractable interactable) {
                 index.interactables.add(interactable);
             }
@@ -129,15 +131,36 @@ public class IndexingTypePage extends TypePageItem {
         return index;
     }
 
+    public LibraryIndex getIndex(ItemStack book, World world, BlockPos pos) {
+        if (hasRangedLinking(book)) {
+            // Get linked libraries from range if no specific links are set.
+            return LibraryIndex.fromRange(world, pos, getMaxRange(book, false), true);
+        } else {
+            // Get linked libraries from specific links in the book.
+            return getLinkedIndex(book, world, pos);
+        }
+    }
 
-    public void tryInsertItemStack(ItemStack itemStack, PlayerEntity player) {
-        LibraryIndex index = LibraryIndex.fromRange(player.getWorld(), player.getBlockPos(), LibraryIndex.ITEM_SEARCH_RANGE);
+    public LibraryIndex getLecternIndex(MysticalLecternBlockEntity lectern) {
+        return ((IndexingLecternState) lectern.typeState).getIndex();
+    }
 
+    public InsertionRequest tryInsertItemStack(LibraryIndex index, ItemStack itemStack, Vec3d pos) {
         InsertionRequest request = new InsertionRequest(itemStack);
-        request.setSourcePosition(player.getPos());
+        request.setSourcePosition(pos);
         request.setBlockAffectedCallback(WorldEffects::insertionParticles);
 
-        index.insertStack(request);
+        request.apply(index);
+        return request;
+    }
+
+    public ExtractionRequest tryExtractItemStacks(LibraryIndex index, String message, Vec3d pos) {
+        ExtractionRequest request = ExtractionRequest.get(message);
+        request.setSourcePosition(pos);
+        request.setBlockAffectedCallback(WorldEffects::extractionParticles);
+
+        request.apply(index);
+        return request;
     }
 
     @Override
@@ -145,7 +168,9 @@ public class IndexingTypePage extends TypePageItem {
         if (clickType != ClickType.RIGHT || !slot.hasStack()) {
             return false;
         }
-        tryInsertItemStack(slot.getStack(), player);
+
+        var index = getIndex(book, player.world, player.getBlockPos());
+        tryInsertItemStack(index, slot.getStack(), player.getPos());
         return true;
     }
 
@@ -154,7 +179,9 @@ public class IndexingTypePage extends TypePageItem {
         if (clickType != ClickType.RIGHT || cursorStack.isEmpty() || !slot.canTakePartial(player)) {
             return false;
         }
-        tryInsertItemStack(cursorStack, player);
+
+        var index = getIndex(book, player.world, player.getBlockPos());
+        tryInsertItemStack(index, cursorStack, player.getPos());
         return true;
     }
 
@@ -227,18 +254,15 @@ public class IndexingTypePage extends TypePageItem {
 
     @Override
     public void book$onInterceptedChatMessage(ItemStack book, ServerPlayerEntity player, String message) {
-        LibraryIndex index = LibraryIndex.fromRange(player.getWorld(), player.getBlockPos(), getMaxRange(book, false));
-        ExtractionRequest request = ExtractionRequest.get(message);
-        request.setSourcePosition(player.getPos().add(0, 1, 0));
-        request.setBlockAffectedCallback(WorldEffects::extractionParticles);
+        var index = getIndex(book, player.world, player.getBlockPos());
+        var request = tryExtractItemStacks(index, message, player.getPos().add(0, 1, 0));
 
-        List<ItemStack> extracted = index.extractItems(request);
-
-        for (ItemStack stack : extracted)
+        for (ItemStack stack : request.getAffectedStacks()) {
             player.getInventory().offerOrDrop(stack);
+        }
 
         player.sendMessage(request.getMessage(), false);
-    } // TODO merge this and lectern version into one
+    }
 
     @Override
     public PageLecternState lectern$getState(MysticalLecternBlockEntity lectern) {
@@ -252,18 +276,14 @@ public class IndexingTypePage extends TypePageItem {
 
     @Override
     public void lectern$onInterceptedChatMessage(MysticalLecternBlockEntity lectern, ServerPlayerEntity player, String message) {
-        ServerWorld world = player.getWorld();
-        BlockPos blockPos = lectern.getPos();
+        var world = player.getWorld();
+        var blockPos = lectern.getPos();
 
-        LibraryIndex index = ((IndexingLecternState) lectern.typeState).getIndex();
-        ExtractionRequest request = ExtractionRequest.get(message);
-        request.setSourcePosition(Vec3d.ofCenter(blockPos, 0.5));
-        request.setBlockAffectedCallback(WorldEffects::extractionParticles);
+        var index = getLecternIndex(lectern);
+        var request = tryExtractItemStacks(index, message, Vec3d.ofCenter(blockPos));
 
-        List<ItemStack> extracted = index.extractItems(request);
-
-        Vec3d itemPos = Vec3d.ofCenter(blockPos, 1);
-        for (ItemStack stack : extracted) {
+        var itemPos = Vec3d.ofCenter(blockPos, 1);
+        for (ItemStack stack : request.getAffectedStacks()) {
             ItemEntity itemEntity = new ItemEntity(world, itemPos.getX(), itemPos.getY(), itemPos.getZ(), stack);
             itemEntity.setToDefaultPickupDelay();
             itemEntity.setVelocity(Vec3d.ZERO);
@@ -271,15 +291,7 @@ public class IndexingTypePage extends TypePageItem {
             world.spawnEntity(itemEntity);
         }
 
-        if (request.hasAffected()) {
-            world.playSound(null, itemPos.getX(), itemPos.getY(), itemPos.getZ(),
-                    SoundEvents.BLOCK_AMETHYST_BLOCK_STEP, SoundCategory.BLOCKS,
-                    0.5f, 1f + world.getRandom().nextFloat() * 0.4f);
-            world.spawnParticles(
-                    ParticleTypes.SOUL_FIRE_FLAME, itemPos.getX(), itemPos.getY(), itemPos.getZ(),
-                    5, 0, 0, 0, 0.1);
-        }
-
+        if (request.hasAffected()) WorldEffects.lecternPlonk(world, itemPos, 1f);
         player.sendMessage(request.getMessage(), false);
     }
 
@@ -287,26 +299,32 @@ public class IndexingTypePage extends TypePageItem {
     public void lectern$serverTick(World world, BlockPos pos, BlockState state, MysticalLecternBlockEntity lectern) {
         var centerPos = Vec3d.ofCenter(pos, 0.5);
 
-        if (lectern.tick % CIRCLE_INTERVAL == 0) {
-            Particles.drawParticleCircle(
+        if (
+                lectern.tick % CIRCLE_INTERVAL == 0 &&
+                world.getClosestPlayer(
+                        pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
+                        LECTERN_DETECTION_RADIUS, false
+                ) != null
+        ) {
+            WorldEffects.drawParticleCircle(
                     lectern.tick,
                     world, centerPos, CIRCLE_PERIOD,
-                    0, LECTERN_PICKUP_RADIUS
+                    0, LECTERN_DETECTION_RADIUS
             );
-            Particles.drawParticleCircle(
+            WorldEffects.drawParticleCircle(
                     lectern.tick,
                     world, centerPos, -CIRCLE_PERIOD,
-                    0, LECTERN_PICKUP_RADIUS
+                    0, LECTERN_DETECTION_RADIUS
             );
-            Particles.drawParticleCircle(
+            WorldEffects.drawParticleCircle(
                     lectern.tick,
                     world, centerPos, CIRCLE_PERIOD,
-                    CIRCLE_PERIOD / 2, LECTERN_PICKUP_RADIUS
+                    CIRCLE_PERIOD / 2, LECTERN_DETECTION_RADIUS
             );
-            Particles.drawParticleCircle(
+            WorldEffects.drawParticleCircle(
                     lectern.tick,
                     world, centerPos, -CIRCLE_PERIOD,
-                    CIRCLE_PERIOD / 2, LECTERN_PICKUP_RADIUS
+                    CIRCLE_PERIOD / 2, LECTERN_DETECTION_RADIUS
             );
 
             if (lectern.tick % SOUND_INTERVAL == 0) {
@@ -314,6 +332,25 @@ public class IndexingTypePage extends TypePageItem {
                         SoundEvents.BLOCK_BEACON_AMBIENT, SoundCategory.BLOCKS,
                         0.3f, 1.4f + world.getRandom().nextFloat() * 0.4f, true);
             }
+        }
+    }
+
+    @Override
+    public void lectern$onEntityCollision(MysticalLecternBlockEntity lectern, BlockState state, World world, BlockPos pos, Entity entity) {
+        if (
+                !world.isClient() &&
+                entity instanceof ItemEntity itemEntity &&
+                !Objects.equals(itemEntity.getThrower(), EXTRACTED_DROP_UUID) &&
+                VoxelShapes.matchesAnywhere(VoxelShapes.cuboid(
+                                entity.getBoundingBox().offset(-pos.getX(), -pos.getY(), -pos.getZ())),
+                        LECTERN_INPUT_AREA_SHAPE, BooleanBiFunction.AND)
+        ) {
+
+            var itemStack = itemEntity.getStack();
+            var index = getIndex(lectern.getBook(), world, pos);
+
+            var request = tryInsertItemStack(index, itemStack, Vec3d.ofCenter(pos));
+            if (request.hasAffected()) WorldEffects.lecternPlonk(world, entity.getPos(), 0.6f);
         }
     }
 
@@ -349,13 +386,7 @@ public class IndexingTypePage extends TypePageItem {
             var world = lectern.getWorld();
             var pos = lectern.getPos();
 
-            if (page.hasRangedLinking(book)) {
-                // Set linked libraries from range if no specific links are set.
-                index = LibraryIndex.fromRange(world, pos, page.getMaxRange(book, false), true);
-            } else {
-                // Set linked libraries to specific links taken from the book.
-                index = page.getIndex(book, world, pos);
-            }
+            index = page.getIndex(book, world, pos);
         }
 
         public LibraryIndex getIndex() {

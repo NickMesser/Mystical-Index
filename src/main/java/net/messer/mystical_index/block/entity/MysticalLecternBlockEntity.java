@@ -16,7 +16,7 @@ import net.minecraft.world.World;
 import static net.minecraft.block.LecternBlock.HAS_BOOK;
 
 public class MysticalLecternBlockEntity extends LecternBlockEntity { // TODO seperate IndexingBlockEntity
-    public static final double LECTERN_PICKUP_RADIUS = 2d;
+    public static final double LECTERN_DETECTION_RADIUS = 2d;
 
     public int tick = 0;
     public float bookRotation = 0;
@@ -51,7 +51,7 @@ public class MysticalLecternBlockEntity extends LecternBlockEntity { // TODO sep
             if (state.get(HAS_BOOK)) {
                 var closestPlayer = world.getClosestPlayer(
                         pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
-                        LECTERN_PICKUP_RADIUS, false
+                        LECTERN_DETECTION_RADIUS, false
                 );
 
                 float rotationDelta = (lectern.bookRotationTarget - lectern.bookRotation) * 0.1f;
@@ -71,7 +71,9 @@ public class MysticalLecternBlockEntity extends LecternBlockEntity { // TODO sep
 
         lectern.tick++;
 
-        ((MysticalBookItem) lectern.getBook().getItem()).lectern$serverTick(world, pos, state, lectern);
+        if (state.get(HAS_BOOK) && lectern.getBook().getItem() instanceof MysticalBookItem book) {
+            book.lectern$serverTick(world, pos, state, lectern);
+        }
     }
 
     @Override

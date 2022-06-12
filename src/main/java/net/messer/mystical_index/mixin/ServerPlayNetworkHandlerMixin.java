@@ -4,22 +4,12 @@ import net.messer.mystical_index.block.entity.MysticalLecternBlockEntity;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.custom.book.MysticalBookItem;
 import net.messer.mystical_index.util.LecternTracker;
-import net.messer.mystical_index.util.WorldEffects;
-import net.messer.mystical_index.util.request.ExtractionRequest;
-import net.messer.mystical_index.util.request.LibraryIndex;
-import net.minecraft.entity.ItemEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.c2s.play.ChatMessageC2SPacket;
-import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -27,10 +17,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.List;
-
-import static net.messer.mystical_index.block.entity.MysticalLecternBlockEntity.EXTRACTED_DROP_UUID;
-import static net.messer.mystical_index.block.entity.MysticalLecternBlockEntity.LECTERN_PICKUP_RADIUS;
+import static net.messer.mystical_index.block.entity.MysticalLecternBlockEntity.LECTERN_DETECTION_RADIUS;
 
 @Mixin(ServerPlayNetworkHandler.class)
 public abstract class ServerPlayNetworkHandlerMixin {
@@ -61,7 +48,7 @@ public abstract class ServerPlayNetworkHandlerMixin {
                 });
                 info.cancel();
             } else {
-                MysticalLecternBlockEntity lectern = LecternTracker.findNearestLectern(player, LECTERN_PICKUP_RADIUS);
+                MysticalLecternBlockEntity lectern = LecternTracker.findNearestLectern(player, LECTERN_DETECTION_RADIUS);
                 if (lectern != null &&
                         ((MysticalBookItem) lectern.getBook().getItem()).lectern$interceptsChatMessage(lectern, player, message)) {
                     server.execute(() -> {

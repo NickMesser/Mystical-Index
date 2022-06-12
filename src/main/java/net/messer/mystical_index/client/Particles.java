@@ -3,7 +3,6 @@ package net.messer.mystical_index.client;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.particle.ParticleEffect;
-import net.minecraft.particle.ParticleTypes;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
@@ -65,9 +64,4 @@ public class Particles {
         world.addParticle(effect, d, e, f, g, h, l);
     }
 
-    public static void drawParticleCircle(int tick, World world, Vec3d pos, int cycleTicks, int cycleOffset, double radius) {
-        double animationPos = (tick + cycleOffset) % cycleTicks / ((double) cycleTicks) * (2 * Math.PI);
-        Vec3d particlePos = pos.add(radius * Math.cos(animationPos), 0, radius * Math.sin(animationPos));
-        world.addParticle(ParticleTypes.ENCHANT, particlePos.getX(), particlePos.getY(), particlePos.getZ(), 0, 0, 0);
-    }
 }
