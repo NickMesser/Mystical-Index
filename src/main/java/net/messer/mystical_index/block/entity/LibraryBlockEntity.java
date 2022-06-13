@@ -10,6 +10,7 @@ import net.messer.mystical_index.screen.LibraryInventoryScreenHandler;
 import net.messer.mystical_index.util.ContentsIndex;
 import net.messer.mystical_index.util.request.ExtractionRequest;
 import net.messer.mystical_index.util.request.IndexInteractable;
+import net.messer.mystical_index.util.request.IndexSource;
 import net.messer.mystical_index.util.request.InsertionRequest;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -46,17 +47,19 @@ public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandle
         }
     }
 
-    public ContentsIndex getContents() {
-        ContentsIndex contents = new ContentsIndex();
+    @Override
+    public List<IndexSource> getSources() {
+        ImmutableList.Builder<IndexSource> builder = ImmutableList.builder();
+
         for (ItemStack book : getItems()) {
             if (book.getItem() instanceof MysticalBookItem mysticalBookItem) {
-                if (mysticalBookItem.getTypePage(book) instanceof ItemStorageTypePage itemStorageTypePage) {
-                    contents.merge(itemStorageTypePage.getContents(book));
+                if (mysticalBookItem.getTypePage(book) instanceof ItemStorageTypePage) {
+                    builder.add(new IndexSource(book, this));
                 }
             }
         }
 
-        return contents;
+        return builder.build();
     }
 
     public LibraryBlockEntity(BlockPos pos, BlockState state) {
@@ -86,38 +89,38 @@ public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandle
         Inventories.readNbt(nbt, storedBooks);
     }
 
-    @Override
-    public List<ItemStack> extractItems(ExtractionRequest request, boolean apply) {
-        ImmutableList.Builder<ItemStack> builder = ImmutableList.builder();
-
-        for (ItemStack book : getItems()) {
-            if (request.isSatisfied()) break;
-
-            if (book.getItem() instanceof MysticalBookItem mysticalBookItem) {
-                if (mysticalBookItem.getTypePage(book) instanceof ItemStorageTypePage itemStorageTypePage) {
-                    builder.addAll(itemStorageTypePage.extractItems(book, request, apply));
-                }
-            }
-        }
-
-        request.runBlockAffectedCallback(this);
-
-        return builder.build();
-    }
-
-    @Override
-    public void insertStack(InsertionRequest request) {
-        for (ItemStack book : getItems()) {
-            if (request.isSatisfied()) break;
-
-            if (book.getItem() instanceof MysticalBookItem mysticalBookItem) {
-                if (mysticalBookItem.getTypePage(book) instanceof ItemStorageTypePage itemStorageTypePage) {
-                    int amountInserted = itemStorageTypePage.tryAddItem(book, request.getItemStack());
-                    request.satisfy(amountInserted);
-                }
-            }
-        }
-
-        request.runBlockAffectedCallback(this);
-    }
+//    @Override
+//    public List<ItemStack> extractItems(ExtractionRequest request, boolean apply) {
+//        ImmutableList.Builder<ItemStack> builder = ImmutableList.builder();
+//
+//        for (ItemStack book : getItems()) {
+//            if (request.isSatisfied()) break;
+//
+//            if (book.getItem() instanceof MysticalBookItem mysticalBookItem) {
+//                if (mysticalBookItem.getTypePage(book) instanceof ItemStorageTypePage itemStorageTypePage) {
+//                    builder.addAll(itemStorageTypePage.extractItems(book, request, apply));
+//                }
+//            }
+//        }
+//
+//        request.runBlockAffectedCallback(this);
+//
+//        return builder.build();
+//    }
+//
+//    @Override
+//    public void insertStack(InsertionRequest request) {
+//        for (ItemStack book : getItems()) {
+//            if (request.isSatisfied()) break;
+//
+//            if (book.getItem() instanceof MysticalBookItem mysticalBookItem) {
+//                if (mysticalBookItem.getTypePage(book) instanceof ItemStorageTypePage itemStorageTypePage) {
+//                    int amountInserted = itemStorageTypePage.tryAddItem(book, request.getItemStack());
+//                    request.satisfy(amountInserted);
+//                }
+//            }
+//        }
+//
+//        request.runBlockAffectedCallback(this);
+//    }
 }

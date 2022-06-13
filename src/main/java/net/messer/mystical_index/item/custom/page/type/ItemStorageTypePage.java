@@ -115,20 +115,31 @@ public class ItemStorageTypePage extends TypePageItem {
         return !book.getOrCreateNbt().getCompound(FILTERS_TAG).isEmpty();
     }
 
-    protected boolean canInsert(ItemStack book, Item item) {
-        if (!item.canBeNested()) return false;
+    public boolean isFilteredTo(ItemStack book, ItemStack stack) {
+        NbtCompound filters = book.getOrCreateNbt().getCompound(FILTERS_TAG);
+
+        return filters.getList(ITEM_FILTERS_TAG, NbtElement.STRING_TYPE)
+                .contains(NbtString.of(stack.getItem().toString()));
+    }
+
+    protected boolean canInsert(ItemStack book, ItemStack itemStack) {
+        if (!itemStack.getItem().canBeNested()) return false;
 
         var filters = book.getOrCreateNbt().getCompound(FILTERS_TAG);
         if (filters.isEmpty()) return true;
 
         var itemFilter = filters.getList(ITEM_FILTERS_TAG, NbtElement.STRING_TYPE);
-        if (itemFilter.contains(NbtString.of(item.toString()))) return false;
+        return !itemFilter.contains(NbtString.of(itemStack.getItem().toString()));
+    }
 
-        return true;
+    public int getInsertPriority(ItemStack book, ItemStack stack) {
+        if (!canInsert(book, stack)) return -1;
+        if (isFilteredTo(book, stack)) return 1;
+        return 0;
     }
 
     public int tryAddItem(ItemStack book, ItemStack stack) {
-        if (stack.isEmpty() || !canInsert(book, stack.getItem())) {
+        if (stack.isEmpty() || !canInsert(book, stack)) {
             return 0;
         }
         NbtCompound bookNbt = book.getOrCreateNbt();

@@ -2,7 +2,6 @@ package net.messer.mystical_index.util.request;
 
 import com.google.common.collect.ImmutableList;
 import net.messer.mystical_index.block.ModTags;
-import net.messer.mystical_index.util.ContentsIndex;
 import net.messer.mystical_index.util.WorldEffects;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
@@ -26,13 +25,13 @@ public class LibraryIndex implements IndexInteractable {
         this.interactables = interactables;
     }
 
-    public ContentsIndex getContents() {
-        ContentsIndex result = new ContentsIndex();
-        for (IndexInteractable entity : interactables) {
-            result.merge(entity.getContents());
-        }
-        return result;
-    }
+//    public ContentsIndex getContents() {
+//        ContentsIndex result = new ContentsIndex();
+//        for (IndexInteractable entity : interactables) {
+//            result.merge(entity.getContents());
+//        }
+//        return result;
+//    }
 
     public boolean isEmpty() {
         return interactables.isEmpty();
@@ -73,24 +72,35 @@ public class LibraryIndex implements IndexInteractable {
     }
 
     @Override
-    public List<ItemStack> extractItems(ExtractionRequest request, boolean apply) {
-        ImmutableList.Builder<ItemStack> builder = ImmutableList.builder();
+    public List<IndexSource> getSources() {
+        ImmutableList.Builder<IndexSource> builder = ImmutableList.builder();
 
         for (IndexInteractable entity : interactables) {
-            if (request.isSatisfied()) break;
-
-            builder.addAll(entity.extractItems(request, apply));
+            builder.addAll(entity.getSources());
         }
 
         return builder.build();
     }
 
-    @Override
-    public void insertStack(InsertionRequest request) {
-        for (IndexInteractable entity : interactables) {
-            if (request.isSatisfied()) break;
-
-            entity.insertStack(request);
-        }
-    }
+    //    @Override
+//    public List<ItemStack> extractItems(ExtractionRequest request, boolean apply) {
+//        ImmutableList.Builder<ItemStack> builder = ImmutableList.builder();
+//
+//        for (IndexInteractable entity : interactables) {
+//            if (request.isSatisfied()) break;
+//
+//            builder.addAll(entity.extractItems(request, apply));
+//        }
+//
+//        return builder.build();
+//    }
+//
+//    @Override
+//    public void insertStack(InsertionRequest request) {
+//        for (IndexInteractable entity : interactables) {
+//            if (request.isSatisfied()) break;
+//
+//            entity.insertStack(request);
+//        }
+//    }
 }

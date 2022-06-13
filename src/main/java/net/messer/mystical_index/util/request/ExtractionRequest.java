@@ -1,5 +1,8 @@
 package net.messer.mystical_index.util.request;
 
+import com.google.common.collect.ImmutableList;
+import net.messer.mystical_index.item.custom.book.MysticalBookItem;
+import net.messer.mystical_index.item.custom.page.type.ItemStorageTypePage;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
@@ -66,7 +69,22 @@ public class ExtractionRequest extends Request {
     }
 
     public void apply(LibraryIndex index, boolean apply) {
-        stacks = index.extractItems(this, apply);
+        ImmutableList.Builder<ItemStack> builder = ImmutableList.builder();
+
+        for (IndexSource source : index.getSources()) {
+            if (isSatisfied()) break;
+
+            var book = source.getBook();
+            if (book.getItem() instanceof MysticalBookItem bookItem) {
+                if (bookItem.getTypePage(book) instanceof ItemStorageTypePage page) {
+                    builder.addAll(page.extractItems(book, this, apply));
+
+                    runBlockAffectedCallback(source.getBlockEntity());
+                }
+            }
+        }
+
+        stacks = builder.build();
     }
 
     public boolean hasMatched() {
