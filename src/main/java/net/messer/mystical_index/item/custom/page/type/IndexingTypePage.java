@@ -303,6 +303,7 @@ public class IndexingTypePage extends TypePageItem {
         var centerPos = Vec3d.ofCenter(pos, 0.5);
 
         if (
+                !world.isClient() &&
                 lectern.tick % CIRCLE_INTERVAL == 0 &&
                 world.getClosestPlayer(
                         pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,

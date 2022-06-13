@@ -57,6 +57,9 @@ public abstract class PageItem extends Item {
     public void lectern$onEntityCollision(MysticalLecternBlockEntity lectern, BlockState state, World world, BlockPos pos, Entity entity) {
     }
 
+    public void lectern$onPlaced(MysticalLecternBlockEntity lectern) {
+    }
+
     public void lectern$serverTick(World world, BlockPos pos, BlockState state, MysticalLecternBlockEntity lectern) {
     }
 

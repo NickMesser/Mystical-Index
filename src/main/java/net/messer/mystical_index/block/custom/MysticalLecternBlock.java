@@ -12,10 +12,13 @@ import net.minecraft.block.LecternBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.block.entity.LecternBlockEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.tag.ItemTags;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -26,6 +29,7 @@ import net.minecraft.util.math.intprovider.UniformIntProvider;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.World;
+import net.minecraft.world.event.GameEvent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Random;
@@ -59,21 +63,32 @@ public class MysticalLecternBlock extends LecternBlock {
 
     @Override
     public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-        if (state.get(HAS_BOOK)) {
-            var blockEntity = world.getBlockEntity(pos);
-            if (blockEntity instanceof MysticalLecternBlockEntity lecternBlockEntity) {
-                var book = lecternBlockEntity.getBook();
-                player.getInventory().offerOrDrop(book);
-
-                world.setBlockState(pos, Blocks.LECTERN.getStateWithProperties(state).with(LecternBlock.HAS_BOOK, false));
-
-                return ActionResult.success(world.isClient);
-            }
+        if (hand != Hand.MAIN_HAND) {
             return ActionResult.CONSUME;
         }
-        ItemStack itemStack = player.getStackInHand(hand);
-        if (itemStack.isEmpty() || itemStack.isIn(ItemTags.LECTERN_BOOKS)) {
-            return ActionResult.PASS;
+
+        if (!player.isSneaking()) {
+            if (world.getBlockEntity(pos) instanceof MysticalLecternBlockEntity lectern) {
+                if (state.get(HAS_BOOK) && lectern.getBook().getItem() instanceof MysticalBookItem book) {
+                    var result = book.lectern$onUse(lectern, state, world, pos, player, hand, hit);
+                    if (result != ActionResult.PASS) {
+                        return result;
+                    }
+                }
+            }
+        } else {
+            if (state.get(HAS_BOOK)) {
+                var blockEntity = world.getBlockEntity(pos);
+                if (blockEntity instanceof MysticalLecternBlockEntity lecternBlockEntity) {
+                    var book = lecternBlockEntity.getBook();
+                    player.getInventory().offerOrDrop(book);
+
+                    world.setBlockState(pos, Blocks.LECTERN.getStateWithProperties(state).with(LecternBlock.HAS_BOOK, false));
+
+                    return ActionResult.success(world.isClient());
+                }
+                return ActionResult.CONSUME;
+            }
         }
         return ActionResult.CONSUME;
     }
@@ -95,5 +110,28 @@ public class MysticalLecternBlock extends LecternBlock {
         Particles.spawnParticles(
                 world, Vec3d.ofCenter(pos).add(0, 0.7, 0), ParticleTypes.SOUL_FIRE_FLAME,
                 0.3, 0.3, 0.3, UniformIntProvider.create(1, 1), 0);
+    }
+
+    public static boolean putBookIfAbsent(@Nullable PlayerEntity player, World world, BlockPos pos, BlockState state, ItemStack stack) {
+        if (!state.get(HAS_BOOK)) {
+            if (!world.isClient) {
+                putBook(player, world, pos, state, stack);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private static void putBook(@Nullable PlayerEntity player, World world, BlockPos pos, BlockState state, ItemStack stack) {
+        BlockEntity blockEntity = world.getBlockEntity(pos);
+        if (blockEntity instanceof MysticalLecternBlockEntity lectern) {
+            lectern.setBook(stack.split(1));
+            LecternBlock.setHasBook(world, pos, state, true);
+            world.playSound(null, pos, SoundEvents.ITEM_BOOK_PUT, SoundCategory.BLOCKS, 1.0f, 1.0f);
+            world.emitGameEvent(player, GameEvent.BLOCK_CHANGE, pos);
+            if (lectern.getBook().getItem() instanceof MysticalBookItem book) {
+                book.lectern$onPlaced(lectern);
+            }
+        }
     }
 }

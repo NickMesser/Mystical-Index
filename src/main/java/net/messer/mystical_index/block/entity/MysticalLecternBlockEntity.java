@@ -9,15 +9,26 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.LecternBlock;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.block.entity.LecternBlockEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtList;
+import net.minecraft.network.Packet;
+import net.minecraft.network.listener.ClientPlayPacketListener;
+import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
 
 import static net.minecraft.block.LecternBlock.HAS_BOOK;
 
 public class MysticalLecternBlockEntity extends LecternBlockEntity { // TODO seperate IndexingBlockEntity
     public static final double LECTERN_DETECTION_RADIUS = 2d;
 
+    public ArrayList<ItemStack> items = new ArrayList<>();
     public int tick = 0;
     public float bookRotation = 0;
     public float bookRotationTarget = 0;
@@ -28,9 +39,43 @@ public class MysticalLecternBlockEntity extends LecternBlockEntity { // TODO sep
         super(pos, state);
     }
 
+    @Override
+    public void readNbt(NbtCompound nbt) {
+        super.readNbt(nbt);
+        items = nbt.getList("items", NbtElement.COMPOUND_TYPE).stream()
+                .map(NbtCompound.class::cast)
+                .map(ItemStack::fromNbt)
+                .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+    @Override
+    protected void writeNbt(NbtCompound nbt) {
+        super.writeNbt(nbt);
+        var itemsNbt = items.stream()
+                .map((stack) -> {
+                    var compound = new NbtCompound();
+                    stack.writeNbt(compound);
+                    return compound;
+                })
+                .collect(NbtList::new, NbtList::add, NbtList::addAll);
+        nbt.put("items", itemsNbt);
+    }
+
+    @Nullable
+    @Override
+    public Packet<ClientPlayPacketListener> toUpdatePacket() {
+        return BlockEntityUpdateS2CPacket.create(this);
+    }
+
+    @Override
+    public NbtCompound toInitialChunkDataNbt() {
+        return createNbt();
+    }
+
     private void initState() {
-        var typePage = ((MysticalBookItem) getBook().getItem()).getTypePage(getBook());
-        var actionPage = ((MysticalBookItem) getBook().getItem()).getActionPage(getBook());
+        var bookItem = ((MysticalBookItem) getBook().getItem());
+        var typePage = bookItem.getTypePage(getBook());
+        var actionPage = bookItem.getActionPage(getBook());
 
         if (typePage != null) typeState = typePage.lectern$getState(this);
         if (actionPage != null) actionState = actionPage.lectern$getState(this);

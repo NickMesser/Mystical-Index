@@ -4,8 +4,10 @@ import net.messer.mystical_index.item.custom.book.MysticalBookItem;
 import net.messer.mystical_index.item.custom.page.type.ItemStorageTypePage;
 import net.minecraft.item.ItemStack;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 public class InsertionRequest extends Request {
     private final ItemStack itemStack;
@@ -18,7 +20,7 @@ public class InsertionRequest extends Request {
 
     @Override
     public void apply(LibraryIndex index, boolean apply) {
-        var sources = index.getSources();
+        var sources = new ArrayList<>(index.getSources());
 
         // Sort sources by priority.
         sources.sort(Comparator.comparingInt((source) -> {

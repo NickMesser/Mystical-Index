@@ -25,6 +25,7 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.*;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
@@ -268,8 +269,17 @@ public class MysticalBookItem extends Item {
         forEachPage(lectern.getBook(), page -> page.lectern$onEntityCollision(lectern, state, world, pos, entity));
     }
 
+    public ActionResult lectern$onUse(MysticalLecternBlockEntity lectern, BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
+        return forInteractingPages(lectern.getBook(), result -> result != ActionResult.PASS,
+                page -> page.lectern$onUse(lectern, state, world, pos, player, hand, hit), ActionResult.PASS);
+    }
+
     public void lectern$serverTick(World world, BlockPos pos, BlockState state, MysticalLecternBlockEntity lectern) {
         forEachPage(lectern.getBook(), page -> page.lectern$serverTick(world, pos, state, lectern));
+    }
+
+    public void lectern$onPlaced(MysticalLecternBlockEntity lectern) {
+        forEachPage(lectern.getBook(), page -> page.lectern$onPlaced(lectern));
     }
 
     @Override

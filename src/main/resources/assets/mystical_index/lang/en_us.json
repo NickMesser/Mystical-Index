@@ -7,6 +7,7 @@
   "item.mystical_index.mystical_book.type.item_storage": "Book of Item Storage",
   "item.mystical_index.mystical_book.type.indexing": "Book of Indexing",
   "item.mystical_index.mystical_book.tooltip.properties": "Properties:",
+  "item.mystical_index.mystical_book.tooltip.type.item_storage.filtered": "Filtered:",
   "item.mystical_index.mystical_book.tooltip.type.item_storage.stacks": " %d/%d Entries used",
   "item.mystical_index.mystical_book.tooltip.type.item_storage.types": " %d/%d Types",
   "item.mystical_index.mystical_book.tooltip.type.indexing.range": " %d Max Range",

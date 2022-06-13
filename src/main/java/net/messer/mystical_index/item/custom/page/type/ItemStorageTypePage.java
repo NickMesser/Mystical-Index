@@ -2,11 +2,14 @@ package net.messer.mystical_index.item.custom.page.type;
 
 import com.google.common.collect.ImmutableList;
 import net.messer.mystical_index.MysticalIndex;
+import net.messer.mystical_index.block.entity.MysticalLecternBlockEntity;
 import net.messer.mystical_index.item.custom.page.AttributePageItem;
 import net.messer.mystical_index.item.custom.page.TypePageItem;
 import net.messer.mystical_index.util.BigStack;
 import net.messer.mystical_index.util.ContentsIndex;
 import net.messer.mystical_index.util.request.ExtractionRequest;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.StackReference;
@@ -19,18 +22,19 @@ import net.minecraft.nbt.NbtString;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.text.LiteralText;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
-import net.minecraft.util.ClickType;
-import net.minecraft.util.Formatting;
+import net.minecraft.util.*;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static net.messer.mystical_index.item.ModItems.ITEM_STORAGE_TYPE_PAGE;
@@ -112,24 +116,45 @@ public class ItemStorageTypePage extends TypePageItem {
     }
 
     private boolean isFiltered(ItemStack book) {
-        return !book.getOrCreateNbt().getCompound(FILTERS_TAG).isEmpty();
+        return !book.getOrCreateSubNbt(FILTERS_TAG).getList(ITEM_FILTERS_TAG, NbtElement.STRING_TYPE).isEmpty();
     }
 
     public boolean isFilteredTo(ItemStack book, ItemStack stack) {
         NbtCompound filters = book.getOrCreateNbt().getCompound(FILTERS_TAG);
 
         return filters.getList(ITEM_FILTERS_TAG, NbtElement.STRING_TYPE)
-                .contains(NbtString.of(stack.getItem().toString()));
+                .contains(NbtString.of(Registry.ITEM.getId(stack.getItem()).toString()));
+    }
+
+    public List<Item> getFilteredItems(ItemStack book) {
+        NbtCompound filters = book.getOrCreateNbt().getCompound(FILTERS_TAG);
+        return filters.getList(ITEM_FILTERS_TAG, NbtElement.STRING_TYPE).stream()
+                .map(NbtString.class::cast)
+                .map(NbtString::asString)
+                .map(Identifier::tryParse)
+                .filter(Objects::nonNull)
+                .map(Registry.ITEM::get)
+                .collect(ImmutableList.toImmutableList());
+    }
+
+    public void addFilteredItem(ItemStack book, Item item) {
+        NbtCompound filters = book.getOrCreateSubNbt(FILTERS_TAG);
+        NbtList itemFilters = filters.getList(ITEM_FILTERS_TAG, NbtElement.STRING_TYPE);
+        itemFilters.add(NbtString.of(Registry.ITEM.getId(item).toString()));
+        filters.put(ITEM_FILTERS_TAG, itemFilters);
+    }
+
+    public void removeFilteredItem(ItemStack book, int i) {
+        NbtCompound filters = book.getOrCreateSubNbt(FILTERS_TAG);
+        filters.getList(ITEM_FILTERS_TAG, NbtElement.STRING_TYPE).remove(i);
     }
 
     protected boolean canInsert(ItemStack book, ItemStack itemStack) {
         if (!itemStack.getItem().canBeNested()) return false;
 
-        var filters = book.getOrCreateNbt().getCompound(FILTERS_TAG);
-        if (filters.isEmpty()) return true;
+        if (!isFiltered(book)) return true;
 
-        var itemFilter = filters.getList(ITEM_FILTERS_TAG, NbtElement.STRING_TYPE);
-        return !itemFilter.contains(NbtString.of(itemStack.getItem().toString()));
+        return isFilteredTo(book, itemStack);
     }
 
     public int getInsertPriority(ItemStack book, ItemStack stack) {
@@ -339,6 +364,18 @@ public class ItemStorageTypePage extends TypePageItem {
         for (Text text : getContents(book).getTextList()) {
             tooltip.add(text.copy().formatted(Formatting.GRAY));
         }
+
+        if (isFiltered(book)) {
+            tooltip.add(new LiteralText(""));
+            tooltip.add(new TranslatableText("item.mystical_index.mystical_book.tooltip.type.item_storage.filtered")
+                    .formatted(Formatting.GRAY));
+
+            tooltip.addAll(getFilteredItems(book).stream()
+                    .map(Item::getName)
+                    .map(text -> new LiteralText(" ").append(text).formatted(Formatting.GRAY))
+                    .toList()
+            );
+        }
     }
 
     @Override
@@ -365,6 +402,36 @@ public class ItemStorageTypePage extends TypePageItem {
     @Override
     public boolean book$hasGlint(ItemStack book) {
         return !isEmpty(book);
+    }
+
+    @Override
+    public ActionResult lectern$onUse(MysticalLecternBlockEntity lectern, BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
+        var handStack = player.getStackInHand(hand);
+        var book = lectern.getBook();
+        var filters = getFilteredItems(book);
+        var i = handStack.isEmpty() ? filters.size() - 1 : filters.indexOf(handStack.getItem());
+
+        if (i == -1) {
+            if (handStack.isEmpty()) return ActionResult.CONSUME;
+
+            addFilteredItem(book, handStack.getItem());
+            lectern.items.add(handStack.getItem().getDefaultStack());
+        } else {
+            removeFilteredItem(book, i);
+            lectern.items.remove(i);
+        }
+
+        lectern.markDirty();
+        world.updateListeners(pos, state, state, Block.NOTIFY_LISTENERS);
+
+        return ActionResult.success(world.isClient());
+    }
+
+    @Override
+    public void lectern$onPlaced(MysticalLecternBlockEntity lectern) {
+        lectern.items = getFilteredItems(lectern.getBook()).stream()
+                .map(Item::getDefaultStack)
+                .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
     public static abstract class ItemStorageAttributePage extends AttributePageItem {

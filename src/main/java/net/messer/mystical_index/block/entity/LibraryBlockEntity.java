@@ -88,39 +88,4 @@ public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandle
         super.readNbt(nbt);
         Inventories.readNbt(nbt, storedBooks);
     }
-
-//    @Override
-//    public List<ItemStack> extractItems(ExtractionRequest request, boolean apply) {
-//        ImmutableList.Builder<ItemStack> builder = ImmutableList.builder();
-//
-//        for (ItemStack book : getItems()) {
-//            if (request.isSatisfied()) break;
-//
-//            if (book.getItem() instanceof MysticalBookItem mysticalBookItem) {
-//                if (mysticalBookItem.getTypePage(book) instanceof ItemStorageTypePage itemStorageTypePage) {
-//                    builder.addAll(itemStorageTypePage.extractItems(book, request, apply));
-//                }
-//            }
-//        }
-//
-//        request.runBlockAffectedCallback(this);
-//
-//        return builder.build();
-//    }
-//
-//    @Override
-//    public void insertStack(InsertionRequest request) {
-//        for (ItemStack book : getItems()) {
-//            if (request.isSatisfied()) break;
-//
-//            if (book.getItem() instanceof MysticalBookItem mysticalBookItem) {
-//                if (mysticalBookItem.getTypePage(book) instanceof ItemStorageTypePage itemStorageTypePage) {
-//                    int amountInserted = itemStorageTypePage.tryAddItem(book, request.getItemStack());
-//                    request.satisfy(amountInserted);
-//                }
-//            }
-//        }
-//
-//        request.runBlockAffectedCallback(this);
-//    }
 }
