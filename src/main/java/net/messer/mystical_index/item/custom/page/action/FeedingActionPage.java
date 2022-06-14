@@ -1,6 +1,7 @@
 package net.messer.mystical_index.item.custom.page.action;
 
 import net.messer.mystical_index.MysticalIndex;
+import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.custom.book.MysticalBookItem;
 import net.messer.mystical_index.item.custom.page.ActionPageItem;
 import net.messer.mystical_index.item.custom.page.TypePageItem;
@@ -16,13 +17,13 @@ import java.util.List;
 public class FeedingActionPage extends ActionPageItem {
     @Override
     public int getColor() {
-        return 0;
+        return 0x71c293;
     }
 
 
     @Override
     public List<TypePageItem> getCompatibleTypes(ItemStack page) {
-        return null;
+        return List.of(ModItems.FOOD_STORAGE_TYPE_PAGE);
     }
 
     @Override
@@ -44,8 +45,6 @@ public class FeedingActionPage extends ActionPageItem {
                 }
             }
         }
-
-        MysticalIndex.LOGGER.info(user.getStackInHand(hand).getItem().toString());
         return super.book$use(world, user, hand);
     }
 }

@@ -19,6 +19,8 @@
   "item.mystical_index.indexing_type_page": "Type Page of Indexing",
   "item.mystical_index.range_page": "Page of Range",
   "item.mystical_index.links_page": "Page of Linking",
+  "item.mystical_index.feeding_action_page" : "Page of Feeding",
+  "item.mystical_index.food_storage_type_page" : "Page of Food Storage",
   "item.mystical_index.page.tooltip.when_applied": "When bound into a book:",
   "item.mystical_index.page.tooltip.type.item_storage": " Item Storage",
   "item.mystical_index.page.tooltip.type.item_storage.stacks": " Entries *%d",
