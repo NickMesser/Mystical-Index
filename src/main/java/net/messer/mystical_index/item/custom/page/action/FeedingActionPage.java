@@ -32,17 +32,13 @@ public class FeedingActionPage extends ActionPageItem {
             return super.book$use(world, user, hand);
 
         var bookStack = user.getStackInHand(hand);
-        var usedBook = (MysticalBookItem)bookStack.getItem();
+        var usedBook = (MysticalBookItem) bookStack.getItem();
 
-        if(usedBook.getTypePage(bookStack) instanceof FoodStorageTypePage foodPage){
-            var contents = foodPage.getContents(bookStack).getAll();
-
-            for (var stack : contents) {
-                if(stack.getItemStack().isFood()){
-                    user.eatFood(world, stack.getItemStack());
-                    MysticalIndex.LOGGER.info("Need to implement a way to remote a single item on use from BigStack.");
-                    return super.book$use(world, user, hand);
-                }
+        if (usedBook.getTypePage(bookStack) instanceof FoodStorageTypePage foodPage) {
+            var food = foodPage.removeFirstStack(bookStack, 1);
+            if (food.isPresent()) {
+                user.eatFood(world, food.get());
+                return TypedActionResult.success(bookStack);
             }
         }
         return super.book$use(world, user, hand);
