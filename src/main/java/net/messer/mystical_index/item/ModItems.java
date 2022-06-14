@@ -21,16 +21,16 @@ public class ModItems {
     public static final MysticalBookItem MYSTICAL_BOOK = registerItem("mystical_book", new MysticalBookItem(new FabricItemSettings().maxCount(1)));
 
     public static final ItemStorageTypePage ITEM_STORAGE_TYPE_PAGE = registerPageItem("item_storage_type_page", new ItemStorageTypePage("item_storage"));
-    public static final StacksPage STACKS_PAGE = registerPageItem("stacks_page", new StacksPage());
-    public static final TypesPage TYPES_PAGE = registerPageItem("types_page", new TypesPage());
+    public static final StacksPage STACKS_PAGE = registerPageItem("stacks_page", new StacksPage("stacks"));
+    public static final TypesPage TYPES_PAGE = registerPageItem("types_page", new TypesPage("types"));
 
     public static final IndexingTypePage INDEXING_TYPE_PAGE = registerPageItem("indexing_type_page", new IndexingTypePage("indexing"));
-    public static final RangePage RANGE_PAGE = registerPageItem("range_page", new RangePage());
-    public static final LinksPage LINKS_PAGE = registerPageItem("links_page", new LinksPage());
+    public static final RangePage RANGE_PAGE = registerPageItem("range_page", new RangePage("range"));
+    public static final LinksPage LINKS_PAGE = registerPageItem("links_page", new LinksPage("links"));
 
 
     public static final FoodStorageTypePage FOOD_STORAGE_TYPE_PAGE = registerPageItem("food_storage_type_page", new FoodStorageTypePage("food_storage"));
-    public static final FeedingActionPage FEEDING_ACTION_PAGE = registerPageItem("feeding_action_page", new FeedingActionPage());
+    public static final FeedingActionPage FEEDING_ACTION_PAGE = registerPageItem("feeding_action_page", new FeedingActionPage("feeding"));
 
     private static <T extends PageItem> T registerPageItem(String name, T item) {
         var id = MysticalIndex.id(name);

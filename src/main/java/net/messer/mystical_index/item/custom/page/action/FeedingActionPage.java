@@ -1,6 +1,5 @@
 package net.messer.mystical_index.item.custom.page.action;
 
-import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.custom.book.MysticalBookItem;
 import net.messer.mystical_index.item.custom.page.ActionPageItem;
@@ -8,6 +7,8 @@ import net.messer.mystical_index.item.custom.page.TypePageItem;
 import net.messer.mystical_index.item.custom.page.type.FoodStorageTypePage;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.text.MutableText;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.world.World;
@@ -15,11 +16,19 @@ import net.minecraft.world.World;
 import java.util.List;
 
 public class FeedingActionPage extends ActionPageItem {
-    @Override
-    public int getColor() {
-        return 0x71c293;
+    public FeedingActionPage(String id) {
+        super(id);
     }
 
+    @Override
+    public int getColor() {
+        return 0xff55dd;
+    }
+
+    @Override
+    public MutableText getActionDisplayName() {
+        return super.getActionDisplayName().formatted(Formatting.LIGHT_PURPLE);
+    }
 
     @Override
     public List<TypePageItem> getCompatibleTypes(ItemStack page) {

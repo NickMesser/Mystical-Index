@@ -15,6 +15,12 @@
         "indexing_type": 1
       },
       "model": "mystical_index:item/book/indexing_type"
+    },
+    {
+      "predicate": {
+        "food_storage_type": 1
+      },
+      "model": "mystical_index:item/book/food_storage_type"
     }
   ]
 }

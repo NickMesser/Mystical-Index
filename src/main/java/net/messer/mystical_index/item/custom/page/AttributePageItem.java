@@ -8,6 +8,10 @@ import java.util.List;
 public abstract class AttributePageItem extends PageItem implements TypeDependentPage {
     public static final String ATTRIBUTES_TAG = "attributes";
 
+    public AttributePageItem(String id) {
+        super(id);
+    }
+
     public static void multiplyIntAttribute(NbtCompound nbt, String attribute, double amount) {
         var attributeValue = nbt.getInt(attribute);
         nbt.putInt(attribute, (int) (attributeValue * amount));

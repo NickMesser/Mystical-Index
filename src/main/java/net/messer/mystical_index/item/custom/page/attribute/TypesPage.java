@@ -4,6 +4,10 @@ import net.messer.mystical_index.item.custom.page.type.ItemStorageTypePage;
 import net.minecraft.item.ItemStack;
 
 public class TypesPage extends ItemStorageTypePage.ItemStorageAttributePage {
+    public TypesPage(String id) {
+        super(id);
+    }
+
     @Override
     public double getTypesMultiplier(ItemStack page) {
         return 2;

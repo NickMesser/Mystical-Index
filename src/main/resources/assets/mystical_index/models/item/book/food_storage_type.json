@@ -1,0 +1,7 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "mystical_index:item/book/food_storage_type",
+    "layer1": "mystical_index:item/book/food_storage_type_overlay"
+  }
+}

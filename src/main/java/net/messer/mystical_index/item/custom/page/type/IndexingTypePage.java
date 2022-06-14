@@ -399,6 +399,10 @@ public class IndexingTypePage extends TypePageItem {
     }
 
     public static abstract class IndexingAttributePage extends AttributePageItem {
+        public IndexingAttributePage(String id) {
+            super(id);
+        }
+
         @Override
         public List<TypePageItem> getCompatibleTypes(ItemStack page) {
             return List.of(INDEXING_TYPE_PAGE);

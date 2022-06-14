@@ -34,9 +34,9 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static net.messer.mystical_index.item.ModItems.FOOD_STORAGE_TYPE_PAGE;
 import static net.messer.mystical_index.item.ModItems.ITEM_STORAGE_TYPE_PAGE;
 
 public class ItemStorageTypePage extends TypePageItem {
@@ -435,9 +435,13 @@ public class ItemStorageTypePage extends TypePageItem {
     }
 
     public static abstract class ItemStorageAttributePage extends AttributePageItem {
+        public ItemStorageAttributePage(String id) {
+            super(id);
+        }
+
         @Override
         public List<TypePageItem> getCompatibleTypes(ItemStack page) {
-            return List.of(ITEM_STORAGE_TYPE_PAGE);
+            return List.of(ITEM_STORAGE_TYPE_PAGE, FOOD_STORAGE_TYPE_PAGE);
         }
 
         public double getStacksMultiplier(ItemStack page) {

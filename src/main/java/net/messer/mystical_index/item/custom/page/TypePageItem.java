@@ -12,10 +12,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class TypePageItem extends PageItem implements InteractingPage {
-    public final String id;
-
     public TypePageItem(String id) {
-        this.id = id;
+        super(id);
     }
 
     @Override
@@ -24,7 +22,7 @@ public abstract class TypePageItem extends PageItem implements InteractingPage {
     }
 
     public MutableText getTypeDisplayName() {
-        return new TranslatableText("item.mystical_index.page.tooltip.type.indexing");
+        return new TranslatableText("item.mystical_index.page.tooltip.type." + id);
     }
 
     public Text getBookDisplayName() {

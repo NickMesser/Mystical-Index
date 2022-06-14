@@ -24,8 +24,11 @@ import java.util.List;
 import static net.messer.mystical_index.item.custom.page.AttributePageItem.ATTRIBUTES_TAG;
 
 public abstract class PageItem extends Item {
-    public PageItem() {
+    public final String id;
+
+    public PageItem(String id) {
         super(new FabricItemSettings().group(ItemGroup.TOOLS));
+        this.id = id;
     }
 
     public void onCraftToBook(ItemStack page, ItemStack book) {
