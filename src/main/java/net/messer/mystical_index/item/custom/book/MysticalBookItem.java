@@ -57,7 +57,7 @@ public class MysticalBookItem extends Item {
      * Safely get a single page from a tag.
      */
     @Nullable
-    private PageItem getPage(ItemStack book, String tag) {
+    public PageItem getPage(ItemStack book, String tag) {
         try {
             return PageRegistry.getPage(new Identifier(book.getOrCreateNbt().getString(tag)));
         } catch (Exception e) {
@@ -245,6 +245,10 @@ public class MysticalBookItem extends Item {
     public boolean hasGlint(ItemStack book) {
         return forInteractingPages(book, result -> result,
                 page -> page.book$hasGlint(book), false);
+    }
+
+    public ItemStack getBook(){
+        return this.getBook();
     }
 
     public boolean interceptsChatMessage(ItemStack book, ServerPlayerEntity player, String message) {

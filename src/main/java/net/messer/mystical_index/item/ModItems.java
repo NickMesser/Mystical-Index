@@ -4,10 +4,12 @@ import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.item.custom.book.MysticalBookItem;
 import net.messer.mystical_index.item.custom.page.PageItem;
+import net.messer.mystical_index.item.custom.page.action.FeedingActionPage;
 import net.messer.mystical_index.item.custom.page.attribute.LinksPage;
 import net.messer.mystical_index.item.custom.page.attribute.RangePage;
 import net.messer.mystical_index.item.custom.page.attribute.StacksPage;
 import net.messer.mystical_index.item.custom.page.attribute.TypesPage;
+import net.messer.mystical_index.item.custom.page.type.FoodStorageTypePage;
 import net.messer.mystical_index.item.custom.page.type.IndexingTypePage;
 import net.messer.mystical_index.item.custom.page.type.ItemStorageTypePage;
 import net.messer.mystical_index.util.PageRegistry;
@@ -25,6 +27,10 @@ public class ModItems {
     public static final IndexingTypePage INDEXING_TYPE_PAGE = registerPageItem("indexing_type_page", new IndexingTypePage("indexing"));
     public static final RangePage RANGE_PAGE = registerPageItem("range_page", new RangePage());
     public static final LinksPage LINKS_PAGE = registerPageItem("links_page", new LinksPage());
+
+
+    public static final FoodStorageTypePage FOOD_STORAGE_TYPE_PAGE = registerPageItem("food_storage_type_page", new FoodStorageTypePage("food_storage"));
+    public static final FeedingActionPage FEEDING_ACTION_PAGE = registerPageItem("feeding_action_page", new FeedingActionPage());
 
     private static <T extends PageItem> T registerPageItem(String name, T item) {
         var id = MysticalIndex.id(name);
