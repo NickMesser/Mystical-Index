@@ -18,8 +18,6 @@ import net.minecraft.client.render.model.json.ModelTransformation;
 import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3f;
 
 @Environment(value = EnvType.CLIENT)

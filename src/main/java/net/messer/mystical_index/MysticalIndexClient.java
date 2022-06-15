@@ -6,9 +6,9 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry;
 import net.fabricmc.fabric.api.event.client.ClientSpriteRegistryCallback;
 import net.messer.mystical_index.block.ModBlockEntities;
-import net.messer.mystical_index.client.ClientEvents;
 import net.messer.mystical_index.client.ItemModelProviders;
 import net.messer.mystical_index.client.NetworkListeners;
+import net.messer.mystical_index.client.event.ClientEvents;
 import net.messer.mystical_index.client.render.MysticalLecternBlockEntityRenderer;
 import net.minecraft.client.texture.SpriteAtlasTexture;
 

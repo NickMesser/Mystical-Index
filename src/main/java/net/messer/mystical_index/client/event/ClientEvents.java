@@ -1,5 +1,7 @@
-package net.messer.mystical_index.client;
+package net.messer.mystical_index.client.event;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
 import net.messer.mystical_index.item.ModItems;
@@ -8,6 +10,7 @@ import net.messer.mystical_index.mixin.HandledScreenAccessor;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 
+@Environment(EnvType.CLIENT)
 public class ClientEvents {
     public static void register() {
         ScreenEvents.AFTER_INIT.register((client, screen, width, height) -> {

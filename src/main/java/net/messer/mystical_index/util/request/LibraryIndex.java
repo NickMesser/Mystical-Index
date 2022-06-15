@@ -1,7 +1,6 @@
 package net.messer.mystical_index.util.request;
 
 import com.google.common.collect.ImmutableList;
-import net.messer.mystical_index.block.ModTags;
 import net.messer.mystical_index.util.WorldEffects;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;

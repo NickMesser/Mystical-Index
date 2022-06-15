@@ -7,7 +7,6 @@ import net.minecraft.item.ItemStack;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 
 public class InsertionRequest extends Request {
     private final ItemStack itemStack;

@@ -21,11 +21,11 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public class EventListeners {
+public class ModEvents {
     public static void register() {
-        ServerBlockEntityEvents.BLOCK_ENTITY_LOAD.register(EventListeners::onLoadBlockEntity);
-        ServerBlockEntityEvents.BLOCK_ENTITY_UNLOAD.register(EventListeners::onUnloadBlockEntity);
-        UseBlockCallback.EVENT.register(EventListeners::onBlockInteract);
+        ServerBlockEntityEvents.BLOCK_ENTITY_LOAD.register(ModEvents::onLoadBlockEntity);
+        ServerBlockEntityEvents.BLOCK_ENTITY_UNLOAD.register(ModEvents::onUnloadBlockEntity);
+        UseBlockCallback.EVENT.register(ModEvents::onBlockInteract);
     }
 
     private static void onLoadBlockEntity(BlockEntity blockEntity, ServerWorld world) {

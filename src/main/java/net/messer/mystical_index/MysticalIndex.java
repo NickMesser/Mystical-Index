@@ -6,7 +6,7 @@ import net.fabricmc.api.ModInitializer;
 import net.messer.config.MysticalConfig;
 import net.messer.mystical_index.block.ModBlockEntities;
 import net.messer.mystical_index.block.ModBlocks;
-import net.messer.mystical_index.event.EventListeners;
+import net.messer.mystical_index.event.ModEvents;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.ModRecipes;
 import net.minecraft.entity.player.PlayerEntity;
@@ -34,7 +34,7 @@ public class MysticalIndex implements ModInitializer {
 		ModBlockEntities.registerBlockEntities();
 		ModRecipes.registerModRecipes();
 
-		EventListeners.register();
+		ModEvents.register();
 	}
 
 	public static Identifier id(String path) {
