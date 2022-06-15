@@ -101,7 +101,11 @@ public class MysticalBookRecipe extends SpecialCraftingRecipe {
                 if (typePage == null || !page.getCompatibleTypes(itemStack).contains(typePage)) {
                     return false;
                 }
-                var incompatiblePages = page.getIncompatibleAttributes(itemStack);
+                var compatibleActions = page.getCompatibleActions(itemStack);
+                if (compatibleActions != null && (actionPage == null || !compatibleActions.contains(actionPage))) {
+                    return false;
+                }
+                var incompatiblePages = page.getIncompatiblePages(itemStack);
                 if (!page.bookCanHaveMultiple(itemStack) && (pages.contains(page) ||
                         pages.stream().anyMatch(i1 -> incompatiblePages.stream().anyMatch(i1::equals)))) {
                     return false;

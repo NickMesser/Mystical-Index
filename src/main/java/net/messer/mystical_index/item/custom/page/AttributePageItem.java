@@ -5,7 +5,7 @@ import net.minecraft.nbt.NbtCompound;
 
 import java.util.List;
 
-public abstract class AttributePageItem extends PageItem implements TypeDependentPage {
+public abstract class AttributePageItem extends PageItem implements TypeDependentPage, ActionDependablePage {
     public static final String ATTRIBUTES_TAG = "attributes";
 
     public AttributePageItem(String id) {
@@ -17,7 +17,7 @@ public abstract class AttributePageItem extends PageItem implements TypeDependen
         nbt.putInt(attribute, (int) (attributeValue * amount));
     }
 
-    public List<AttributePageItem> getIncompatibleAttributes(ItemStack page) {
+    public List<TypeDependentPage> getIncompatiblePages(ItemStack page) {
         return List.of();
     }
 
