@@ -66,9 +66,6 @@ public class FeedingActionPage extends ActionPageItem {
     @Nullable
     @Override
     public ItemStack book$finishUsing(ItemStack book, World world, LivingEntity user) {
-        if(world.isClient)
-            return super.book$finishUsing(book, world, user);
-
         var usedBook = (MysticalBookItem) book.getItem();
 
         if (usedBook.getTypePage(book) instanceof FoodStorageTypePage foodPage) {

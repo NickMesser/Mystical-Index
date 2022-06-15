@@ -53,12 +53,6 @@ public class MysticalLecternBlockEntityRenderer implements BlockEntityRenderer<M
         float g = facing.rotateYClockwise().asRotation();
         matrices.multiply(Vec3f.POSITIVE_Y.getDegreesQuaternion(-g));
         matrices.multiply(Vec3f.POSITIVE_Y.getRadialQuaternion(-bookRotation));
-        matrices.multiply(Vec3f.POSITIVE_Z.getDegreesQuaternion(67.5f));
-        matrices.translate(0.0, -0.125, 0.0);
-        this.book.setPageAngles(0.0f, 0.1f, 0.9f, 1.2f);
-        VertexConsumer vertexConsumer = BOOK_TEXTURE.getVertexConsumer(vertexConsumers, RenderLayer::getEntitySolid);
-        this.book.renderBook(matrices, vertexConsumer, light, overlay, 1.0f, 1.0f, 1.0f, 1.0f);
-        matrices.pop();
 
         var itemCount = be.items.size();
         for (int i = 0; i < itemCount; i++) {
@@ -68,17 +62,24 @@ public class MysticalLecternBlockEntityRenderer implements BlockEntityRenderer<M
             var offset = (2 * Math.PI) / itemCount * i;
             var animationPos = offset + anim / 20;
 
-            matrices.translate(0.5 + facing.getOffsetX() * 0.2, 1.2 + bookHeightOffset, 0.5 + facing.getOffsetZ() * 0.2);
-            matrices.multiply(Vec3f.POSITIVE_Y.getDegreesQuaternion(-g));
-            matrices.multiply(Vec3f.POSITIVE_Y.getRadialQuaternion(-bookRotation));
+            matrices.translate(0.2, 0.18, 0);
             var itemX = ITEMS_RADIUS * Math.cos(animationPos);
             var itemZ = ITEMS_RADIUS * Math.sin(animationPos);
             matrices.translate(itemX, itemX * -0.35, itemZ);
             matrices.multiply(Vec3f.POSITIVE_Y.getRadialQuaternion(anim * 0.05f));
+            matrices.scale(0.75f, 0.75f, 0.75f);
             MinecraftClient.getInstance().getItemRenderer()
                     .renderItem(itemStack, ModelTransformation.Mode.GROUND, light, overlay, matrices, vertexConsumers, 0);
 
             matrices.pop();
         }
+
+        matrices.multiply(Vec3f.POSITIVE_Z.getDegreesQuaternion(67.5f));
+        matrices.translate(0.0, -0.125, 0.0);
+        this.book.setPageAngles(0.0f, 0.1f, 0.9f, 1.2f);
+        VertexConsumer vertexConsumer = BOOK_TEXTURE.getVertexConsumer(vertexConsumers, RenderLayer::getEntitySolid);
+        this.book.renderBook(matrices, vertexConsumer, light, overlay, 1.0f, 1.0f, 1.0f, 1.0f);
+
+        matrices.pop();
     }
 }
