@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import static net.messer.mystical_index.block.ModTags.INDEX_INTRACTABLE;
+
 public class LibraryIndex implements IndexInteractable {
     public static final int ITEM_SEARCH_RANGE = 5; // TODO: config // TODO: higher range for lectern based somehow, extenders?
     public static final int LECTERN_SEARCH_RANGE = 8;
@@ -57,7 +59,7 @@ public class LibraryIndex implements IndexInteractable {
 //                            world.getBlockEntity(testPos) instanceof IndexInteractable entity) {
 //                        result.add(entity, particles ? WorldEffects::registrationParticles : i -> {});
 
-                    if(ModTags.INDEX_INTRACTABLE.equals(world.getBlockState(testPos).getBlock()) &&
+                    if(world.getBlockState(testPos).isIn(INDEX_INTRACTABLE) &&
                             world.getBlockEntity(testPos) instanceof IndexInteractable entity) {
                         result.add(entity, particles ? WorldEffects::registrationParticles : i -> {});
                     }
