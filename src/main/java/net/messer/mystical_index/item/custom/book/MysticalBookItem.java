@@ -13,6 +13,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.LecternBlock;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.StackReference;
 import net.minecraft.item.Item;
@@ -31,6 +32,7 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -258,6 +260,24 @@ public class MysticalBookItem extends Item {
 
     public void onInterceptedChatMessage(ItemStack book, ServerPlayerEntity player, String message) {
         forEachPage(book, page -> page.book$onInterceptedChatMessage(book, player, message));
+    }
+
+    @Override
+    public ItemStack finishUsing(ItemStack book, World world, LivingEntity user) {
+        return forInteractingPages(book, Objects::nonNull,
+                page -> page.book$finishUsing(book, world, user), book);
+    }
+
+    @Override
+    public UseAction getUseAction(ItemStack book) {
+        return forInteractingPages(book, result -> result != UseAction.NONE,
+                page -> page.book$getUseAction(book), UseAction.NONE);
+    }
+
+    @Override
+    public int getMaxUseTime(ItemStack book) {
+        return forInteractingPages(book, result -> result != 0,
+                page -> page.book$getMaxUseTime(book), 0);
     }
 
     public boolean lectern$interceptsChatMessage(MysticalLecternBlockEntity lectern, ServerPlayerEntity player, String message) {

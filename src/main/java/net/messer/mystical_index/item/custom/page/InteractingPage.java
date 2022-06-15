@@ -3,19 +3,18 @@ package net.messer.mystical_index.item.custom.page;
 import net.messer.mystical_index.block.entity.MysticalLecternBlockEntity;
 import net.messer.mystical_index.util.state.PageLecternState;
 import net.minecraft.block.BlockState;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.StackReference;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.ClickType;
-import net.minecraft.util.Hand;
-import net.minecraft.util.TypedActionResult;
+import net.minecraft.util.*;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.Nullable;
 
 public interface InteractingPage {
     default TypedActionResult<ItemStack> book$use(World world, PlayerEntity user, Hand hand) {
@@ -44,6 +43,19 @@ public interface InteractingPage {
      */
     default boolean book$interceptsChatMessage(ItemStack book, ServerPlayerEntity player, String message) {
         return false;
+    }
+
+    @Nullable
+    default ItemStack book$finishUsing(ItemStack book, World world, LivingEntity user) {
+        return null;
+    }
+
+    default UseAction book$getUseAction(ItemStack book) {
+        return UseAction.NONE;
+    }
+
+    default int book$getMaxUseTime(ItemStack book) {
+        return 0;
     }
 
     default PageLecternState lectern$getState(MysticalLecternBlockEntity lectern) {
