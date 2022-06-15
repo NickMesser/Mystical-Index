@@ -351,7 +351,7 @@ public class IndexingTypePage extends TypePageItem {
         ) {
 
             var itemStack = itemEntity.getStack();
-            var index = getIndex(lectern.getBook(), world, pos);
+            var index = getLecternIndex(lectern);
 
             var request = tryInsertItemStack(index, itemStack, Vec3d.ofCenter(pos));
             if (request.hasAffected()) WorldEffects.lecternPlonk(world, entity.getPos(), 0.6f, true);

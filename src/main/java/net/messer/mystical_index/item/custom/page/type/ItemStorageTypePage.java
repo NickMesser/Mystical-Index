@@ -150,21 +150,24 @@ public class ItemStorageTypePage extends TypePageItem {
     }
 
     protected boolean canInsert(ItemStack book, ItemStack itemStack) {
-        if (!itemStack.getItem().canBeNested()) return false;
+        return itemStack.getItem().canBeNested();
+    }
+
+    private boolean canInsertFiltered(ItemStack book, ItemStack itemStack) {
+        if (!canInsert(book, itemStack)) return false;
 
         if (!isFiltered(book)) return true;
-
         return isFilteredTo(book, itemStack);
     }
 
     public int getInsertPriority(ItemStack book, ItemStack stack) {
-        if (!canInsert(book, stack)) return -1;
+        if (!canInsertFiltered(book, stack)) return -1;
         if (isFilteredTo(book, stack)) return 1;
         return 0;
     }
 
     public int tryAddItem(ItemStack book, ItemStack stack) {
-        if (stack.isEmpty() || !canInsert(book, stack)) {
+        if (stack.isEmpty() || !canInsertFiltered(book, stack)) {
             return 0;
         }
         NbtCompound bookNbt = book.getOrCreateNbt();
@@ -408,6 +411,9 @@ public class ItemStorageTypePage extends TypePageItem {
     public ActionResult lectern$onUse(MysticalLecternBlockEntity lectern, BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
         var handStack = player.getStackInHand(hand);
         var book = lectern.getBook();
+
+        if (!(canInsert(book, handStack) || handStack.isEmpty())) return ActionResult.CONSUME;
+
         var filters = getFilteredItems(book);
         var i = handStack.isEmpty() ? filters.size() - 1 : filters.indexOf(handStack.getItem());
 
