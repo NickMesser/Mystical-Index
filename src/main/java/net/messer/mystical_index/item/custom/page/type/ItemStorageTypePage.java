@@ -408,6 +408,20 @@ public class ItemStorageTypePage extends TypePageItem {
     }
 
     @Override
+    public boolean book$onInventoryScroll(ItemStack book, PlayerEntity player, byte scrollDirection) {
+        var nbt = book.getOrCreateNbt();
+        var itemsList = nbt.getList("Items", NbtElement.COMPOUND_TYPE);
+        if (itemsList.isEmpty()) return false;
+
+        Collections.rotate(itemsList, -scrollDirection);
+        if (player.world.isClient()) {
+            player.playSound(SoundEvents.ITEM_BUNDLE_INSERT, SoundCategory.PLAYERS, 0.4f, 0.8f);
+        }
+
+        return true;
+    }
+
+    @Override
     public ActionResult lectern$onUse(MysticalLecternBlockEntity lectern, BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
         var handStack = player.getStackInHand(hand);
         var book = lectern.getBook();

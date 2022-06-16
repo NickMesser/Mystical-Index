@@ -2,13 +2,17 @@ package net.messer.mystical_index.client.event;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
-import net.messer.mystical_index.item.ModItems;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.messer.mystical_index.item.custom.book.MysticalBookItem;
 import net.messer.mystical_index.mixin.HandledScreenAccessor;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
+
+import static net.messer.mystical_index.event.ServerNetworkListeners.SCROLL_ITEM;
 
 @Environment(EnvType.CLIENT)
 public class ClientEvents {
@@ -21,14 +25,24 @@ public class ClientEvents {
     }
 
     private static void scrollOnBook(Screen screen, double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        var handledScreen = (HandledScreenAccessor) screen;
+        var handledScreen = (HandledScreenAccessor<?>) screen;
         var focusedSlot = handledScreen.getFocusedSlot();
 
-        if (focusedSlot != null && focusedSlot.getStack().isOf(ModItems.MYSTICAL_BOOK)) {
-            var book = focusedSlot.getStack();
-            var bookItem = ((MysticalBookItem) book.getItem());
+        if (verticalAmount != 0 && focusedSlot != null) {
+            var stack = focusedSlot.getStack();
+            var scroll = (byte) (verticalAmount > 0 ? 1 : -1);
 
-            // TODO packet to server to scroll book.
+            if (stack.getItem() instanceof MysticalBookItem book) {
+                book.onInventoryScroll(stack, MinecraftClient.getInstance().player, scroll);
+            }
+
+            var buf = PacketByteBufs.create();
+
+            buf.writeByte(handledScreen.getHandler().syncId);
+            buf.writeShort(focusedSlot.id);
+            buf.writeByte(scroll);
+
+            ClientPlayNetworking.send(SCROLL_ITEM, buf);
         }
     }
 }

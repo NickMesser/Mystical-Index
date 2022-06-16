@@ -58,6 +58,10 @@ public interface InteractingPage {
         return 0;
     }
 
+    default boolean book$onInventoryScroll(ItemStack book, PlayerEntity player, byte scrollDirection) {
+        return false;
+    }
+
     default PageLecternState lectern$getState(MysticalLecternBlockEntity lectern) {
         return new PageLecternState(lectern);
     }

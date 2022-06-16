@@ -280,6 +280,11 @@ public class MysticalBookItem extends Item {
                 page -> page.book$getMaxUseTime(book), 0);
     }
 
+    public void onInventoryScroll(ItemStack book, PlayerEntity player, byte scrollDirection) {
+        forInteractingPages(book, result -> result,
+                page -> page.book$onInventoryScroll(book, player, scrollDirection), false);
+    }
+
     public boolean lectern$interceptsChatMessage(MysticalLecternBlockEntity lectern, ServerPlayerEntity player, String message) {
         return forInteractingPages(lectern.getBook(), result -> result,
                 page -> page.lectern$interceptsChatMessage(lectern, player, message), false);

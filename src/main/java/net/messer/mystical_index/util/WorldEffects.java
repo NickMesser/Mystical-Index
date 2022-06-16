@@ -3,7 +3,7 @@ package net.messer.mystical_index.util;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.messer.mystical_index.client.NetworkListeners;
+import net.messer.mystical_index.client.ClientNetworkListeners;
 import net.messer.mystical_index.util.request.IndexInteractable;
 import net.messer.mystical_index.util.request.Request;
 import net.minecraft.block.entity.BlockEntity;
@@ -78,7 +78,7 @@ public class WorldEffects {
             buf.writeIdentifier(Registry.PARTICLE_TYPE.getId(effect.getType()));
 
             for (ServerPlayerEntity player : PlayerLookup.tracking(serverWorld, pos)) {
-                ServerPlayNetworking.send(player, NetworkListeners.BLOCK_PARTICLES, buf);
+                ServerPlayNetworking.send(player, ClientNetworkListeners.BLOCK_PARTICLES, buf);
             }
         }
     }

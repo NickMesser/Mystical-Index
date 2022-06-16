@@ -7,7 +7,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.intprovider.UniformIntProvider;
 import net.minecraft.util.registry.Registry;
 
-public class NetworkListeners {
+public class ClientNetworkListeners {
     public static final Identifier BLOCK_PARTICLES = MysticalIndex.id("block_particles");
 
     public static void registerListeners() {

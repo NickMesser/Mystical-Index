@@ -7,6 +7,7 @@ import net.messer.config.MysticalConfig;
 import net.messer.mystical_index.block.ModBlockEntities;
 import net.messer.mystical_index.block.ModBlocks;
 import net.messer.mystical_index.event.ModEvents;
+import net.messer.mystical_index.event.ServerNetworkListeners;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.ModRecipes;
 import net.minecraft.entity.player.PlayerEntity;
@@ -35,6 +36,7 @@ public class MysticalIndex implements ModInitializer {
 		ModRecipes.registerModRecipes();
 
 		ModEvents.register();
+		ServerNetworkListeners.registerListeners();
 	}
 
 	public static Identifier id(String path) {
