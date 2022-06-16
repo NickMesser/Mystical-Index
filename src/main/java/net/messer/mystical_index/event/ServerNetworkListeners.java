@@ -17,7 +17,7 @@ public class ServerNetworkListeners {
             server.execute(() -> {
                 var screen = player.currentScreenHandler;
 
-                if (screen.syncId == syncId) {
+                if (screen.syncId == syncId && screen.isValid(slotId)) {
                     var slot = screen.getSlot(slotId);
                     var stack = slot.getStack();
 
