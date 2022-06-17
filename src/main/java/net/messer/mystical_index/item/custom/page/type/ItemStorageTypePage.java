@@ -3,6 +3,7 @@ package net.messer.mystical_index.item.custom.page.type;
 import com.google.common.collect.ImmutableList;
 import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.block.entity.MysticalLecternBlockEntity;
+import net.messer.mystical_index.client.tooltip.ItemStorageTooltipData;
 import net.messer.mystical_index.item.custom.page.AttributePageItem;
 import net.messer.mystical_index.item.custom.page.TypePageItem;
 import net.messer.mystical_index.util.BigStack;
@@ -11,6 +12,7 @@ import net.messer.mystical_index.util.request.ExtractionRequest;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.item.TooltipContext;
+import net.minecraft.client.item.TooltipData;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.StackReference;
 import net.minecraft.item.Item;
@@ -364,10 +366,6 @@ public class ItemStorageTypePage extends TypePageItem {
 
     @Override
     public void book$appendTooltip(ItemStack book, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        for (Text text : getContents(book).getTextList()) {
-            tooltip.add(text.copy().formatted(Formatting.GRAY));
-        }
-
         if (isFiltered(book)) {
             tooltip.add(new LiteralText(""));
             tooltip.add(new TranslatableText("item.mystical_index.mystical_book.tooltip.type.item_storage.filtered")
@@ -419,6 +417,11 @@ public class ItemStorageTypePage extends TypePageItem {
         }
 
         return true;
+    }
+
+    @Override
+    public Optional<TooltipData> book$getTooltipData(ItemStack book) {
+        return Optional.of(new ItemStorageTooltipData(getContents(book)));
     }
 
     @Override

@@ -3,6 +3,7 @@ package net.messer.mystical_index.item.custom.page;
 import net.messer.mystical_index.block.entity.MysticalLecternBlockEntity;
 import net.messer.mystical_index.util.state.PageLecternState;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.item.TooltipData;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.StackReference;
@@ -15,6 +16,8 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
 
 public interface InteractingPage {
     default TypedActionResult<ItemStack> book$use(World world, PlayerEntity user, Hand hand) {
@@ -60,6 +63,10 @@ public interface InteractingPage {
 
     default boolean book$onInventoryScroll(ItemStack book, PlayerEntity player, byte scrollDirection) {
         return false;
+    }
+
+    default Optional<TooltipData> book$getTooltipData(ItemStack book) {
+        return Optional.empty();
     }
 
     default PageLecternState lectern$getState(MysticalLecternBlockEntity lectern) {

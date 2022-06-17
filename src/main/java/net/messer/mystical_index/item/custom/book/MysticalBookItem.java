@@ -12,6 +12,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.LecternBlock;
 import net.minecraft.client.item.TooltipContext;
+import net.minecraft.client.item.TooltipData;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -249,10 +251,6 @@ public class MysticalBookItem extends Item {
                 page -> page.book$hasGlint(book), false);
     }
 
-    public ItemStack getBook(){
-        return this.getBook();
-    }
-
     public boolean interceptsChatMessage(ItemStack book, ServerPlayerEntity player, String message) {
         return forInteractingPages(book, result -> result,
                 page -> page.book$interceptsChatMessage(book, player, message), false);
@@ -283,6 +281,12 @@ public class MysticalBookItem extends Item {
     public void onInventoryScroll(ItemStack book, PlayerEntity player, byte scrollDirection) {
         forInteractingPages(book, result -> result,
                 page -> page.book$onInventoryScroll(book, player, scrollDirection), false);
+    }
+
+    @Override
+    public Optional<TooltipData> getTooltipData(ItemStack book) {
+        return forInteractingPages(book, Optional::isPresent,
+                page -> page.book$getTooltipData(book), Optional.empty());
     }
 
     public boolean lectern$interceptsChatMessage(MysticalLecternBlockEntity lectern, ServerPlayerEntity player, String message) {
