@@ -1,0 +1,31 @@
+{
+  "name": "Piston Crafting",
+  "icon": "minecraft:piston",
+  "category": "mystical_index:general",
+  "pages": [
+    "Because of the inherent mystical properties of blank pages, creating functional pages for a mystical book is a relatively simple process.$(br2)You need only apply a moderate amount of pressure to the page. When combined with some specific items, this will merge the ingredients into the page, bringing out their latent potential.",
+    "This effect can be most easily achieved using a method known by the experts among us as \"piston crafting\".$(br2)This entails having a piston facing into a block, with one space of air between them. After which, one puts the required ingredients between the piston and the block, and extends the piston.",
+    "See $(italic)fig 1$() for an exemplary setup.$(br2)This process is not limited to a downwards facing piston, and works with any piston facing into a block.$(br2)Besides that, the anvil can be replaced with any other block, and is used here for illustrative purposes only.",
+    {
+      "type": "patchouli:multiblock",
+      "name": "Piston Crafting",
+      "multiblock": {
+        "mapping": {
+          "B": "minecraft:oak_button[face=floor,facing=north]",
+          "P": "minecraft:piston[facing=down]",
+          "A": "minecraft:anvil[facing=north]"
+        },
+        "pattern": [
+          ["B"],
+          ["P"],
+          ["0"],
+          ["A"]
+        ]
+      },
+      "enable_visualize": false,
+      "text": "$(italic)Fig 1"
+    },
+    "On the following pages you may find an assortment of things piston crafting can be used for besides constructing pages.",
+    "$(bold)TODO recipe display"
+  ]
+}

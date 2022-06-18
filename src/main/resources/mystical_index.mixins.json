@@ -4,7 +4,8 @@
   "package": "net.messer.mystical_index.mixin",
   "compatibilityLevel": "JAVA_16",
   "mixins": [
-    "ServerPlayNetworkHandlerMixin"
+    "ServerPlayNetworkHandlerMixin",
+    "compat.patchouli.LecternEventHandlerMixin"
   ],
   "client": [
     "HandledScreenAccessor",
