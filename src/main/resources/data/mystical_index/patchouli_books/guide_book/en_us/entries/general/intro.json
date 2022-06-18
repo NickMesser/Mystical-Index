@@ -1,0 +1,17 @@
+{
+  "name": "Introduction",
+  "icon": "mystical_index:empty_page",
+  "category": "mystical_index:general",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:image",
+      "title": "Introduction",
+      "border": true,
+      "images": [
+        "mystical_index:textures/gui/intro.png"
+      ]
+    },
+    "Mystical books are mysterious and powerful items that compress physical matter into pure information, and manipulate it in many ways.$(br2)The art of writing and compiling mystical books is one largely lost to time.$(br2)Nevertheless, this book attempts to document and explain what little we do know of this lost art to anyone who may find use in it."
+  ]
+}

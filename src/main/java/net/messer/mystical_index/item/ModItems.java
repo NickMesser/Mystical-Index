@@ -19,6 +19,7 @@ import net.minecraft.util.registry.Registry;
 
 public class ModItems {
     public static final MysticalBookItem MYSTICAL_BOOK = registerItem("mystical_book", new MysticalBookItem(new FabricItemSettings().maxCount(1)));
+    public static final Item EMPTY_PAGE = registerItem("empty_page", new Item(new FabricItemSettings()));
 
     public static final ItemStorageTypePage ITEM_STORAGE_TYPE_PAGE = registerPageItem("item_storage_type_page", new ItemStorageTypePage("item_storage"));
     public static final StacksPage STACKS_PAGE = registerPageItem("stacks_page", new StacksPage("stacks"));
