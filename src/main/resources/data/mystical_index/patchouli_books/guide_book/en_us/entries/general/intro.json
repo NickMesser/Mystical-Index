@@ -1,17 +1,24 @@
 {
-  "name": "Introduction",
+  "name": "Foreword",
   "icon": "mystical_index:empty_page",
   "category": "mystical_index:general",
   "sortnum": 0,
   "pages": [
+    "Mystical books are mysterious and powerful items that compress physical matter into pure information, and manipulate it in various ways.$(br2)This power can be applied in many ways, including convenience, portable storage of both dead and living matter, mining, building and even large scale organisation and centralization of items.",
     {
       "type": "patchouli:image",
-      "title": "Introduction",
       "border": true,
       "images": [
-        "mystical_index:textures/gui/intro.png"
+        "mystical_index:textures/gui/guide_book/intro.png"
       ]
     },
-    "Mystical books are mysterious and powerful items that compress physical matter into pure information, and manipulate it in many ways.$(br2)The art of writing and compiling mystical books is one largely lost to time.$(br2)Nevertheless, this book attempts to document and explain what little we do know of this lost art to anyone who may find use in it."
+    {
+      "type": "patchouli:image",
+      "border": true,
+      "images": [
+        "mystical_index:textures/gui/guide_book/intro2.png"
+      ]
+    },
+    "Regretfully, the art of writing and compiling mystical books is one largely lost to time.$(br2)Thus, this book is my attempt to document and explain what little we do know of this lost art, in the hopes it may be of use to someone.$(br2)Sincerely,$(br)Victor Vlissides"
   ]
 }
