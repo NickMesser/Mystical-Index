@@ -375,10 +375,10 @@ public class IndexingTypePage extends TypePageItem {
                 .formatted(Formatting.YELLOW));
     }
 
-    @Override
-    public boolean book$hasGlint(ItemStack book) {
-        return getLinks(book) > 0;
-    }
+//    @Override
+//    public boolean book$hasGlint(ItemStack book) {
+//        return getLinks(book) > 0;
+//    }
 
     public static class IndexingLecternState extends PageLecternState {
         private final LibraryIndex index;

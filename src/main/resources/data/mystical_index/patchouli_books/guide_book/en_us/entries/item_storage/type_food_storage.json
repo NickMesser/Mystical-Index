@@ -1,0 +1,9 @@
+{
+  "name": "Sub-Type: Food Storage",
+  "icon": "mystical_index:food_storage_type_page",
+  "category": "mystical_index:item_storage",
+  "sortnum": 1,
+  "pages": [
+
+  ]
+}

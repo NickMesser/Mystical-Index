@@ -131,6 +131,7 @@ public class MysticalBookRecipe extends SpecialCraftingRecipe {
             if (stack.getItem() instanceof TypePageItem pageItem) {
                 pageItem.onCraftToBook(stack, book);
                 typeColor = pageItem.getColor();
+                if (pageItem.mixColor(stack)) otherColors.add(typeColor);
                 nbt.put(MysticalBookItem.TYPE_PAGE_TAG, NbtString.of(Registry.ITEM.getId(pageItem).toString()));
                 break;
             }

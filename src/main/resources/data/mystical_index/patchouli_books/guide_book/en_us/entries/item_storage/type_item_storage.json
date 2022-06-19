@@ -1,0 +1,9 @@
+{
+  "name": "Type: Item Storage",
+  "icon": "mystical_index:item_storage_type_page",
+  "category": "mystical_index:item_storage",
+  "sortnum": 0,
+  "pages": [
+
+  ]
+}

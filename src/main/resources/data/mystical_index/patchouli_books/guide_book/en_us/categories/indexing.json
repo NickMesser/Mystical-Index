@@ -1,0 +1,6 @@
+{
+  "name": "Item Indexing",
+  "description": "The concepts of large scale item indexing and retrieval.",
+  "icon": "mystical_index:mystical_book{type_page:'mystical_index:indexing_type_page',color:11149994}",
+  "sortnum": 2
+}

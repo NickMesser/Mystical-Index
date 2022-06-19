@@ -1,0 +1,6 @@
+{
+  "name": "Item Storage",
+  "description": "Pages and mechanics related to the storage of items.",
+  "icon": "mystical_index:mystical_book{type_page:'mystical_index:item_storage_type_page',color:8978312}",
+  "sortnum": 1
+}

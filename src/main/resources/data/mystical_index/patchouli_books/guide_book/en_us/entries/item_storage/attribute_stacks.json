@@ -1,0 +1,9 @@
+{
+  "name": "Attribute: Stacks",
+  "icon": "mystical_index:stacks_page",
+  "category": "mystical_index:item_storage",
+  "sortnum": 2,
+  "pages": [
+
+  ]
+}

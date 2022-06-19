@@ -7,6 +7,7 @@
   "item.mystical_index.mystical_book.type.item_storage": "Book of Item Storage",
   "item.mystical_index.mystical_book.type.indexing": "Book of Indexing",
   "item.mystical_index.mystical_book.type.food_storage": "Book of Food Storage",
+  "item.mystical_index.mystical_book.type.block_storage": "Book of Block Storage",
   "item.mystical_index.mystical_book.tooltip.properties": "Properties:",
   "item.mystical_index.mystical_book.tooltip.type.item_storage.filtered": "Filtered:",
   "item.mystical_index.mystical_book.tooltip.type.item_storage.stacks": " %d/%d Entries used",
@@ -23,6 +24,7 @@
   "item.mystical_index.links_page": "Page of Linking",
   "item.mystical_index.feeding_action_page" : "Page of Feeding",
   "item.mystical_index.food_storage_type_page" : "Type Page of Food Storage",
+  "item.mystical_index.block_storage_type_page" : "Type Page of Block Storage",
   "item.mystical_index.page.tooltip.when_applied": "When bound into a book:",
   "item.mystical_index.page.tooltip.type.item_storage": " Item Storage",
   "item.mystical_index.page.tooltip.type.item_storage.stacks": " Entries *%d",
@@ -32,5 +34,6 @@
   "item.mystical_index.page.tooltip.type.indexing.linked_range": " Max Linked Range *%d",
   "item.mystical_index.page.tooltip.type.indexing.links": " Links *%d",
   "item.mystical_index.page.tooltip.type.food_storage": " Food Storage",
+  "item.mystical_index.page.tooltip.type.block_storage": " Block Storage",
   "item.mystical_index.page.tooltip.action.feeding": " Feeding"
 }

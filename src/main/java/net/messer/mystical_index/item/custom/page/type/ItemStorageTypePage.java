@@ -38,8 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Stream;
 
-import static net.messer.mystical_index.item.ModItems.FOOD_STORAGE_TYPE_PAGE;
-import static net.messer.mystical_index.item.ModItems.ITEM_STORAGE_TYPE_PAGE;
+import static net.messer.mystical_index.item.ModItems.*;
 
 public class ItemStorageTypePage extends TypePageItem {
     public static final String MAX_STACKS_TAG = "max_stacks";
@@ -400,10 +399,10 @@ public class ItemStorageTypePage extends TypePageItem {
                         typesFullRatio == 1 ? Formatting.RED : Formatting.GOLD));
     }
 
-    @Override
-    public boolean book$hasGlint(ItemStack book) {
-        return !isEmpty(book);
-    }
+//    @Override
+//    public boolean book$hasGlint(ItemStack book) {
+//        return !isEmpty(book);
+//    }
 
     @Override
     public boolean book$onInventoryScroll(ItemStack book, PlayerEntity player, byte scrollDirection) {
@@ -464,7 +463,7 @@ public class ItemStorageTypePage extends TypePageItem {
 
         @Override
         public List<TypePageItem> getCompatibleTypes(ItemStack page) {
-            return List.of(ITEM_STORAGE_TYPE_PAGE, FOOD_STORAGE_TYPE_PAGE);
+            return List.of(ITEM_STORAGE_TYPE_PAGE, FOOD_STORAGE_TYPE_PAGE, BLOCK_STORAGE_TYPE_PAGE);
         }
 
         public double getStacksMultiplier(ItemStack page) {

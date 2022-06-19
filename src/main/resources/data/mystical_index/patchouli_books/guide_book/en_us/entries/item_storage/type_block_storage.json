@@ -1,0 +1,9 @@
+{
+  "name": "Sub-Type: Block Storage",
+  "icon": "mystical_index:block_storage_type_page",
+  "category": "mystical_index:item_storage",
+  "sortnum": 1,
+  "pages": [
+
+  ]
+}

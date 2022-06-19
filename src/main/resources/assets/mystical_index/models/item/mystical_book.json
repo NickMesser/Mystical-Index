@@ -21,6 +21,12 @@
         "food_storage_type": 1
       },
       "model": "mystical_index:item/book/food_storage_type"
+    },
+    {
+      "predicate": {
+        "block_storage_type": 1
+      },
+      "model": "mystical_index:item/book/block_storage_type"
     }
   ]
 }
