@@ -5,10 +5,7 @@ import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.item.custom.book.MysticalBookItem;
 import net.messer.mystical_index.item.custom.page.PageItem;
 import net.messer.mystical_index.item.custom.page.action.FeedingActionPage;
-import net.messer.mystical_index.item.custom.page.attribute.LinksPage;
-import net.messer.mystical_index.item.custom.page.attribute.RangePage;
-import net.messer.mystical_index.item.custom.page.attribute.StacksPage;
-import net.messer.mystical_index.item.custom.page.attribute.TypesPage;
+import net.messer.mystical_index.item.custom.page.attribute.*;
 import net.messer.mystical_index.item.custom.page.type.BlockStorageTypePage;
 import net.messer.mystical_index.item.custom.page.type.FoodStorageTypePage;
 import net.messer.mystical_index.item.custom.page.type.IndexingTypePage;
@@ -33,6 +30,7 @@ public class ModItems {
 
     public static final FoodStorageTypePage FOOD_STORAGE_TYPE_PAGE = registerPageItem("food_storage_type_page", new FoodStorageTypePage("food_storage"));
     public static final FeedingActionPage FEEDING_ACTION_PAGE = registerPageItem("feeding_action_page", new FeedingActionPage("feeding"));
+    public static final AutoFeedingAttributePage AUTO_FEEDING_ATTRIBUTE_PAGE = registerPageItem("auto_feeding_attribute_page", new AutoFeedingAttributePage("auto_feeding"));
     public static final BlockStorageTypePage BLOCK_STORAGE_TYPE_PAGE = registerPageItem("block_storage_type_page", new BlockStorageTypePage("block_storage"));
 
     private static <T extends PageItem> T registerPageItem(String name, T item) {
