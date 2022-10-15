@@ -9,9 +9,7 @@ import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.hit.HitResult;
@@ -31,7 +29,7 @@ public class SaturationBook extends Item {
         if(world.isClient)
             return super.use(world, player, hand);
 
-        var stack = player.getStackInHand(hand);
+        ItemStack stack = player.getStackInHand(hand);
         if(player.isSneaking()){
             var hitResult = player.raycast(10, 0, false);
             if (hitResult.getType() == HitResult.Type.MISS)
@@ -51,7 +49,7 @@ public class SaturationBook extends Item {
                 }
             }
             else{
-                player.sendMessage(new LiteralText("Unable to update stored item. Please empty all contents first"), true);
+                player.sendMessage(Text.literal("Unable to update stored item. Please empty all contents first"), true);
             }
         }
 
@@ -85,11 +83,18 @@ public class SaturationBook extends Item {
 
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
+        if(stack.hasGlint()){
+            SingleItemStackingInventory inventory = new SingleItemStackingInventory(stack, 1);
+            ItemStack storedStack = inventory.getStack(0);
+            tooltip.add(Text.literal("§a"+storedStack.getCount() + "x " + "§f" + storedStack.getItem().getName().getString()));
+            tooltip.add(Text.literal(""));
+        }
+
         if(Screen.hasShiftDown()){
-            tooltip.add(new TranslatableText("tooltip.mystical_index.saturation_book_shift0"));
-            tooltip.add(new TranslatableText("tooltip.mystical_index.saturation_book_shift1"));
+            tooltip.add(Text.translatable("tooltip.mystical_index.saturation_book_shift0"));
+            tooltip.add(Text.translatable("tooltip.mystical_index.saturation_book_shift1"));
         } else {
-            tooltip.add(new TranslatableText("tooltip.mystical_index.saturation_book"));
+            tooltip.add(Text.translatable("tooltip.mystical_index.saturation_book"));
         }
 
         super.appendTooltip(stack, world, tooltip, context);

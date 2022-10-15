@@ -1,6 +1,7 @@
 package net.messer.mystical_index.item.custom;
 
 import net.messer.mystical_index.MysticalIndex;
+import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.item.TooltipContext;
@@ -12,15 +13,14 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
@@ -39,25 +39,25 @@ public class MagnetismBook extends Item {
         if(world.isClient)
             return super.use(world, user, hand);
 
-        var stack = user.getStackInHand(hand);
+        ItemStack stack = user.getStackInHand(hand);
         this.readNbt(stack);
 
         if(user.isSneaking()){
-            var hitResult = user.raycast(10, 0, false);
+            HitResult hitResult = user.raycast(10, 0, false);
             if (hitResult.getType() == HitResult.Type.MISS)
                 return super.use(world, user, hand);
 
-            var box = Box.from(hitResult.getPos()).expand(.5);
+            Box box = Box.from(hitResult.getPos()).expand(.5);
             for(Entity e : world.getNonSpectatingEntities(ItemEntity.class, box)){
                 ItemEntity item = (ItemEntity) e;
-                var hitItem = item.getStack().getItem();
+                Item hitItem = item.getStack().getItem();
 
                 if(itemFilters.contains(hitItem))
                     return super.use(world, user, hand);
 
                 itemFilters.add(hitItem);
                 this.markDirty(stack);
-                user.sendMessage(new LiteralText("Added " + hitItem.toString() + " to the filter."), true);
+                user.sendMessage(Text.literal("Added " + hitItem.getName().getString() + " to the filter."), true);
                 return super.use(world, user, hand);
             }
         }
@@ -69,17 +69,17 @@ public class MagnetismBook extends Item {
         if(context.getWorld().isClient || !context.getPlayer().isSneaking())
             return super.useOnBlock(context);
 
-        var hitBlock = context.getWorld().getBlockState(context.getBlockPos()).getBlock();
+        Block hitBlock = context.getWorld().getBlockState(context.getBlockPos()).getBlock();
         if(hitBlock != Blocks.COAL_BLOCK)
             return super.useOnBlock(context);
 
-        var player = context.getPlayer();
-        var itemStack = context.getStack();
+        PlayerEntity player = context.getPlayer();
+        ItemStack itemStack = context.getStack();
         this.readNbt(itemStack);
         itemFilters.clear();
         this.markDirty(itemStack);
         if(player != null)
-            player.sendMessage(new LiteralText("Cleared all items from the filter."), true);
+            player.sendMessage(Text.literal("Cleared all items from the filter."), true);
         return super.useOnBlock(context);
     }
 
@@ -92,17 +92,16 @@ public class MagnetismBook extends Item {
         if(itemFilters.isEmpty())
             return;
 
-        var pos = entity.getPos();
-        var target = pos.add(.05, .05, .05);
-        var box = Box.from(target).expand(MysticalIndex.CONFIG.BookOfMangetism.Range);
+        Vec3d pos = entity.getPos();
+        Vec3d target = pos.add(.05, .05, .05);
+        Box box = Box.from(target).expand(MysticalIndex.CONFIG.BookOfMangetism.Range);
 
-        for(Entity e : world.getNonSpectatingEntities(ItemEntity.class, box)){
-            ItemEntity item = (ItemEntity) e;
-            if(item.cannotPickup() || !itemFilters.contains(item.getStack().getItem()))
+        for(ItemEntity e : world.getNonSpectatingEntities(ItemEntity.class, box)){
+            if(e.cannotPickup() || !itemFilters.contains(e.getStack().getItem()))
                 continue;
 
-            var velocity = item.getPos().relativize(target).normalize().multiply(0.1);
-            item.addVelocity(velocity.x, velocity.y, velocity.z);
+            Vec3d itemVector = e.getPos();
+            e.move(null, pos.subtract(itemVector).multiply(0.25));
         }
     }
 
@@ -111,14 +110,15 @@ public class MagnetismBook extends Item {
     }
 
     public void readNbt(ItemStack stack){
+        itemFilters.clear();
         if (!stack.getOrCreateNbt().contains("Filtered Items")){
             stack.getNbt().put("Filtered Items", new NbtList());
         }
-        var filteredItems = stack.getNbt().getList("Filtered Items", 10  );
+        NbtList filteredItems = stack.getNbt().getList("Filtered Items", 10  );
         for (int i = 0; i < filteredItems.size(); i++){
             NbtCompound compound = filteredItems.getCompound(i);
-            var itemName = compound.getString("ItemName");
-            var item = Registry.ITEM.get(Identifier.tryParse(itemName));
+            String itemName = compound.getString("ItemName");
+            Item item = Registry.ITEM.get(Identifier.tryParse(itemName));
             itemFilters.add(item);
         }
 
@@ -138,13 +138,29 @@ public class MagnetismBook extends Item {
 
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
+        if(stack.hasNbt()){
+            this.readNbt(stack);
+            if(!itemFilters.isEmpty()){
+                StringBuilder stringBuilder = new StringBuilder();
+                stringBuilder.append("§aFiltering: ");
+                stringBuilder.append("§e");
+                for (Item item: itemFilters) {
+                    stringBuilder.append(item.getName().getString()).append(", ");
+                }
+                stringBuilder.setLength(stringBuilder.length() - 2);
+
+                tooltip.add(Text.literal(stringBuilder.toString()));
+                tooltip.add(Text.literal(""));
+            }
+        }
+
         if(Screen.hasShiftDown()){
-            tooltip.add(new TranslatableText("tooltip.mystical_index.magnetism_book_shift0"));
-            tooltip.add(new TranslatableText("tooltip.mystical_index.magnetism_book_shift1"));
-            tooltip.add(new TranslatableText("tooltip.mystical_index.magnetism_book_shift2"));
-            tooltip.add(new TranslatableText("tooltip.mystical_index.magnetism_book_shift3"));
+            tooltip.add(Text.translatable("tooltip.mystical_index.magnetism_book_shift0"));
+            tooltip.add(Text.translatable("tooltip.mystical_index.magnetism_book_shift1"));
+            tooltip.add(Text.translatable("tooltip.mystical_index.magnetism_book_shift2"));
+            tooltip.add(Text.translatable("tooltip.mystical_index.magnetism_book_shift3"));
         } else {
-            tooltip.add(new TranslatableText("tooltip.mystical_index.storage_book"));
+            tooltip.add(Text.translatable("tooltip.mystical_index.storage_book"));
         }
         super.appendTooltip(stack, world, tooltip, context);
     }

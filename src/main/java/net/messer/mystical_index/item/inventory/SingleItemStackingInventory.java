@@ -9,7 +9,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.registry.Registry;
@@ -47,7 +47,7 @@ public class SingleItemStackingInventory implements Inventory {
         var itemName = stack.getNbt().get("storedItem").asString();
         currentlyStoredItem = Registry.ITEM.get(Identifier.tryParse(itemName));
         if(!itemName.isBlank()){
-            this.stack.setCustomName(new LiteralText("Book of " + currentlyStoredItem.getName().getString()));
+            this.stack.setCustomName(Text.literal("Book of " + currentlyStoredItem.getName().getString()));
         }
     }
 

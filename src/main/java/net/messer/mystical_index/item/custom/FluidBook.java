@@ -20,13 +20,13 @@ import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.tag.FluidTags;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
@@ -121,7 +121,7 @@ public class FluidBook extends Item {
             boolean bl2 = blockState.isAir() || bl || block instanceof FluidFillable && ((FluidFillable)block).canFillWithFluid(world, pos, blockState, fluidStorage.variant.getFluid());
             if (!bl2) {
                 return hitResult != null && this.placeFluid(player, world, hitResult.getBlockPos().offset(hitResult.getSide()), (BlockHitResult)null, fluidBook);
-            } else if (world.getDimension().isUltrawarm() && fluidStorage.variant.getFluid().isIn(FluidTags.WATER)) {
+            } else if (world.getDimension().ultrawarm() && fluidStorage.variant.getFluid().isIn(FluidTags.WATER)) {
                 int i = pos.getX();
                 int j = pos.getY();
                 int k = pos.getZ();
@@ -166,7 +166,17 @@ public class FluidBook extends Item {
 
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        tooltip.add(new TranslatableText("tooltip.mystical_index.fluid_book"));
+        if(stack.hasGlint()){
+            if(stack.hasGlint()){
+                SingleFluidStackingInventory inventory = new SingleFluidStackingInventory(stack);
+                String storedLiquid  = Registry.FLUID.getId(inventory.fluidStorage.variant.getFluid()).getPath();
+
+                tooltip.add(Text.literal("§a"+ (inventory.fluidStorage.amount / FluidConstants.BUCKET)+ " Bucket(s) of " + "§f" + storedLiquid));
+                tooltip.add(Text.literal(""));
+            }
+        }
+
+        tooltip.add(Text.translatable("tooltip.mystical_index.fluid_book"));
         super.appendTooltip(stack, world, tooltip, context);
     }
 }

@@ -7,7 +7,7 @@ import net.messer.mystical_index.MysticalIndex;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 import net.minecraft.util.registry.Registry;
 
 public class SingleFluidStackingInventory {
@@ -55,7 +55,7 @@ public class SingleFluidStackingInventory {
         fluidStorage.variant = FluidVariant.fromNbt(stack.getNbt().getCompound("fluidVariant"));
         fluidStorage.amount = stack.getNbt().getLong("amount");
         if(fluidStorage.variant.getFluid() != Fluids.EMPTY)
-            stack.setCustomName(new LiteralText("Book of " +
+            stack.setCustomName(Text.literal("Book of " +
                     Registry.FLUID.getId(fluidStorage.variant.getFluid()).getPath().substring(0,1).toUpperCase() +
                     Registry.FLUID.getId(fluidStorage.variant.getFluid()).getPath().substring(1)));
 
