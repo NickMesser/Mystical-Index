@@ -1,6 +1,6 @@
 package net.messer.mystical_index.item.custom;
 
-import net.messer.mystical_index.MysticalIndex;
+import net.messer.config.ModConfig;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.gui.screen.Screen;
@@ -13,6 +13,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -21,7 +22,6 @@ import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,7 +94,7 @@ public class MagnetismBook extends Item {
 
         Vec3d pos = entity.getPos();
         Vec3d target = pos.add(.05, .05, .05);
-        Box box = Box.from(target).expand(MysticalIndex.CONFIG.BookOfMangetism.Range);
+        Box box = Box.from(target).expand(ModConfig.MagnetismRange);
 
         for(ItemEntity e : world.getNonSpectatingEntities(ItemEntity.class, box)){
             if(e.cannotPickup() || !itemFilters.contains(e.getStack().getItem()))
@@ -118,7 +118,7 @@ public class MagnetismBook extends Item {
         for (int i = 0; i < filteredItems.size(); i++){
             NbtCompound compound = filteredItems.getCompound(i);
             String itemName = compound.getString("ItemName");
-            Item item = Registry.ITEM.get(Identifier.tryParse(itemName));
+            Item item = Registries.ITEM.get(Identifier.tryParse(itemName));
             itemFilters.add(item);
         }
 

@@ -1,10 +1,9 @@
 package net.messer.mystical_index;
 
-import me.shedaniel.autoconfig.AutoConfig;
-import me.shedaniel.autoconfig.serializer.JanksonConfigSerializer;
+import eu.midnightdust.lib.config.MidnightConfig;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.registry.FuelRegistry;
-import net.messer.config.MysticalConfig;
+import net.messer.config.ModConfig;
 import net.messer.mystical_index.block.ModBlocks;
 import net.messer.mystical_index.block.entity.ModBlockEntities;
 import net.messer.mystical_index.item.ModItems;
@@ -16,12 +15,9 @@ public class MysticalIndex implements ModInitializer {
 	public static final Logger LOGGER = LogManager.getLogger("mystical_index");
 	public static final String MOD_ID = "mystical_index";
 
-	public static MysticalConfig CONFIG;
-
 	@Override
 	public void onInitialize() {
-		AutoConfig.register(MysticalConfig.class, JanksonConfigSerializer::new);
-		CONFIG = AutoConfig.getConfigHolder(MysticalConfig.class).getConfig();
+		MidnightConfig.init(MOD_ID, ModConfig.class);
 
 		ModItems.registerModItems();
 		ModBlocks.registerModBlocks();

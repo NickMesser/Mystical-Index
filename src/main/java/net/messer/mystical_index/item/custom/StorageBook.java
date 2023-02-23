@@ -1,6 +1,6 @@
 package net.messer.mystical_index.item.custom;
 
-import net.messer.mystical_index.MysticalIndex;
+import net.messer.config.ModConfig;
 import net.messer.mystical_index.item.inventory.SingleItemStackingInventory;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.item.TooltipContext;
@@ -9,12 +9,12 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
+import net.minecraft.registry.Registries;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,13 +37,13 @@ public class StorageBook extends Item {
         BlockPos currentBlockPos = context.getBlockPos();
         ItemStack heldBookStack = player.getStackInHand(hand);
 
-        SingleItemStackingInventory currentBookInventory = new SingleItemStackingInventory(player.getStackInHand(hand), 1);
+        SingleItemStackingInventory currentBookInventory = new SingleItemStackingInventory(player.getStackInHand(hand), ModConfig.StorageBookMaxStacks);
         if(player.isSneaking()){
             if(currentBookInventory.isEmpty())
             {
                 Item item = context.getWorld().getBlockState(currentBlockPos).getBlock().asItem();
 
-                if(MysticalIndex.CONFIG.BookOfStorage.BlockBlacklist.contains(Registry.ITEM.getId(item).toString())){
+                if(ModConfig.StorageBookBlockBlacklist.contains(Registries.ITEM.getId(item).toString())){
                     player.sendMessage(Text.literal("This block is blacklisted. Sorry :("), true);
                     return super.useOnBlock(context);
                 }
@@ -59,7 +59,8 @@ public class StorageBook extends Item {
 
         if(currentBookInventory.isEmpty()){ return super.useOnBlock(context); }
 
-        var stackInBook = currentBookInventory.getStack(0);
+        ItemStack stackInBook = currentBookInventory.firstAvailableStack();
+        int stackSlot = currentBookInventory.firstSlotWithStack();
 
         if(stackInBook.getItem() instanceof BlockItem blockItem){
             var hitBlockPos = context.getBlockPos();
@@ -67,7 +68,7 @@ public class StorageBook extends Item {
             var newBlockPos = hitBlockPos.offset(direction);
             var world = context.getWorld();
             if(world.canPlayerModifyAt(player, newBlockPos) && player.canPlaceOn(newBlockPos, direction, stackInBook) && world.canSetBlock(newBlockPos)){
-                currentBookInventory.removeStack(0, 1);
+                currentBookInventory.removeStack(stackSlot, 1);
                 var soundEvent = blockItem.getBlock().getSoundGroup(null).getPlaceSound();
                 context.getWorld().playSound(null, newBlockPos,soundEvent, SoundCategory.BLOCKS, 1.0f,1.0f);
                 context.getWorld().setBlockState(newBlockPos, blockItem.getBlock().getDefaultState());
@@ -86,9 +87,14 @@ public class StorageBook extends Item {
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
         if(stack.hasGlint()){
-            SingleItemStackingInventory inventory = new SingleItemStackingInventory(stack, 1);
-            ItemStack storedStack = inventory.getStack(0);
-            tooltip.add(Text.literal("§a"+storedStack.getCount() + "x " + "§f" + storedStack.getItem().getName().getString()));
+            SingleItemStackingInventory inventory = new SingleItemStackingInventory(stack, ModConfig.StorageBookMaxStacks);
+            int currentAmount = 0;
+            for (ItemStack inventoryStack : inventory.items) {
+                currentAmount += stack.getCount();
+            }
+
+            Item storedItem = inventory.currentlyStoredItem;
+            tooltip.add(Text.literal("§a"+currentAmount + "x " + "§f" + storedItem.getName().getString()));
             tooltip.add(Text.literal(""));
         }
 

@@ -1,5 +1,6 @@
 package net.messer.mystical_index.item.custom;
 
+import net.messer.config.ModConfig;
 import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.item.inventory.SingleItemStackingInventory;
 import net.minecraft.client.gui.screen.Screen;
@@ -68,7 +69,7 @@ public class SaturationBook extends Item {
             if(!foodStack.isEmpty() && foodStack.isFood()){
                 player.eatFood(world, foodStack);
                 inventory.markDirty();
-                player.getItemCooldownManager().set(this, MysticalIndex.CONFIG.BookOfSaturation.TimeBetweenFeedings * 20);
+                player.getItemCooldownManager().set(this, ModConfig.SaturationBookTimeBetweenFeedings * 20);
             }
         }
 

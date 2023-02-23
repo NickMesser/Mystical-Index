@@ -3,12 +3,13 @@ package net.messer.mystical_index.item.inventory;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
+import net.messer.config.ModConfig;
 import net.messer.mystical_index.MysticalIndex;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
-import net.minecraft.util.registry.Registry;
 
 public class SingleFluidStackingInventory {
     public final ItemStack stack;
@@ -21,7 +22,7 @@ public class SingleFluidStackingInventory {
 
         @Override
         protected long getCapacity(FluidVariant variant) {
-            return MysticalIndex.CONFIG.BookOfFluid.MaxBuckets * FluidConstants.BUCKET;
+            return ModConfig.FluidBookMaxBuckets * FluidConstants.BUCKET;
         }
 
         @Override
@@ -56,8 +57,8 @@ public class SingleFluidStackingInventory {
         fluidStorage.amount = stack.getNbt().getLong("amount");
         if(fluidStorage.variant.getFluid() != Fluids.EMPTY)
             stack.setCustomName(Text.literal("Book of " +
-                    Registry.FLUID.getId(fluidStorage.variant.getFluid()).getPath().substring(0,1).toUpperCase() +
-                    Registry.FLUID.getId(fluidStorage.variant.getFluid()).getPath().substring(1)));
+                    Registries.FLUID.getId(fluidStorage.variant.getFluid()).getPath().substring(0,1).toUpperCase() +
+                    Registries.FLUID.getId(fluidStorage.variant.getFluid()).getPath().substring(1)));
 
     }
 }

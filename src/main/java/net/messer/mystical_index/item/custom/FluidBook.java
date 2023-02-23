@@ -14,11 +14,12 @@ import net.minecraft.fluid.Fluids;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.tag.FluidTags;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.tag.FluidTags;
 import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
@@ -26,7 +27,6 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldAccess;
@@ -169,7 +169,7 @@ public class FluidBook extends Item {
         if(stack.hasGlint()){
             if(stack.hasGlint()){
                 SingleFluidStackingInventory inventory = new SingleFluidStackingInventory(stack);
-                String storedLiquid  = Registry.FLUID.getId(inventory.fluidStorage.variant.getFluid()).getPath();
+                String storedLiquid  = Registries.FLUID.getId(inventory.fluidStorage.variant.getFluid()).getPath();
 
                 tooltip.add(Text.literal("§a"+ (inventory.fluidStorage.amount / FluidConstants.BUCKET)+ " Bucket(s) of " + "§f" + storedLiquid));
                 tooltip.add(Text.literal(""));

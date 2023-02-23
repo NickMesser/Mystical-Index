@@ -1,6 +1,6 @@
 package net.messer.mystical_index.item.inventory;
 
-import net.messer.mystical_index.MysticalIndex;
+import net.messer.config.ModConfig;
 import net.messer.mystical_index.item.ModItems;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventories;
@@ -9,10 +9,10 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.util.registry.Registry;
 
 public class SingleItemStackingInventory implements Inventory {
     public final ItemStack stack;
@@ -45,7 +45,7 @@ public class SingleItemStackingInventory implements Inventory {
     public void readNbt(ItemStack stack){
         Inventories.readNbt(stack.getOrCreateNbt(), items);
         var itemName = stack.getNbt().get("storedItem").asString();
-        currentlyStoredItem = Registry.ITEM.get(Identifier.tryParse(itemName));
+        currentlyStoredItem = Registries.ITEM.get(Identifier.tryParse(itemName));
         if(!itemName.isBlank()){
             this.stack.setCustomName(Text.literal("Book of " + currentlyStoredItem.getName().getString()));
         }
@@ -56,10 +56,10 @@ public class SingleItemStackingInventory implements Inventory {
     public int getMaxCountPerStack() {
 
         if(this.stack.getItem() == ModItems.STORAGE_BOOK)
-            return MysticalIndex.CONFIG.BookOfStorage.MaxStacks * 64;
+            return ModConfig.StorageBookMaxStacks * 64;
 
         if(this.stack.getItem() == ModItems.SATURATION_BOOK)
-            return MysticalIndex.CONFIG.BookOfSaturation.MaxStacks * 64;
+            return ModConfig.StorageBookMaxStacks * 64;
 
         return 64;
     }
@@ -157,5 +157,21 @@ public class SingleItemStackingInventory implements Inventory {
         }
         this.markDirty();
         return stackToAdd;
+    }
+
+    public ItemStack firstAvailableStack(){
+        for (ItemStack stack : items){
+            if(stack.isEmpty()) continue;
+            return stack;
+        }
+        return ItemStack.EMPTY;
+    }
+
+    public int firstSlotWithStack(){
+        for (int i = 0; i < items.size(); i++){
+            if(items.get(i).isEmpty()) continue;
+            return i;
+        }
+        return -1;
     }
 }
