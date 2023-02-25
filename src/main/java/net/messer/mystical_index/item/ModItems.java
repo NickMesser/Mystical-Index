@@ -2,10 +2,7 @@ package net.messer.mystical_index.item;
 
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.messer.mystical_index.MysticalIndex;
-import net.messer.mystical_index.item.custom.FluidBook;
-import net.messer.mystical_index.item.custom.MagnetismBook;
-import net.messer.mystical_index.item.custom.SaturationBook;
-import net.messer.mystical_index.item.custom.StorageBook;
+import net.messer.mystical_index.item.custom.*;
 import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
@@ -18,6 +15,9 @@ public class ModItems {
 
     public static final Item STORAGE_BOOK = registerItem("storage_book",
             new StorageBook(new FabricItemSettings().maxCount(1)));
+
+    public static final Item HUSBANDRY_BOOK = registerItem("husbandry_book",
+            new HusbandryBook(new FabricItemSettings().maxCount(1)));
 
     public static final Item SATURATION_BOOK = registerItem("saturation_book",
             new SaturationBook(new FabricItemSettings().maxCount(1)));

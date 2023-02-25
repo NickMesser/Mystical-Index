@@ -2,6 +2,7 @@ package net.messer.mystical_index.item.custom;
 
 import net.messer.config.ModConfig;
 import net.messer.mystical_index.MysticalIndex;
+import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.inventory.SingleItemStackingInventory;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.item.TooltipContext;
@@ -36,7 +37,7 @@ public class SaturationBook extends Item {
             if (hitResult.getType() == HitResult.Type.MISS)
                 return TypedActionResult.pass(stack);
 
-            var inventory = new SingleItemStackingInventory(stack, 1);
+            var inventory = new SingleItemStackingInventory(stack, ModConfig.SaturationBookMaxStacks);
             if(inventory.isEmpty()){
                 var box = Box.from(hitResult.getPos()).expand(.5);
 
@@ -64,8 +65,8 @@ public class SaturationBook extends Item {
                 !player.isCreative() &&
                 !world.isClient){
 
-            var inventory = new SingleItemStackingInventory(stack,1);
-            var foodStack = inventory.getStack(0);
+            var inventory = new SingleItemStackingInventory(stack,ModConfig.SaturationBookMaxStacks);
+            var foodStack = inventory.getFirstItemStack();
             if(!foodStack.isEmpty() && foodStack.isFood()){
                 player.eatFood(world, foodStack);
                 inventory.markDirty();
@@ -78,16 +79,15 @@ public class SaturationBook extends Item {
 
     @Override
     public boolean hasGlint(ItemStack stack) {
-        var storageInventory = new SingleItemStackingInventory(stack, 1);
+        var storageInventory = new SingleItemStackingInventory(stack, ModConfig.SaturationBookMaxStacks);
         return !storageInventory.isEmpty();
     }
 
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
         if(stack.hasGlint()){
-            SingleItemStackingInventory inventory = new SingleItemStackingInventory(stack, 1);
-            ItemStack storedStack = inventory.getStack(0);
-            tooltip.add(Text.literal("§a"+storedStack.getCount() + "x " + "§f" + storedStack.getItem().getName().getString()));
+            SingleItemStackingInventory inventory = new SingleItemStackingInventory(stack, ModConfig.SaturationBookMaxStacks);
+            tooltip.add(Text.literal("§a"+ inventory.getCountOfStoredItem() + "x " + "§f" + inventory.currentlyStoredItem.getName().getString()));
             tooltip.add(Text.literal(""));
         }
 

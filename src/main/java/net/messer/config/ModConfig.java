@@ -7,7 +7,7 @@ import java.util.List;
 
 public class ModConfig extends MidnightConfig {
     @Comment public static Comment BookStorageTitle;
-    @Entry public static int StorageBookMaxStacks = 25;
+    @Entry public static int StorageBookMaxStacks = 10;
     @Entry public static List<String> StorageBookBlockBlacklist = List.of("minecraft:shulker_box");
 
     @Comment public static Comment BoogMangetismTitle;
@@ -19,5 +19,8 @@ public class ModConfig extends MidnightConfig {
 
     @Comment public static Comment BookOfFluidTitle;
     @Entry public static int FluidBookMaxBuckets = 10;
+
+    @Comment public static Comment BookOfHusbandryTitle;
+    @Entry public static int HusbandryBookCooldown = 5;
 
 }

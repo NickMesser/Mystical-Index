@@ -20,15 +20,8 @@ public class MixinHooks {
             for (int i = 0; i < playerInventory.size(); i++) {
                 var potentialBook = playerInventory.getStack(i);
                 if (potentialBook.getItem() == ModItems.SATURATION_BOOK) {
-                    var bookInventory = new SingleItemStackingInventory(potentialBook, 1);
-                    if (bookInventory.currentlyStoredItem == itemPickedUp.getItem()) {
-                        var itemToAdd = bookInventory.addStack(itemPickedUp);
-                        if (itemToAdd.isEmpty()) {
-                            return true;
-                        } else {
-                            itemPickedUp.setCount(itemToAdd.getCount());
-                        }
-                    }
+                    SingleItemStackingInventory bookInventory = new SingleItemStackingInventory(potentialBook, ModConfig.SaturationBookMaxStacks);
+                    return bookInventory.tryAddStack(itemPickedUp, Boolean.FALSE);
                 }
             }
             return false;
@@ -38,15 +31,8 @@ public class MixinHooks {
             for (int i = 0; i < playerInventory.size(); i++) {
                 var potentialBook = playerInventory.getStack(i);
                 if (potentialBook.getItem() == ModItems.STORAGE_BOOK) {
-                    var bookInventory = new SingleItemStackingInventory(potentialBook, 1);
-                    if (bookInventory.currentlyStoredItem == itemPickedUp.getItem()) {
-                        var itemToAdd = bookInventory.addStack(itemPickedUp);
-                        if (itemToAdd.isEmpty()) {
-                            return true;
-                        } else {
-                            itemPickedUp.setCount(itemToAdd.getCount());
-                        }
-                    }
+                    var bookInventory = new SingleItemStackingInventory(potentialBook, ModConfig.StorageBookMaxStacks);
+                    return bookInventory.tryAddStack(itemPickedUp, Boolean.FALSE);
                 }
             }
         }

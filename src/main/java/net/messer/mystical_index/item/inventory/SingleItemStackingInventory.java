@@ -1,7 +1,6 @@
 package net.messer.mystical_index.item.inventory;
 
 import net.messer.config.ModConfig;
-import net.messer.mystical_index.item.ModItems;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventories;
 import net.minecraft.inventory.Inventory;
@@ -17,14 +16,17 @@ import net.minecraft.util.collection.DefaultedList;
 public class SingleItemStackingInventory implements Inventory {
     public final ItemStack stack;
     public final int inventorySize;
-    public final DefaultedList<ItemStack> items;
+    public final DefaultedList<ItemStack> storedItems;
     public Item currentlyStoredItem;
+
+    public int maxStacks = 1;
 
     public SingleItemStackingInventory(ItemStack stack , int size){
         this.stack = stack;
         this.inventorySize = size;
-        this.items = DefaultedList.ofSize(size,ItemStack.EMPTY);
+        this.storedItems = DefaultedList.ofSize(size,ItemStack.EMPTY);
         this.currentlyStoredItem = Items.AIR;
+        this.maxStacks = ModConfig.StorageBookMaxStacks;
         if(stack.hasNbt()){
             readNbt(stack);
         }
@@ -35,32 +37,90 @@ public class SingleItemStackingInventory implements Inventory {
         this.markDirty();
     }
 
+    public boolean tryRemoveOneItem(){
+        for (int i = 0; i < storedItems.size(); i++) {
+            if(storedItems.get(i).getItem() != Items.AIR){
+                storedItems.get(i).decrement(1);
+                if(storedItems.get(i).getCount() == 0){
+                    storedItems.set(i, ItemStack.EMPTY);
+                }
+                this.markDirty();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public int getCountOfStoredItem(){
+        int count = 0;
+        for (ItemStack item: storedItems) {
+            if(item.getItem() != Items.AIR)
+                count += item.getCount();
+        }
+        return count;
+    }
+
+    public ItemStack getFirstItemStack(){
+        for (int i = 0; i < storedItems.size(); i++) {
+            if(storedItems.get(i).getItem() != Items.AIR){
+                return storedItems.get(i);
+            }
+        }
+        return ItemStack.EMPTY;
+    }
+
+
+    public boolean tryAddStack(ItemStack stack, Boolean bypassItemCheck){
+        if(stack.getItem() != currentlyStoredItem && !bypassItemCheck)
+            return false;
+
+        ItemStack stackToAdd = stack.copy();
+
+        for (ItemStack item: storedItems) {
+            if (ItemStack.canCombine(item, stack)) {
+                int combinedCount = item.getCount() + stack.getCount();
+                if (combinedCount > this.getMaxCountPerStack() && item.getCount() < this.getMaxCountPerStack()) {
+                    var remainder = this.getMaxCountPerStack() - item.getCount();
+                    item.increment(remainder);
+                    stack.decrement(remainder);
+                    this.markDirty();
+                    if(stack.getCount() > 0)
+                        return tryAddStack(stack, true);
+                    else
+                        return true;
+                }
+            }
+        }
+
+        for (int i = 0; i < storedItems.size(); i++) {
+            if(storedItems.get(i).getItem() == Items.AIR){
+                storedItems.set(i, stackToAdd);
+                stack.setCount(0);
+                this.markDirty();
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public void writeNbt(){
         NbtCompound nbtData = new NbtCompound();
         nbtData.putString("storedItem", this.currentlyStoredItem.toString());
-        Inventories.writeNbt(nbtData, items);
+        Inventories.writeNbt(nbtData, storedItems);
         stack.setNbt(nbtData);
     }
 
     public void readNbt(ItemStack stack){
-        Inventories.readNbt(stack.getOrCreateNbt(), items);
-        var itemName = stack.getNbt().get("storedItem").asString();
+        NbtCompound compound = stack.getOrCreateNbt();
+        Inventories.readNbt(compound, storedItems);
+        var itemName = compound.getString("storedItem");
         currentlyStoredItem = Registries.ITEM.get(Identifier.tryParse(itemName));
-        if(!itemName.isBlank()){
-            this.stack.setCustomName(Text.literal("Book of " + currentlyStoredItem.getName().getString()));
-        }
     }
 
 
     @Override
     public int getMaxCountPerStack() {
-
-        if(this.stack.getItem() == ModItems.STORAGE_BOOK)
-            return ModConfig.StorageBookMaxStacks * 64;
-
-        if(this.stack.getItem() == ModItems.SATURATION_BOOK)
-            return ModConfig.StorageBookMaxStacks * 64;
-
         return 64;
     }
 
@@ -71,7 +131,7 @@ public class SingleItemStackingInventory implements Inventory {
 
     @Override
     public boolean isEmpty() {
-        for (ItemStack stack : items){
+        for (ItemStack stack : storedItems){
             if(stack.isEmpty()) continue;
             return false;
         }
@@ -80,30 +140,24 @@ public class SingleItemStackingInventory implements Inventory {
 
     @Override
     public ItemStack getStack(int slot) {
-        return items.get(slot);
+        return storedItems.get(slot);
     }
 
     @Override
     public ItemStack removeStack(int slot, int amount) {
-        ItemStack stack = Inventories.splitStack(items, slot, amount);
+        ItemStack stack = Inventories.splitStack(storedItems, slot, amount);
         this.markDirty();
         return stack;
     }
 
-    public ItemStack decrementStack(int amount){
-        getStack(0).decrement(amount);
-        this.markDirty();
-        return getStack(0);
-    }
-
     @Override
     public ItemStack removeStack(int slot) {
-        return Inventories.removeStack(items, slot);
+        return Inventories.removeStack(storedItems, slot);
     }
 
     @Override
     public void setStack(int slot, ItemStack stack) {
-        this.items.set(slot, stack);
+        this.storedItems.set(slot, stack);
         this.currentlyStoredItem = stack.getItem();
         if (!stack.isEmpty() && stack.getCount() > this.getMaxCountPerStack()) {
             stack.setCount(this.getMaxCountPerStack());
@@ -124,54 +178,7 @@ public class SingleItemStackingInventory implements Inventory {
 
     @Override
     public void clear() {
-        items.clear();
+        storedItems.clear();
     }
 
-    public ItemStack addStack(ItemStack stackToAdd) {
-        var currentStack = this.getStack(0);
-        if (ItemStack.canCombine(currentStack, stackToAdd)) {
-            if ((currentStack.getCount() + stackToAdd.getCount()) > this.getMaxCountPerStack()) {
-                var amountToMax = getMaxCountPerStack() - currentStack.getCount();
-                currentStack.increment(amountToMax);
-                stackToAdd.decrement(amountToMax);
-                this.markDirty();
-                return stackToAdd;
-            } else {
-                currentStack.increment(stackToAdd.getCount());
-                stackToAdd.setCount(0);
-                this.markDirty();
-                return ItemStack.EMPTY;
-            }
-        } else {
-            var newStack = stackToAdd.copy();
-            if(newStack.getCount() > getMaxCountPerStack()){
-                setStack(0, newStack);
-                newStack.setCount(getMaxCountPerStack());
-                stackToAdd.decrement(getMaxCountPerStack());
-                this.markDirty();
-                return stackToAdd;
-            } else {
-                setStack(0, newStack);
-                stackToAdd.setCount(0);
-            }
-        }
-        this.markDirty();
-        return stackToAdd;
-    }
-
-    public ItemStack firstAvailableStack(){
-        for (ItemStack stack : items){
-            if(stack.isEmpty()) continue;
-            return stack;
-        }
-        return ItemStack.EMPTY;
-    }
-
-    public int firstSlotWithStack(){
-        for (int i = 0; i < items.size(); i++){
-            if(items.get(i).isEmpty()) continue;
-            return i;
-        }
-        return -1;
-    }
 }

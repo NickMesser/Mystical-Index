@@ -5,10 +5,7 @@ import net.messer.mystical_index.item.inventory.SingleItemStackingInventory;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUsageContext;
+import net.minecraft.item.*;
 import net.minecraft.registry.Registries;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.text.Text;
@@ -59,16 +56,14 @@ public class StorageBook extends Item {
 
         if(currentBookInventory.isEmpty()){ return super.useOnBlock(context); }
 
-        ItemStack stackInBook = currentBookInventory.firstAvailableStack();
-        int stackSlot = currentBookInventory.firstSlotWithStack();
 
-        if(stackInBook.getItem() instanceof BlockItem blockItem){
+
+        if(currentBookInventory.currentlyStoredItem instanceof BlockItem blockItem && currentBookInventory.tryRemoveOneItem()){
             var hitBlockPos = context.getBlockPos();
             var direction = context.getSide();
             var newBlockPos = hitBlockPos.offset(direction);
             var world = context.getWorld();
-            if(world.canPlayerModifyAt(player, newBlockPos) && player.canPlaceOn(newBlockPos, direction, stackInBook) && world.canSetBlock(newBlockPos)){
-                currentBookInventory.removeStack(stackSlot, 1);
+            if(world.canPlayerModifyAt(player, newBlockPos) && player.canPlaceOn(newBlockPos, direction, heldBookStack) && world.canSetBlock(newBlockPos)){
                 var soundEvent = blockItem.getBlock().getSoundGroup(null).getPlaceSound();
                 context.getWorld().playSound(null, newBlockPos,soundEvent, SoundCategory.BLOCKS, 1.0f,1.0f);
                 context.getWorld().setBlockState(newBlockPos, blockItem.getBlock().getDefaultState());
@@ -80,7 +75,7 @@ public class StorageBook extends Item {
 
     @Override
     public boolean hasGlint(ItemStack stack) {
-        var storageInventory = new SingleItemStackingInventory(stack, 1);
+        var storageInventory = new SingleItemStackingInventory(stack, ModConfig.StorageBookMaxStacks);
         return !storageInventory.isEmpty();
     }
 
@@ -89,8 +84,10 @@ public class StorageBook extends Item {
         if(stack.hasGlint()){
             SingleItemStackingInventory inventory = new SingleItemStackingInventory(stack, ModConfig.StorageBookMaxStacks);
             int currentAmount = 0;
-            for (ItemStack inventoryStack : inventory.items) {
-                currentAmount += stack.getCount();
+            for (ItemStack inventoryStack : inventory.storedItems) {
+                if(inventoryStack.getItem() == Items.AIR)
+                    continue;
+                currentAmount += inventoryStack.getCount();
             }
 
             Item storedItem = inventory.currentlyStoredItem;
