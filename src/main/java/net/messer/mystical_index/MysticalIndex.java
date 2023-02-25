@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.registry.FuelRegistry;
 import net.messer.config.ModConfig;
 import net.messer.mystical_index.block.ModBlocks;
 import net.messer.mystical_index.block.entity.ModBlockEntities;
+import net.messer.mystical_index.events.PlayerKillEvent;
 import net.messer.mystical_index.item.ModItems;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,6 +22,8 @@ public class MysticalIndex implements ModInitializer {
 
 		ModItems.registerModItems();
 		ModBlocks.registerModBlocks();
+
+		PlayerKillEvent.init();
 
 		ModBlockEntities.registerBlockEntities();
 	}

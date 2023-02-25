@@ -22,5 +22,6 @@ public class ModConfig extends MidnightConfig {
 
     @Comment public static Comment BookOfHusbandryTitle;
     @Entry public static int HusbandryBookCooldown = 5;
+    @Entry public static int HusbandryBookMaxKills = 100;
 
 }
