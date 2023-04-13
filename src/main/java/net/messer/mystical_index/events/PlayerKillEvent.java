@@ -1,12 +1,9 @@
 package net.messer.mystical_index.events;
 
 import net.fabricmc.fabric.api.entity.event.v1.ServerEntityCombatEvents;
-import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.custom.HusbandryBook;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
 
 public class PlayerKillEvent {
     public static void init() {

@@ -2,7 +2,6 @@ package net.messer.mystical_index;
 
 import eu.midnightdust.lib.config.MidnightConfig;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.registry.FuelRegistry;
 import net.messer.config.ModConfig;
 import net.messer.mystical_index.block.ModBlocks;
 import net.messer.mystical_index.block.entity.ModBlockEntities;

@@ -1,5 +1,4 @@
 package net.messer.mystical_index.item.inventory;
-
 import net.messer.config.ModConfig;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventories;
@@ -9,9 +8,10 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.Registries;
-import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.DefaultedList;
+
+import java.util.Iterator;
 
 public class SingleItemStackingInventory implements Inventory {
     public final ItemStack stack;

@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 
-public class StorageBook extends Item {
+public class StorageBook extends BaseStorageBook {
 
     public StorageBook(Settings settings) {
         super(settings);
@@ -102,5 +102,10 @@ public class StorageBook extends Item {
             tooltip.add(Text.translatable("tooltip.mystical_index.storage_book"));
         }
         super.appendTooltip(stack, world, tooltip, context);
+    }
+
+    @Override
+    public SingleItemStackingInventory getInventory(ItemStack stack) {
+        return new SingleItemStackingInventory(stack, ModConfig.StorageBookMaxStacks);
     }
 }

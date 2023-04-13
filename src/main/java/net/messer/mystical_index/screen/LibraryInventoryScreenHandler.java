@@ -70,7 +70,7 @@ public class LibraryInventoryScreenHandler extends ScreenHandler {
         return this.inventory.canPlayerUse(player);
     }
 
-    public boolean isStorageBook(ItemStack itemStack){
+    public static boolean isStorageBook(ItemStack itemStack){
         if(itemStack.getItem() == ModItems.STORAGE_BOOK) return true;
         else return false;
     }
