@@ -1,0 +1,40 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "WSR",
+    "GMP",
+    "QBA"
+  ],
+  "key":{
+    "W": {
+      "item": "minecraft:porkchop"
+    },
+    "W": {
+      "item": "minecraft:beef"
+    },
+    "R": {
+      "item": "minecraft:mutton"
+    },
+    "M": {
+      "item": "mystical_index:storage_book"
+    },
+    "G": {
+      "item": "minecraft:chicken"
+    },
+    "P": {
+      "item": "minecraft:rabbit_foot"
+    },
+    "Q": {
+      "item": "minecraft:leather"
+    },
+    "B": {
+      "item": "minecraft:salmon"
+    },
+    "A": {
+      "item": "minecraft:cod"
+    }
+  },
+  "result": {
+    "item": "mystical_index:husbandry_book"
+  }
+}

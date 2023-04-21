@@ -3,6 +3,7 @@ package net.messer.config;
 
 import eu.midnightdust.lib.config.MidnightConfig;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ModConfig extends MidnightConfig {
@@ -21,7 +22,13 @@ public class ModConfig extends MidnightConfig {
     @Entry public static int FluidBookMaxBuckets = 10;
 
     @Comment public static Comment BookOfHusbandryTitle;
-    @Entry public static int HusbandryBookCooldown = 5;
+    @Entry public static int HusbandryBookCooldown = 120;
     @Entry public static int HusbandryBookMaxKills = 100;
+    @Entry public static List<String> HusbandryBookBlackList = new ArrayList<>();
+    @Comment public static Comment BookOfHostilityTitle;
+    @Entry public static int HostileBookCooldown = 120;
+    @Entry public static int HostileBookMaxKills = 100;
+
+    @Entry public static List<String> HostileBookBlackList = List.of("minecraft:ender_dragon", "minecraft:wither");
 
 }

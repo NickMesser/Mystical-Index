@@ -1,0 +1,40 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "WSR",
+    "GMP",
+    "QBA"
+  ],
+  "key":{
+    "W": {
+      "item": "minecraft:wither_skeleton_skull"
+    },
+    "W": {
+      "item": "minecraft:spider_eye"
+    },
+    "R": {
+      "item": "minecraft:rotten_flesh"
+    },
+    "M": {
+      "item": "mystical_index:storage_book"
+    },
+    "G": {
+      "item": "minecraft:gunpowder"
+    },
+    "P": {
+      "item": "minecraft:shulker_shell"
+    },
+    "Q": {
+      "item": "minecraft:ender_pearl"
+    },
+    "B": {
+      "item": "minecraft:bone"
+    },
+    "A": {
+      "item": "minecraft:phantom_membrane"
+    }
+  },
+  "result": {
+    "item": "mystical_index:hostile_book"
+  }
+}

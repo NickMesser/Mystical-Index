@@ -1,9 +1,13 @@
 package net.messer.mystical_index.item;
 
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
+import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.messer.mystical_index.MysticalIndex;
+import net.messer.mystical_index.block.ModBlocks;
 import net.messer.mystical_index.item.custom.*;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemGroup;
+import net.minecraft.item.ItemGroups;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.util.Identifier;
@@ -19,6 +23,9 @@ public class ModItems {
     public static final Item HUSBANDRY_BOOK = registerItem("husbandry_book",
             new HusbandryBook(new FabricItemSettings().maxCount(1)));
 
+    public static final Item HOSTILE_BOOK = registerItem("hostile_book",
+            new HostileBook(new FabricItemSettings().maxCount(1)));
+
     public static final Item SATURATION_BOOK = registerItem("saturation_book",
             new SaturationBook(new FabricItemSettings().maxCount(1)));
 
@@ -31,5 +38,20 @@ public class ModItems {
 
     public static void registerModItems(){
         MysticalIndex.LOGGER.info("Registering items for " + MysticalIndex.MOD_ID);
+        addItemsToItemGroup();
+    }
+
+    public static void addItemsToItemGroup(){
+        addToItemGroup(ItemGroups.TOOLS, FLUID_BOOK);
+        addToItemGroup(ItemGroups.TOOLS, STORAGE_BOOK);
+        addToItemGroup(ItemGroups.TOOLS, HUSBANDRY_BOOK);
+        addToItemGroup(ItemGroups.TOOLS, HOSTILE_BOOK);
+        addToItemGroup(ItemGroups.TOOLS, SATURATION_BOOK);
+        addToItemGroup(ItemGroups.TOOLS, MAGNETISM_BOOK);
+        addToItemGroup(ItemGroups.INVENTORY, Item.fromBlock(ModBlocks.LIBRARY));
+    }
+
+    private static void addToItemGroup(ItemGroup group, Item item) {
+        ItemGroupEvents.modifyEntriesEvent(group).register(entries -> entries.add(item));
     }
 }

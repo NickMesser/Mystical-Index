@@ -1,15 +1,20 @@
 package net.messer.mystical_index.block.entity;
 
 import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.CombinedStorage;
 import net.messer.mystical_index.item.custom.BaseStorageBook;
+import net.messer.mystical_index.item.inventory.SimpleBookInventory;
 import net.messer.mystical_index.screen.LibraryInventoryScreenHandler;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventories;
-import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.SimpleInventory;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.screen.NamedScreenHandlerFactory;
@@ -18,65 +23,32 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Dictionary;
-import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandlerFactory {
 
-    public SimpleInventory storedBooks = new SimpleInventory(5){
+    List<InventoryStorage> combinedContents = new ArrayList<>();
+    Storage<ItemVariant> combinedStorage = new CombinedStorage<>(combinedContents);
+
+    public SimpleInventory storedBooks = new SimpleInventory(5) {
         @Override
         public void markDirty() {
+            combinedContents.clear();
             for (var itemStack : storedBooks.stacks) {
-                if (itemStack.getItem() instanceof BaseStorageBook storageBook) {
-                    var content = storageBook.getInventory(itemStack);
-                    if (content.isEmpty())
-                        continue;
-                    for (int i = 0; i < content.size(); i++) {
-                        if (content.getStack(i).isEmpty())
-                            continue;
-                        contents.setStack(i, content.getStack(i));
-                    }
-                    LibraryBlockEntity.this.markDirty();
-                    break;
-                }
-            }
-            LibraryBlockEntity.this.markDirty();
-        }
-    };
-
-    public InventoryStorage storedContents(){
-        storedBooks.markDirty();
-        return InventoryStorage.of(contents, null);
-    }
-
-    public SimpleInventory contents = new SimpleInventory(64){
-        @Override
-        public void markDirty() {
-            for (var itemStack: storedBooks.stacks) {
                 if(itemStack.getItem() instanceof BaseStorageBook storageBook){
-                    var content = storageBook.getInventory(itemStack);
-                    if(content.isEmpty())
+                    if(storageBook.getInventory(itemStack).isEmpty())
                         continue;
-                    content.clear();
-                    for (int i = 0; i < contents.size(); i++) {
-                        if(contents.getStack(i).isEmpty())
-                            continue;
-                        content.setStack(i, contents.getStack(i));
-                    }
-                    content.markDirty();
-                    LibraryBlockEntity.this.markDirty();
-                    break;
                 }
+                SimpleBookInventory bookInventory = new SimpleBookInventory(itemStack);
+                combinedContents.add(InventoryStorage.of(bookInventory.contents, null));
+                combinedStorage = new CombinedStorage<>(combinedContents);
+                LibraryBlockEntity.this.markDirty();
             }
-            LibraryBlockEntity.this.markDirty();
         }
     };
-
     public final InventoryStorage bookWrapper = InventoryStorage.of(storedBooks, null);
-    public final InventoryStorage contentWrapper = InventoryStorage.of(contents, null);
-
-
     @Override
     public void readNbt(NbtCompound nbt) {
         super.readNbt(nbt);

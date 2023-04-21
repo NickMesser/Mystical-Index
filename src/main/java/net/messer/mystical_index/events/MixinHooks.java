@@ -45,22 +45,4 @@ public class MixinHooks {
         }
         return false;
     }
-
-    public static Inventory getInputInventory(World world, Hopper hopper, Inventory inventory) {
-//        var blockPos = new BlockPos(hopper.getHopperX(), hopper.getHopperY() + 1, hopper.getHopperZ());
-//        var blockEntity = world.getBlockEntity(blockPos);
-//        world.getPlayers().forEach(player -> player.sendMessage(Text.of("I made it here!"), false));
-//        if(blockEntity instanceof LibraryBlockEntity entity)
-//        {
-//            var stack = entity.getItems().get(0);
-//            var item = stack.getItem();
-//            if(item instanceof BaseStorageBook book){
-//                return book.getInventory(stack);
-//            }
-//
-//            return entity;
-//        }
-
-        return inventory;
-    }
 }

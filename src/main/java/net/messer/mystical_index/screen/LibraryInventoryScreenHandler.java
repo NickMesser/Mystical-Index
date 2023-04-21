@@ -1,6 +1,7 @@
 package net.messer.mystical_index.screen;
 
 import net.messer.mystical_index.item.ModItems;
+import net.messer.mystical_index.item.custom.BaseStorageBook;
 import net.messer.mystical_index.item.inventory.LibraryBookSlot;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -71,8 +72,9 @@ public class LibraryInventoryScreenHandler extends ScreenHandler {
     }
 
     public static boolean isStorageBook(ItemStack itemStack){
-        if(itemStack.getItem() == ModItems.STORAGE_BOOK) return true;
-        else return false;
+        if(itemStack.getItem() instanceof BaseStorageBook) return true;
+
+        return false;
     }
 
 }

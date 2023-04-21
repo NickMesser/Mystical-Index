@@ -4,28 +4,24 @@ import net.messer.config.ModConfig;
 import net.messer.mystical_index.item.inventory.SingleItemStackingInventory;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.item.TooltipContext;
-import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.passive.PassiveEntity;
-import net.minecraft.entity.passive.SheepEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.loot.LootTable;
 import net.minecraft.loot.context.LootContext;
 import net.minecraft.loot.context.LootContextParameters;
+import net.minecraft.loot.context.LootContextType;
 import net.minecraft.loot.context.LootContextTypes;
-import net.minecraft.loot.entry.LootPoolEntry;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.DyeColor;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
@@ -35,19 +31,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class HusbandryBook extends BaseStorageBook {
+public class HostileBook extends BaseStorageBook {
 
     private static final String STORED_ENTITY_NAME_KEY = "storedEntityName";
     private static final String STORED_ENTITY_LOOT_TABLE_KEY = "storedEntityLootTable";
-    private static final String STORED_ENTITY_ID_KEY = "storedEntityId";
     private static final String NUMBER_OF_KILLS_KEY = "numberOfKills";
+
+    private static final String STORED_ENTITY_ID_KEY = "storedEntityId";
 
     private static final int INVENTORY_SIZE = 6;
 
-    private int maxCooldown = ModConfig.HusbandryBookCooldown * 20;
+    private int maxCooldown = ModConfig.HostileBookCooldown * 20;
 
 
-    public HusbandryBook(Settings settings) {
+    public HostileBook(Settings settings) {
         super(settings);
     }
 
@@ -61,7 +58,7 @@ public class HusbandryBook extends BaseStorageBook {
         if(user.world.isClient)
             return super.useOnEntity(stack, user, entity, hand);
 
-        if(!(entity instanceof PassiveEntity))
+        if((entity instanceof PassiveEntity))
             return super.useOnEntity(stack, user, entity, hand);
 
         var entityName = Registries.ENTITY_TYPE.getId(entity.getType()).toString();
@@ -117,7 +114,7 @@ public class HusbandryBook extends BaseStorageBook {
 
         var numberOfKills = compound.getInt(NUMBER_OF_KILLS_KEY);
 
-        if(numberOfKills >= ModConfig.HusbandryBookMaxKills)
+        if(numberOfKills >= ModConfig.HostileBookMaxKills)
             return;
 
         compound.putInt(NUMBER_OF_KILLS_KEY, numberOfKills + 1);
@@ -141,7 +138,6 @@ public class HusbandryBook extends BaseStorageBook {
 
         NbtCompound compound = stack.getNbt();
 
-        var storedEntityName = compound.getString(STORED_ENTITY_NAME_KEY);
         var storedEntityLootTable = new Identifier(compound.getString(STORED_ENTITY_LOOT_TABLE_KEY));
         var numberOfKills = compound.getInt(NUMBER_OF_KILLS_KEY);
         var storedEntityId = compound.getString(STORED_ENTITY_ID_KEY);
@@ -176,15 +172,12 @@ public class HusbandryBook extends BaseStorageBook {
 
             LootTable lootTable = world.getServer().getLootManager().getTable(storedEntityLootTable);
             var loot = lootTable.generateLoot(context);
-
-            if (storedEntity instanceof SheepEntity) // Dumb hack because sheep dont have wool in a drop table. TODO: Fix this
-                loot.add(new ItemStack(Items.WHITE_WOOL, 1 + world.random.nextInt(2)));
-
             for(ItemStack itemStack : loot) {
                 if (!inventory.tryAddStack(itemStack, true))
                     itemStack.setCount(0);
             }
         }
+
     }
 
     public void updateUseTime(ItemStack stack, long time){
@@ -200,6 +193,8 @@ public class HusbandryBook extends BaseStorageBook {
         if(!stack.hasNbt())
             return;
 
+
+
         SingleItemStackingInventory inventory = new SingleItemStackingInventory(stack, INVENTORY_SIZE);
         List<String> itemNames = new ArrayList<>();
         for (ItemStack inventoryStack : inventory.storedItems) {
@@ -211,14 +206,13 @@ public class HusbandryBook extends BaseStorageBook {
             }
         }
 
-
-
         var compound = stack.getNbt();
         if (compound == null)
             return;
 
         var storedEntityName = compound.getString(STORED_ENTITY_NAME_KEY);
         var numberOfKills = compound.getInt(NUMBER_OF_KILLS_KEY);
+
         tooltip.add(Text.literal("Cooldown: " + ((maxCooldown - (20 * numberOfKills))/20) + " seconds"));
 
         tooltip.add(Text.literal("§a"+numberOfKills + "x " + "§f" + storedEntityName));
@@ -234,10 +228,10 @@ public class HusbandryBook extends BaseStorageBook {
         }
 
         if(Screen.hasShiftDown()){
-            tooltip.add(Text.translatable("tooltip.mystical_index.husbandry_book_shift0"));
-            tooltip.add(Text.translatable("tooltip.mystical_index.husbandry_book_shift1"));
+            tooltip.add(Text.translatable("tooltip.mystical_index.hostile_book_shift0"));
+            tooltip.add(Text.translatable("tooltip.mystical_index.hostile_book_shift1"));
         } else {
-            tooltip.add(Text.translatable("tooltip.mystical_index.husbandry_book"));
+            tooltip.add(Text.translatable("tooltip.mystical_index.hostile_book"));
         }
 
         super.appendTooltip(stack, world, tooltip, context);

@@ -28,7 +28,7 @@ public class SingleItemStackingInventory implements Inventory {
         this.currentlyStoredItem = Items.AIR;
         this.maxStacks = ModConfig.StorageBookMaxStacks;
         if(stack.hasNbt()){
-            readNbt(stack);
+            readNbt();
         }
     }
 
@@ -89,6 +89,13 @@ public class SingleItemStackingInventory implements Inventory {
                     else
                         return true;
                 }
+
+                if(combinedCount <= this.getMaxCountPerStack()){
+                    item.increment(stack.getCount());
+                    stack.setCount(0);
+                    this.markDirty();
+                    return true;
+                }
             }
         }
 
@@ -105,14 +112,20 @@ public class SingleItemStackingInventory implements Inventory {
     }
 
     public void writeNbt(){
-        NbtCompound nbtData = new NbtCompound();
+        NbtCompound nbtData = stack.getNbt();
+        if(nbtData == null)
+            nbtData = new NbtCompound();
+
         nbtData.putString("storedItem", this.currentlyStoredItem.toString());
         Inventories.writeNbt(nbtData, storedItems);
-        stack.setNbt(nbtData);
     }
 
-    public void readNbt(ItemStack stack){
-        NbtCompound compound = stack.getOrCreateNbt();
+    public void readNbt(){
+        NbtCompound compound = stack.getNbt();
+        if (compound == null) {
+            return;
+        }
+
         Inventories.readNbt(compound, storedItems);
         var itemName = compound.getString("storedItem");
         currentlyStoredItem = Registries.ITEM.get(Identifier.tryParse(itemName));
@@ -132,8 +145,9 @@ public class SingleItemStackingInventory implements Inventory {
     @Override
     public boolean isEmpty() {
         for (ItemStack stack : storedItems){
-            if(stack.isEmpty()) continue;
-            return false;
+            if(stack.getItem() != Items.AIR || !stack.isEmpty()){
+                return false;
+            }
         }
         return true;
     }

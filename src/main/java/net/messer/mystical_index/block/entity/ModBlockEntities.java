@@ -24,7 +24,7 @@ public class ModBlockEntities {
                                 ModBlocks.LIBRARY).build(null));
 
         ItemStorage.SIDED.registerForBlockEntity((block, direction) -> switch (direction){
-            default -> block.storedContents();
+            default -> block.combinedStorage;
         }, LIBRARY_BLOCK_ENTITY);
 
     }

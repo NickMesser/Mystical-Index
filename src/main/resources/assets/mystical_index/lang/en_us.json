@@ -16,5 +16,13 @@
   "tooltip.mystical_index.magnetism_book_shift0": "§eSHIFT§r + §eRIGHT CLICK§r an item on the",
   "tooltip.mystical_index.magnetism_book_shift1": "ground to add items to the filter.",
   "tooltip.mystical_index.magnetism_book_shift2": "§eSHIFT§r + §eRIGHT CLICK§r a Coal Block to ",
-  "tooltip.mystical_index.magnetism_book_shift3": "reset reset the filter."
+  "tooltip.mystical_index.magnetism_book_shift3": "reset reset the filter.",
+  "item.mystical_index.husbandry_book": "Book Of Husbandry",
+  "tooltip.mystical_index.husbandry_book": "Hold §eSHIFT§r for more info.",
+  "tooltip.mystical_index.husbandry_book_shift0": "§eSHIFT§r + §eRIGHT CLICK§r a mob to set this book.",
+  "tooltip.mystical_index.husbandry_book_shift1": "Kill stored mob with book in offhand to decrease cooldown.",
+  "item.mystical_index.hostile_book": "Book of Hostile",
+  "tooltip.mystical_index.hostile_book": "Hold §eSHIFT§r for more info.",
+  "tooltip.mystical_index.hostile_book_shift0": "§eSHIFT§r + §eRIGHT CLICK§r a mob to set this book.",
+  "tooltip.mystical_index.hostile_book_shift1": "Kill stored mod with book in offhand to decrease cooldown."
 }
