@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "BBB",
+    "#E#",
+    "BBB"
+  ],
+  "key": {
+    "#": {
+      "item": "mystical_index:villager_book"
+    },
+    "E": {
+      "item": "mystical_index:empty_villager_book"
+    },
+    "B": {
+      "item": "minecraft:bread"
+    }
+  },
+  "result": {
+    "item": "mystical_index:baby_villager_book"
+  }
+}

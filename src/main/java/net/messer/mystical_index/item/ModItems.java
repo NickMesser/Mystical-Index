@@ -32,6 +32,15 @@ public class ModItems {
     public static final Item MAGNETISM_BOOK = registerItem("magnetism_book",
             new MagnetismBook(new FabricItemSettings().maxCount(1)));
 
+    public static final Item VILLAGER_BOOK = registerItem("villager_book",
+            new VillagerBook(new FabricItemSettings().maxCount(1)));
+
+    public static final Item BABY_VILLAGER_BOOK = registerItem("baby_villager_book",
+            new BabyVillagerBook(new FabricItemSettings().maxCount(1)));
+
+    public static final Item EMPTY_VILLAGER_BOOK = registerItem("empty_villager_book",
+            new EmptyVillagerBook(new FabricItemSettings().maxCount(1)));
+
     private static Item registerItem(String name, Item item){
         return Registry.register(Registries.ITEM, new Identifier(MysticalIndex.MOD_ID, name), item);
     }

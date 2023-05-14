@@ -17,7 +17,6 @@ public class ModBlockEntities {
     public static BlockEntityType<LibraryBlockEntity> LIBRARY_BLOCK_ENTITY;
 
     public static void registerBlockEntities() {
-
         LIBRARY_BLOCK_ENTITY =
                 Registry.register(Registries.BLOCK_ENTITY_TYPE, new Identifier(MysticalIndex.MOD_ID, "library"),
                         FabricBlockEntityTypeBuilder.create((pos, state) -> new LibraryBlockEntity(pos, state),
