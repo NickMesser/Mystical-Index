@@ -4,7 +4,11 @@
   "package": "net.messer.mixin",
   "compatibilityLevel": "JAVA_16",
   "mixins": [
-    "ItemStackPickupMixin", "VillagerEntityMixin", "MobEntityMixin", "VillagerEntityInvoker"
+    "ItemStackPickupMixin",
+    "MobEntityMixin",
+    "PassiveEntityAccessor",
+    "VillagerEntityInvoker",
+    "VillagerEntityMixin"
   ],
   "client": [
   ],

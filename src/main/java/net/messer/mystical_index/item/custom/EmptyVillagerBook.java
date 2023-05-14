@@ -7,7 +7,6 @@ import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 
@@ -20,13 +19,9 @@ public class EmptyVillagerBook extends Item {
     public ActionResult useOnEntity(ItemStack stack, PlayerEntity user, LivingEntity entity, Hand hand) {
         if(entity instanceof VillagerEntity && !stack.hasNbt()){
             ItemStack newStack = new ItemStack(ModItems.VILLAGER_BOOK);
-            NbtCompound newStackNbt = newStack.getOrCreateNbt();
-
-            NbtCompound entityNbt = new NbtCompound();
-            entity.saveSelfNbt(entityNbt);
-            newStackNbt.put("Entity", entityNbt);
+            var bookItem = (VillagerBook) newStack.getItem();
+            bookItem.addVillagerToBook(newStack, (VillagerEntity) entity);
             entity.remove(Entity.RemovalReason.DISCARDED);
-
             stack.decrement(1);
             user.setStackInHand(hand, newStack);
             super.useOnEntity(stack, user, entity, hand);

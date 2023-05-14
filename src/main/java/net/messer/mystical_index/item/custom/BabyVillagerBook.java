@@ -1,19 +1,23 @@
 package net.messer.mystical_index.item.custom;
 
-import net.messer.mystical_index.MysticalIndex;
+import net.messer.mixin.PassiveEntityAccessor;
 import net.messer.mystical_index.item.ModItems;
+import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnReason;
-import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
 import net.minecraft.village.VillagerType;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class BabyVillagerBook extends Item {
     public BabyVillagerBook(Settings settings) {
@@ -27,7 +31,7 @@ public class BabyVillagerBook extends Item {
 
         NbtCompound compound = stack.getOrCreateNbt();
         var child = createChild((ServerWorld) world);
-        child.setBreedingAge(-100);
+        child.setBreedingAge(-24000);
         NbtCompound entityNbt = new NbtCompound();
         child.saveSelfNbt(entityNbt);
         compound.put("Entity", entityNbt);
@@ -41,8 +45,7 @@ public class BabyVillagerBook extends Item {
             return;
 
         NbtCompound nbt = stack.getNbt();
-        VillagerEntity villagerEntity = (VillagerEntity) EntityType.loadEntityWithPassengers(nbt.getCompound("Entity"), world, (entityx) -> {
-            entityx.refreshPositionAndAngles(entity.getX(), entity.getY(), entity.getZ(), entityx.getYaw(), entityx.getPitch());
+        VillagerEntity villagerEntity = (VillagerEntity) EntityType.loadEntityWithPassengers(nbt.getCompound("Entity"), world, (entityx) -> {entityx.refreshPositionAndAngles(entity.getX(), entity.getY(), entity.getZ(), entityx.getYaw(), entityx.getPitch());
             return entityx;
         });
 
@@ -55,10 +58,13 @@ public class BabyVillagerBook extends Item {
         {
             if(entity instanceof PlayerEntity player)
             {
+                var inventorySlot = player.getInventory().getSlotWithStack(stack);
+                player.getInventory().setStack(inventorySlot, ItemStack.EMPTY);
+
                 ItemStack newVillagerStack = new ItemStack(ModItems.VILLAGER_BOOK);
                 var villagerBook = (VillagerBook) newVillagerStack.getItem();
                 villagerBook.createAndAddVillager(newVillagerStack,(ServerWorld) world);
-                player.giveItemStack(newVillagerStack);
+                player.getInventory().setStack(inventorySlot, newVillagerStack);
                 stack.decrement(1);
                 villagerEntity.remove(Entity.RemovalReason.DISCARDED);
                 return;
@@ -67,6 +73,7 @@ public class BabyVillagerBook extends Item {
 
         NbtCompound entityNbt = new NbtCompound();
         villagerEntity.saveSelfNbt(entityNbt);
+        nbt.remove("Entity");
         nbt.put("Entity", entityNbt);
         villagerEntity.remove(Entity.RemovalReason.DISCARDED);
 
@@ -78,5 +85,36 @@ public class BabyVillagerBook extends Item {
         VillagerEntity villagerEntity = new VillagerEntity(EntityType.VILLAGER, serverWorld, villagerType);
         villagerEntity.initialize(serverWorld, serverWorld.getLocalDifficulty(villagerEntity.getBlockPos()), SpawnReason.BREEDING, null, null);
         return villagerEntity;
+    }
+
+    @Override
+    public boolean hasGlint(ItemStack stack) {
+        return stack.hasNbt();
+    }
+
+    @Override
+    public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
+        NbtCompound nbt = stack.getNbt();
+
+        if(nbt == null) {
+            tooltip.add(Text.of("Craft to create a baby villager!"));
+            return;
+        }
+
+        VillagerEntity villagerEntity = (VillagerEntity) EntityType.loadEntityWithPassengers(nbt.getCompound("Entity"), world, (entityx) -> {
+            return entityx;
+        });
+        if (villagerEntity == null)
+            return;
+
+        PassiveEntityAccessor passiveEntityAccessor = (PassiveEntityAccessor) villagerEntity;
+
+
+        var timeUntilAdult = -passiveEntityAccessor.getBreedingAgeNumber();
+        var secondsUntilAdult = timeUntilAdult / 20;
+        var minutesUntilAdult = secondsUntilAdult / 60;
+        tooltip.add(Text.of("Time until adult: " + minutesUntilAdult + " minutes" + " " + secondsUntilAdult % 60 + " seconds"));
+        villagerEntity.remove(Entity.RemovalReason.DISCARDED);
+        super.appendTooltip(stack, world, tooltip, context);
     }
 }
