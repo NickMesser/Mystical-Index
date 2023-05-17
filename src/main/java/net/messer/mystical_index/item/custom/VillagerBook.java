@@ -15,6 +15,8 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -173,7 +175,7 @@ public class VillagerBook extends Item {
         if(((VillagerEntityInvoker) villagerEntity).getCanLevelUp())
             ((VillagerEntityInvoker) villagerEntity).invokeLevelUp();
 
-
+        world.playSound(null, user.getBlockPos(), SoundEvents.ENTITY_VILLAGER_TRADE, SoundCategory.AMBIENT, 1f, 1.5f);
         user.interact(villagerEntity, hand);
 
         return super.use(world, user, hand);
@@ -207,7 +209,13 @@ public class VillagerBook extends Item {
         stackNbt.remove("Entity");
         stackNbt.put("Entity", entityNbt);
 
-        var professionName = villagerEntity.getVillagerData().getProfession().toString().substring(0,1).toUpperCase() + villagerEntity.getVillagerData().getProfession().toString().substring(1).toLowerCase();
-        stack.setCustomName(Text.of("Book Of " + professionName));
+        if(villagerEntity.getVillagerData().getProfession() == VillagerProfession.NONE){
+            stack.setCustomName(Text.of("Book Of Villager"));
+        }
+        else{
+            var professionName = villagerEntity.getVillagerData().getProfession().toString().substring(0,1).toUpperCase() + villagerEntity.getVillagerData().getProfession().toString().substring(1).toLowerCase();
+            stack.setCustomName(Text.of("Book Of " + professionName));
+        }
+
     }
 }

@@ -6,13 +6,18 @@ import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnReason;
+import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
+import net.minecraft.util.Hand;
+import net.minecraft.util.TypedActionResult;
 import net.minecraft.village.VillagerType;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
@@ -29,14 +34,15 @@ public class BabyVillagerBook extends Item {
         if(world.isClient())
             return;
 
-        NbtCompound compound = stack.getOrCreateNbt();
-        var child = createChild((ServerWorld) world);
-        child.setBreedingAge(-24000);
-        NbtCompound entityNbt = new NbtCompound();
-        child.saveSelfNbt(entityNbt);
-        compound.put("Entity", entityNbt);
-        child.remove(Entity.RemovalReason.DISCARDED);
+        createAndAddBabyVillagerToBook(stack, (ServerWorld) world);
+
         super.onCraft(stack, world, player);
+    }
+
+    @Override
+    public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
+        world.playSound(null, user.getBlockPos(), SoundEvents.ENTITY_VILLAGER_YES, SoundCategory.AMBIENT, 1f, 1.5f);
+        return super.use(world, user, hand);
     }
 
     @Override
@@ -53,8 +59,8 @@ public class BabyVillagerBook extends Item {
             return;
 
         villagerEntity.setBreedingAge(villagerEntity.getBreedingAge() + 1);
-
-        if(!villagerEntity.isBaby())
+        var timeUntilAdult = nbt.getLong("timeUntilAdult");
+        if(world.getTime() > timeUntilAdult)
         {
             if(entity instanceof PlayerEntity player)
             {
@@ -71,20 +77,9 @@ public class BabyVillagerBook extends Item {
             }
         }
 
-        NbtCompound entityNbt = new NbtCompound();
-        villagerEntity.saveSelfNbt(entityNbt);
-        nbt.remove("Entity");
-        nbt.put("Entity", entityNbt);
         villagerEntity.remove(Entity.RemovalReason.DISCARDED);
 
         super.inventoryTick(stack, world, entity, slot, selected);
-    }
-
-    public VillagerEntity createChild(ServerWorld serverWorld) {
-        VillagerType villagerType = VillagerType.PLAINS;
-        VillagerEntity villagerEntity = new VillagerEntity(EntityType.VILLAGER, serverWorld, villagerType);
-        villagerEntity.initialize(serverWorld, serverWorld.getLocalDifficulty(villagerEntity.getBlockPos()), SpawnReason.BREEDING, null, null);
-        return villagerEntity;
     }
 
     @Override
@@ -110,11 +105,43 @@ public class BabyVillagerBook extends Item {
         PassiveEntityAccessor passiveEntityAccessor = (PassiveEntityAccessor) villagerEntity;
 
 
-        var timeUntilAdult = -passiveEntityAccessor.getBreedingAgeNumber();
+        var timeUntilAdult = nbt.getLong("timeUntilAdult") - villagerEntity.getEntityWorld().getTime();
         var secondsUntilAdult = timeUntilAdult / 20;
         var minutesUntilAdult = secondsUntilAdult / 60;
         tooltip.add(Text.of("Time until adult: " + minutesUntilAdult + " minutes" + " " + secondsUntilAdult % 60 + " seconds"));
         villagerEntity.remove(Entity.RemovalReason.DISCARDED);
         super.appendTooltip(stack, world, tooltip, context);
+    }
+    public VillagerEntity createChild(ServerWorld serverWorld) {
+        VillagerType villagerType = VillagerType.PLAINS;
+        VillagerEntity villagerEntity = new VillagerEntity(EntityType.VILLAGER, serverWorld, villagerType);
+        villagerEntity.initialize(serverWorld, serverWorld.getLocalDifficulty(villagerEntity.getBlockPos()), SpawnReason.BREEDING, null, null);
+        return villagerEntity;
+    }
+
+
+    public void createAndAddBabyVillagerToBook(ItemStack stack, ServerWorld world) {
+        NbtCompound nbt = stack.getOrCreateNbt();
+        var child = createChild(world);
+        var currentTime = world.getTime();
+        var timeUntilAdult = currentTime + 24000;
+        child.setBreedingAge(-24000);
+        NbtCompound entityNbt = new NbtCompound();
+        child.saveSelfNbt(entityNbt);
+        nbt.put("Entity", entityNbt);
+        nbt.putLong("timeUntilAdult", timeUntilAdult);
+        child.remove(Entity.RemovalReason.DISCARDED);
+        stack.setCustomName(Text.of("Baby Villager Book"));
+    }
+
+    public void addBabyVillagerToBook(ItemStack stack, VillagerEntity villagerEntity) {
+        var world = villagerEntity.getEntityWorld();
+        var timeUntilAdult = world.getTime() + -villagerEntity.getBreedingAge();
+        NbtCompound nbt = stack.getOrCreateNbt();
+        NbtCompound entityNbt = new NbtCompound();
+        villagerEntity.saveSelfNbt(entityNbt);
+        nbt.put("Entity", entityNbt);
+        nbt.putLong("timeUntilAdult", timeUntilAdult);
+        stack.setCustomName(Text.of("Baby Villager Book"));
     }
 }
