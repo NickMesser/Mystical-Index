@@ -57,7 +57,9 @@ public class ModItems {
         addToItemGroup(ItemGroups.TOOLS, HOSTILE_BOOK);
         addToItemGroup(ItemGroups.TOOLS, SATURATION_BOOK);
         addToItemGroup(ItemGroups.TOOLS, MAGNETISM_BOOK);
-        addToItemGroup(ItemGroups.INVENTORY, Item.fromBlock(ModBlocks.LIBRARY));
+        addToItemGroup(ItemGroups.FUNCTIONAL, Item.fromBlock(ModBlocks.LIBRARY));
+        addToItemGroup(ItemGroups.TOOLS, EMPTY_VILLAGER_BOOK);
+        addToItemGroup(ItemGroups.TOOLS, BABY_VILLAGER_BOOK);
     }
 
     private static void addToItemGroup(ItemGroup group, Item item) {

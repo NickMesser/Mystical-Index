@@ -110,8 +110,6 @@ public class VillagerBook extends Item {
 
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-
-
         if(!stack.hasNbt())
         {
             super.appendTooltip(stack, world, tooltip, context);
@@ -129,7 +127,21 @@ public class VillagerBook extends Item {
         if(villagerEntity == null)
             return;
 
+        if(villagerEntity.getVillagerData().getProfession() == VillagerProfession.NONE){
+            tooltip.add(Text.of("§eSHIFT§r + §eRIGHT CLICK§r a profession block"));
+            tooltip.add(Text.of("to set the profession of this villager."));
+            return;
+        }
+
+        tooltip.add(Text.of("§eRIGHT CLICK§r to trade with this villager."));
+        tooltip.add(Text.of(""));
+
         var trades = villagerEntity.getOffers();
+        if(trades.isEmpty())
+            return;
+
+        tooltip.add(Text.of("§aTrades:§a"));
+
         for (TradeOffer trade : trades) {
             ItemStack firstBuyItemStack = trade.getOriginalFirstBuyItem();
             ItemStack secondBuyItemStack = trade.getSecondBuyItem();
@@ -166,6 +178,7 @@ public class VillagerBook extends Item {
         if(villagerEntity.getVillagerData().getProfession() == VillagerProfession.NONE)
         {
             world.playSound(null, user.getBlockPos(), net.minecraft.sound.SoundEvents.ENTITY_VILLAGER_NO, net.minecraft.sound.SoundCategory.NEUTRAL, 1f, 1f);
+            user.getItemCooldownManager().set(this, 20);
             return super.use(world, user, hand);
         }
 
@@ -177,7 +190,7 @@ public class VillagerBook extends Item {
 
         world.playSound(null, user.getBlockPos(), SoundEvents.ENTITY_VILLAGER_TRADE, SoundCategory.AMBIENT, 1f, 1.5f);
         user.interact(villagerEntity, hand);
-
+        user.getItemCooldownManager().set(this, 20);
         return super.use(world, user, hand);
     }
 

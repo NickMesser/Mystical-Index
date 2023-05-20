@@ -8,6 +8,7 @@ import net.messer.mystical_index.block.entity.ModBlockEntities;
 import net.messer.mystical_index.events.PlayerKillEvent;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.recipe.ModRecipe;
+import net.messer.mystical_index.screen.ModScreenHandlers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -27,5 +28,7 @@ public class MysticalIndex implements ModInitializer {
 
 		ModBlockEntities.registerBlockEntities();
 		ModRecipe.registerRecipes();
+
+		ModScreenHandlers.registerScreenHandlers();
 	}
 }

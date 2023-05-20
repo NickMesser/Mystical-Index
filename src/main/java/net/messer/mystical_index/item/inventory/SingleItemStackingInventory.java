@@ -116,7 +116,7 @@ public class SingleItemStackingInventory implements Inventory {
         if(nbtData == null)
             nbtData = new NbtCompound();
 
-        nbtData.putString("storedItem", this.currentlyStoredItem.toString());
+        nbtData.putString("storedItem", Registries.ITEM.getId(this.currentlyStoredItem).toString());
         Inventories.writeNbt(nbtData, storedItems);
     }
 

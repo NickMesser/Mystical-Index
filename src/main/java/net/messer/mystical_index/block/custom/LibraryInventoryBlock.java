@@ -60,7 +60,6 @@ public class LibraryInventoryBlock extends BlockWithEntity implements BlockEntit
             return ActionResult.SUCCESS;
         } else {
             NamedScreenHandlerFactory screenHandlerFactory = state.createScreenHandlerFactory(world, pos);
-
             if (screenHandlerFactory != null){
                 player.openHandledScreen(screenHandlerFactory);
             }

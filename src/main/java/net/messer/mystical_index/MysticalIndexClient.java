@@ -6,12 +6,12 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.screenhandler.v1.ScreenRegistry;
 import net.messer.mystical_index.screen.LibraryInventoryScreen;
 import net.messer.mystical_index.screen.ModScreenHandlers;
+import net.minecraft.client.gui.screen.ingame.HandledScreens;
 
 @Environment(EnvType.CLIENT)
 public class MysticalIndexClient implements ClientModInitializer {
-
     @Override
     public void onInitializeClient() {
-        ScreenRegistry.register(ModScreenHandlers.LIBRARY_INVENTORY_SCREEN_HANDLER, LibraryInventoryScreen::new);
+        HandledScreens.register(ModScreenHandlers.LIBRARY_INVENTORY_SCREEN_HANDLER, LibraryInventoryScreen::new);
     }
 }

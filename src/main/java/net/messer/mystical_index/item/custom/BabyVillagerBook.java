@@ -42,6 +42,7 @@ public class BabyVillagerBook extends Item {
     @Override
     public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
         world.playSound(null, user.getBlockPos(), SoundEvents.ENTITY_VILLAGER_YES, SoundCategory.AMBIENT, 1f, 1.5f);
+        user.getItemCooldownManager().set(this, 40);
         return super.use(world, user, hand);
     }
 
@@ -51,9 +52,7 @@ public class BabyVillagerBook extends Item {
             return;
 
         NbtCompound nbt = stack.getNbt();
-        VillagerEntity villagerEntity = (VillagerEntity) EntityType.loadEntityWithPassengers(nbt.getCompound("Entity"), world, (entityx) -> {entityx.refreshPositionAndAngles(entity.getX(), entity.getY(), entity.getZ(), entityx.getYaw(), entityx.getPitch());
-            return entityx;
-        });
+        VillagerEntity villagerEntity = (VillagerEntity) EntityType.loadEntityWithPassengers(nbt.getCompound("Entity"), world, (entityx) -> entityx);
 
         if(villagerEntity == null)
             return;
@@ -92,23 +91,18 @@ public class BabyVillagerBook extends Item {
         NbtCompound nbt = stack.getNbt();
 
         if(nbt == null) {
-            tooltip.add(Text.of("Craft to create a baby villager!"));
+            tooltip.add(Text.of("§aCraft to create a baby villager!"));
             return;
         }
 
-        VillagerEntity villagerEntity = (VillagerEntity) EntityType.loadEntityWithPassengers(nbt.getCompound("Entity"), world, (entityx) -> {
-            return entityx;
-        });
+        VillagerEntity villagerEntity = (VillagerEntity) EntityType.loadEntityWithPassengers(nbt.getCompound("Entity"), world, (entityx) -> entityx);
         if (villagerEntity == null)
             return;
-
-        PassiveEntityAccessor passiveEntityAccessor = (PassiveEntityAccessor) villagerEntity;
-
 
         var timeUntilAdult = nbt.getLong("timeUntilAdult") - villagerEntity.getEntityWorld().getTime();
         var secondsUntilAdult = timeUntilAdult / 20;
         var minutesUntilAdult = secondsUntilAdult / 60;
-        tooltip.add(Text.of("Time until adult: " + minutesUntilAdult + " minutes" + " " + secondsUntilAdult % 60 + " seconds"));
+        tooltip.add(Text.of("§6Time until adult:§6 " + minutesUntilAdult + " minutes" + " " + secondsUntilAdult % 60 + " seconds"));
         villagerEntity.remove(Entity.RemovalReason.DISCARDED);
         super.appendTooltip(stack, world, tooltip, context);
     }

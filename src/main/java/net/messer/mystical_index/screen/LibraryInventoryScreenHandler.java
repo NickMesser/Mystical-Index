@@ -8,6 +8,8 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.screen.ArrayPropertyDelegate;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.world.World;
@@ -40,6 +42,8 @@ public class LibraryInventoryScreenHandler extends ScreenHandler {
             this.addSlot(new Slot(playerInventory, x, 8 + x * 18, 109));
         }
     }
+
+
 
     @Override
     public ItemStack quickMove(PlayerEntity player, int slot) {
