@@ -9,6 +9,7 @@ import com.google.gson.JsonSyntaxException;
 import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.item.custom.VillagerBook;
 import net.minecraft.inventory.CraftingInventory;
+import net.minecraft.inventory.RecipeInputInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
@@ -53,8 +54,7 @@ public class BabyVillagerRecipe extends ShapedRecipe {
     }
 
     @Override
-    public DefaultedList<ItemStack> getRemainder(CraftingInventory inventory) {
-        MysticalIndex.LOGGER.info("getRemainder");
+    public DefaultedList<ItemStack> getRemainder(RecipeInputInventory inventory) {
         var itemList = DefaultedList.ofSize(9, ItemStack.EMPTY);
         for(int i = 0; i < inventory.size(); ++i) {
             ItemStack itemStack = inventory.getStack(i);
@@ -66,9 +66,8 @@ public class BabyVillagerRecipe extends ShapedRecipe {
     }
 
     @Override
-    public ItemStack craft(CraftingInventory craftingInventory, DynamicRegistryManager dynamicRegistryManager) {
-        MysticalIndex.LOGGER.info("craft");
-        return super.craft(craftingInventory, dynamicRegistryManager);
+    public ItemStack craft(RecipeInputInventory recipeInputInventory, DynamicRegistryManager dynamicRegistryManager) {
+        return super.craft(recipeInputInventory, dynamicRegistryManager);
     }
 
     static Map<String, Ingredient> readSymbols(JsonObject json) {

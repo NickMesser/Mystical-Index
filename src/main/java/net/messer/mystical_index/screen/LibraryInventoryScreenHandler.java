@@ -26,7 +26,7 @@ public class LibraryInventoryScreenHandler extends ScreenHandler {
         super(ModScreenHandlers.LIBRARY_INVENTORY_SCREEN_HANDLER, syncId);
         checkSize(inventory,5);
         this.inventory = inventory;
-        this.world = playerInventory.player.world;
+        this.world = playerInventory.player.getWorld();
         inventory.onOpen(playerInventory.player);
 
         for (int i = 0; i < 5; i++) {

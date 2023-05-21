@@ -5,7 +5,6 @@ import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.block.custom.LibraryInventoryBlock;
 import net.minecraft.block.Block;
-import net.minecraft.block.Material;
 import net.minecraft.item.BlockItem;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
@@ -14,7 +13,7 @@ import net.minecraft.util.Identifier;
 public class ModBlocks {
 
     public static final Block LIBRARY = registerBlock("library",
-            new LibraryInventoryBlock(FabricBlockSettings.of(Material.WOOD).strength(1.5f)));
+            new LibraryInventoryBlock(FabricBlockSettings.create().strength(1.5f)));
 
     private static Block registerBlock(String name, Block block){
         registerBlockItem(name, block);

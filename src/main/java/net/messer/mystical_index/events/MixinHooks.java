@@ -24,7 +24,7 @@ public class MixinHooks {
     public static boolean interceptPickup(PlayerInventory playerInventory, ItemStack itemPickedUp) {
         var player = playerInventory.player;
 
-        if(ModConfig.StorageBookBlockBlacklist.contains(Registries.ITEM.getId(itemPickedUp.getItem())) || player.world.isClient()){
+        if(ModConfig.StorageBookBlockBlacklist.contains(Registries.ITEM.getId(itemPickedUp.getItem())) || player.getWorld().isClient()){
             return false;
         }
 
