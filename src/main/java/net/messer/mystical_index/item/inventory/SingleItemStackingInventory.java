@@ -114,7 +114,7 @@ public class SingleItemStackingInventory implements Inventory {
     public void writeNbt(){
         NbtCompound nbtData = stack.getNbt();
         if(nbtData == null)
-            nbtData = new NbtCompound();
+            nbtData = stack.getOrCreateNbt();
 
         nbtData.putString("storedItem", Registries.ITEM.getId(this.currentlyStoredItem).toString());
         Inventories.writeNbt(nbtData, storedItems);

@@ -17,6 +17,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.loot.LootTable;
 import net.minecraft.loot.context.LootContext;
+import net.minecraft.loot.context.LootContextParameterSet;
 import net.minecraft.loot.context.LootContextParameters;
 import net.minecraft.loot.context.LootContextTypes;
 import net.minecraft.loot.entry.LootPoolEntry;
@@ -58,7 +59,7 @@ public class HusbandryBook extends BaseStorageBook {
 
     @Override
     public ActionResult useOnEntity(ItemStack stack, PlayerEntity user, LivingEntity entity, Hand hand) {
-        if(user.world.isClient)
+        if(user.getWorld().isClient)
             return super.useOnEntity(stack, user, entity, hand);
 
         if(!(entity instanceof PassiveEntity))
@@ -162,19 +163,17 @@ public class HusbandryBook extends BaseStorageBook {
 
             var source = player.getDamageSources().playerAttack(player);
 
-            LootContext context = new LootContext.Builder((ServerWorld) world)
-                    .random(world.random)
-                    .luck(10000f)
-                    .parameter(LootContextParameters.THIS_ENTITY, storedEntity)
-                    .parameter(LootContextParameters.ORIGIN, player.getPos())
-                    .parameter(LootContextParameters.DAMAGE_SOURCE, source)
-                    .optionalParameter(LootContextParameters.KILLER_ENTITY, player)
-                    .parameter(LootContextParameters.DIRECT_KILLER_ENTITY, player)
-                    .parameter(LootContextParameters.LAST_DAMAGE_PLAYER, player)
+            LootContextParameterSet context = new LootContextParameterSet.Builder((ServerWorld) world)
+                    .add(LootContextParameters.THIS_ENTITY, storedEntity)
+                    .add(LootContextParameters.ORIGIN, player.getPos())
+                    .add(LootContextParameters.DAMAGE_SOURCE, source)
+                    .add(LootContextParameters.KILLER_ENTITY, player)
+                    .add(LootContextParameters.DIRECT_KILLER_ENTITY, player)
+                    .add(LootContextParameters.LAST_DAMAGE_PLAYER, player)
                     .build(LootContextTypes.ENTITY);
 
 
-            LootTable lootTable = world.getServer().getLootManager().getTable(storedEntityLootTable);
+            LootTable lootTable = world.getServer().getLootManager().getLootTable(storedEntityLootTable);
             var loot = lootTable.generateLoot(context);
 
             if (storedEntity instanceof SheepEntity) // Dumb hack because sheep dont have wool in a drop table. TODO: Fix this

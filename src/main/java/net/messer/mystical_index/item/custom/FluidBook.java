@@ -116,7 +116,6 @@ public class FluidBook extends Item {
         } else {
             BlockState blockState = world.getBlockState(pos);
             Block block = blockState.getBlock();
-            Material material = blockState.getMaterial();
             boolean bl = blockState.canBucketPlace(fluidStorage.variant.getFluid());
             boolean bl2 = blockState.isAir() || bl || block instanceof FluidFillable && ((FluidFillable)block).canFillWithFluid(world, pos, blockState, fluidStorage.variant.getFluid());
             if (!bl2) {
@@ -137,7 +136,7 @@ public class FluidBook extends Item {
                 this.playEmptyingSound(player, world, pos, fluidStorage);
                 return true;
             } else {
-                if (!world.isClient && bl && !material.isLiquid()) {
+                if (!world.isClient && bl && !blockState.isLiquid()) {
                     world.breakBlock(pos, true);
                 }
 

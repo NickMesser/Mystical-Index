@@ -13,10 +13,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.loot.LootTable;
-import net.minecraft.loot.context.LootContext;
-import net.minecraft.loot.context.LootContextParameters;
-import net.minecraft.loot.context.LootContextType;
-import net.minecraft.loot.context.LootContextTypes;
+import net.minecraft.loot.context.*;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
@@ -55,7 +52,7 @@ public class HostileBook extends BaseStorageBook {
 
     @Override
     public ActionResult useOnEntity(ItemStack stack, PlayerEntity user, LivingEntity entity, Hand hand) {
-        if(user.world.isClient)
+        if(user.getWorld().isClient)
             return super.useOnEntity(stack, user, entity, hand);
 
         if((entity instanceof PassiveEntity))
@@ -158,19 +155,17 @@ public class HostileBook extends BaseStorageBook {
 
             var source = player.getDamageSources().playerAttack(player);
 
-            LootContext context = new LootContext.Builder((ServerWorld) world)
-                    .random(world.random)
-                    .luck(10000f)
-                    .parameter(LootContextParameters.THIS_ENTITY, storedEntity)
-                    .parameter(LootContextParameters.ORIGIN, player.getPos())
-                    .parameter(LootContextParameters.DAMAGE_SOURCE, source)
-                    .optionalParameter(LootContextParameters.KILLER_ENTITY, player)
-                    .parameter(LootContextParameters.DIRECT_KILLER_ENTITY, player)
-                    .parameter(LootContextParameters.LAST_DAMAGE_PLAYER, player)
+            LootContextParameterSet context = new LootContextParameterSet.Builder((ServerWorld) world)
+                    .add(LootContextParameters.THIS_ENTITY, storedEntity)
+                    .add(LootContextParameters.ORIGIN, player.getPos())
+                    .add(LootContextParameters.DAMAGE_SOURCE, source)
+                    .add(LootContextParameters.KILLER_ENTITY, player)
+                    .add(LootContextParameters.DIRECT_KILLER_ENTITY, player)
+                    .add(LootContextParameters.LAST_DAMAGE_PLAYER, player)
                     .build(LootContextTypes.ENTITY);
 
 
-            LootTable lootTable = world.getServer().getLootManager().getTable(storedEntityLootTable);
+            LootTable lootTable = world.getServer().getLootManager().getLootTable(storedEntityLootTable);
             var loot = lootTable.generateLoot(context);
             for(ItemStack itemStack : loot) {
                 if (!inventory.tryAddStack(itemStack, true))
