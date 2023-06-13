@@ -22,9 +22,6 @@ public class ModBlockEntities {
                         FabricBlockEntityTypeBuilder.create((pos, state) -> new LibraryBlockEntity(pos, state),
                                 ModBlocks.LIBRARY).build(null));
 
-        ItemStorage.SIDED.registerForBlockEntity((block, direction) -> switch (direction){
-            default -> block.combinedStorage;
-        }, LIBRARY_BLOCK_ENTITY);
-
+        ItemStorage.SIDED.registerForBlockEntity((block, direction) -> block.combinedStorage, LIBRARY_BLOCK_ENTITY);
     }
 }

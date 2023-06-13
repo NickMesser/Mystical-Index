@@ -4,7 +4,10 @@ import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.CombinedStorage;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import net.fabricmc.fabric.impl.transfer.item.ItemVariantImpl;
 import net.messer.mystical_index.item.custom.BaseStorageBook;
+import net.messer.mystical_index.item.inventory.LibraryCombinedStorage;
 import net.messer.mystical_index.item.inventory.SimpleBookInventory;
 import net.messer.mystical_index.screen.LibraryInventoryScreenHandler;
 import net.minecraft.block.BlockState;
@@ -13,6 +16,7 @@ import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventories;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -30,7 +34,7 @@ import java.util.List;
 public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandlerFactory {
 
     List<InventoryStorage> combinedContents = new ArrayList<>();
-    Storage<ItemVariant> combinedStorage = new CombinedStorage<>(combinedContents);
+    Storage<ItemVariant> combinedStorage = new LibraryCombinedStorage(combinedContents);
 
     public SimpleInventory storedBooks = new SimpleInventory(5) {
         @Override
@@ -43,12 +47,26 @@ public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandle
                 }
                 SimpleBookInventory bookInventory = new SimpleBookInventory(itemStack);
                 combinedContents.add(InventoryStorage.of(bookInventory.contents, null));
-                combinedStorage = new CombinedStorage<>(combinedContents);
+                combinedStorage = new LibraryCombinedStorage(combinedContents){
+                    @Override
+                    public long insert(Object resource, long maxAmount, TransactionContext transaction) {
+                        var stack = ((ItemVariantImpl) resource).toStack((int)maxAmount);
+                        var stackCopy = stack.copy();
+                        for(var book: storedBooks.stacks){
+                            if(book.getItem() instanceof BaseStorageBook storageBook){
+                                var storage = storageBook.getInventory(book);
+                                if(storage.tryAddStack(stack, false)){
+                                    return stackCopy.getCount();
+                                }
+                            }
+                        }
+                        return 0;
+                    }
+                };
                 LibraryBlockEntity.this.markDirty();
             }
         }
     };
-    public final InventoryStorage bookWrapper = InventoryStorage.of(storedBooks, null);
     @Override
     public void readNbt(NbtCompound nbt) {
         super.readNbt(nbt);

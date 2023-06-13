@@ -1,10 +1,12 @@
 package net.messer.mystical_index.item.inventory;
 
 import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
+import net.messer.config.ModConfig;
 import net.messer.mystical_index.item.custom.BaseStorageBook;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.util.collection.DefaultedList;
 
 public class SimpleBookInventory {
     ItemStack bookStack;
@@ -14,13 +16,18 @@ public class SimpleBookInventory {
         book.addStack(bookStack);
     }
 
-    public SimpleInventory book = new SimpleInventory(1){
+    public void clearInventory(SimpleInventory inventory){
+        for (int i = 0; i < inventory.size(); i++) {
+            inventory.setStack(i, ItemStack.EMPTY);
+        }
+    }
 
+    public SimpleInventory book = new SimpleInventory(1){
         @Override
         public void markDirty() {
             if(bookStack.getItem() instanceof BaseStorageBook storageBook){
                 var content = storageBook.getInventory(bookStack);
-                contents.clear();
+                clearInventory(contents);
                 for(int i = 0; i < content.size(); i++){
                     contents.setStack(i, content.getStack(i));
                 }
@@ -29,13 +36,15 @@ public class SimpleBookInventory {
         }
     };
 
-    public SimpleInventory contents = new SimpleInventory(64){
+    public SimpleInventory contents = new SimpleInventory(ModConfig.StorageBookMaxStacks * 5){
         @Override
         public void markDirty() {
             if(bookStack.getItem() instanceof BaseStorageBook storageBook){
                 var content = storageBook.getInventory(bookStack);
                 content.clear();
                 for (int i = 0; i < contents.size(); i++) {
+                    if (i >= content.size())
+                        break;
                     var stack = contents.getStack(i);
                     if(stack.isEmpty() || stack.getItem() == Items.AIR)
                         continue;
