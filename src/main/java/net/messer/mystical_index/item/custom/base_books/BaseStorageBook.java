@@ -1,4 +1,4 @@
-package net.messer.mystical_index.item.custom;
+package net.messer.mystical_index.item.custom.base_books;
 
 import net.messer.mystical_index.block.entity.LibraryBlockEntity;
 import net.messer.mystical_index.item.inventory.SingleItemStackingInventory;

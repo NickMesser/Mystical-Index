@@ -2,11 +2,10 @@ package net.messer.mystical_index.item.inventory;
 
 import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
 import net.messer.config.ModConfig;
-import net.messer.mystical_index.item.custom.BaseStorageBook;
+import net.messer.mystical_index.item.custom.base_books.BaseStorageBook;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.util.collection.DefaultedList;
 
 public class SimpleBookInventory {
     ItemStack bookStack;

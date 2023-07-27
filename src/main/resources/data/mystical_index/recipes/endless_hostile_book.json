@@ -1,0 +1,19 @@
+{
+  "type": "mystical_index:book_shaped",
+  "pattern": [
+    "   ",
+    "#E#",
+    "   "
+  ],
+  "key": {
+    "#": {
+      "item": "minecraft:nether_star"
+    },
+    "E": {
+      "item": "mystical_index:hostile_book"
+    }
+  },
+  "result": {
+    "item": "mystical_index:hostile_book"
+  }
+}

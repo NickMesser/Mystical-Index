@@ -1,13 +1,14 @@
 package net.messer.mystical_index.item.custom;
 
 import net.messer.config.ModConfig;
+import net.messer.mystical_index.item.custom.base_books.BaseGeneratingBook;
+import net.messer.mystical_index.item.custom.base_books.BaseStorageBook;
 import net.messer.mystical_index.item.inventory.SingleItemStackingInventory;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -28,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class HostileBook extends BaseStorageBook {
+public class HostileBook extends BaseGeneratingBook {
 
     private static final String STORED_ENTITY_NAME_KEY = "storedEntityName";
     private static final String STORED_ENTITY_LOOT_TABLE_KEY = "storedEntityLootTable";
@@ -188,6 +189,14 @@ public class HostileBook extends BaseStorageBook {
         if(!stack.hasNbt())
             return;
 
+        var compound = stack.getNbt();
+        if (compound == null)
+            return;
+
+        if(compound.contains("endless") && !compound.contains(STORED_ENTITY_NAME_KEY)){
+            tooltip.add(Text.literal("§a+Endless"));
+            return;
+        }
 
 
         SingleItemStackingInventory inventory = new SingleItemStackingInventory(stack, INVENTORY_SIZE);
@@ -200,10 +209,6 @@ public class HostileBook extends BaseStorageBook {
                 itemNames.add(itemName);
             }
         }
-
-        var compound = stack.getNbt();
-        if (compound == null)
-            return;
 
         var storedEntityName = compound.getString(STORED_ENTITY_NAME_KEY);
         var numberOfKills = compound.getInt(NUMBER_OF_KILLS_KEY);
@@ -222,12 +227,17 @@ public class HostileBook extends BaseStorageBook {
             tooltip.add(Text.literal("§a"+currentAmount + "x " + "§f" + itemName));
         }
 
+        if(compound.contains("endless") && compound.contains(STORED_ENTITY_NAME_KEY))
+            tooltip.add(Text.literal("§aEndless"));
+
         if(Screen.hasShiftDown()){
             tooltip.add(Text.translatable("tooltip.mystical_index.hostile_book_shift0"));
             tooltip.add(Text.translatable("tooltip.mystical_index.hostile_book_shift1"));
         } else {
             tooltip.add(Text.translatable("tooltip.mystical_index.hostile_book"));
         }
+
+
 
         super.appendTooltip(stack, world, tooltip, context);
     }
