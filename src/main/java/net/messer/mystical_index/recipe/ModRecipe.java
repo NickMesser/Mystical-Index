@@ -10,9 +10,10 @@ import net.minecraft.util.Identifier;
 
 public class ModRecipe {
 
+    public static RecipeSerializer<ShapedBookRecipe> BOOK_SHAPED;
+
     public static void registerRecipes() {
         MysticalIndex.LOGGER.info("Registering recipes");
-        Registry.register(Registries.RECIPE_SERIALIZER, new Identifier(MysticalIndex.MOD_ID, BabyVillagerRecipe.BabyVillagerRecipeSerializer.ID), BabyVillagerRecipe.BabyVillagerRecipeSerializer.INSTANCE);
-        Registry.register(Registries.RECIPE_TYPE, new Identifier(MysticalIndex.MOD_ID, BabyVillagerRecipe.Type.ID), BabyVillagerRecipe.Type.INSTANCE);
+        BOOK_SHAPED = Registry.register(Registries.RECIPE_SERIALIZER, new Identifier(MysticalIndex.MOD_ID, "book_shaped"), new ShapedBookRecipe.Serializer());
     }
 }

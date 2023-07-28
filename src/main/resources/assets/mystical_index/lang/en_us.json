@@ -28,5 +28,6 @@
   "item.mystical_index.villager_book": "Book of Villager",
   "tooltip.mystical_index.villager_book": "Hold §eSHIFT§r for more info.",
   "item.mystical_index.empty_villager_book": "Empty Villager Book",
-  "item.mystical_index.baby_villager_book" : "Baby Villager Book"
+  "item.mystical_index.baby_villager_book" : "Baby Villager Book",
+  "item.mystical_index.farming_book": "Book of Farming"
 }

@@ -1,6 +1,7 @@
 package net.messer.mystical_index.item.custom;
 
 import net.messer.config.ModConfig;
+import net.messer.mystical_index.item.custom.base_books.BaseStorageBook;
 import net.messer.mystical_index.item.inventory.SingleItemStackingInventory;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.item.TooltipContext;

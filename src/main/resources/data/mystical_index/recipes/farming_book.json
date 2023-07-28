@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "   ",
+    "HFH",
+    " D "
+  ],
+  "key":{
+    "H": {
+      "item": "minecraft:diamond_hoe"
+    },
+    "F": {
+      "item": "mystical_index:storage_book"
+    },
+    "D": {
+      "item": "minecraft:dirt"
+    }
+  },
+  "result": {
+    "item": "mystical_index:farming_book"
+  }
+}

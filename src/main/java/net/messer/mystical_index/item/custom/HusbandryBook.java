@@ -1,32 +1,31 @@
 package net.messer.mystical_index.item.custom;
 
+import net.fabricmc.fabric.api.entity.FakePlayer;
 import net.messer.config.ModConfig;
+import net.messer.mystical_index.block.entity.LibraryBlockEntity;
+import net.messer.mystical_index.item.custom.base_books.BaseGeneratingBook;
 import net.messer.mystical_index.item.inventory.SingleItemStackingInventory;
+import net.messer.util.MysticalUtil;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.item.TooltipContext;
-import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.SpawnReason;
-import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.passive.SheepEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.loot.LootTable;
-import net.minecraft.loot.context.LootContext;
 import net.minecraft.loot.context.LootContextParameterSet;
 import net.minecraft.loot.context.LootContextParameters;
 import net.minecraft.loot.context.LootContextTypes;
-import net.minecraft.loot.entry.LootPoolEntry;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.DyeColor;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
@@ -36,7 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class HusbandryBook extends BaseStorageBook {
+public class HusbandryBook extends BaseGeneratingBook {
 
     private static final String STORED_ENTITY_NAME_KEY = "storedEntityName";
     private static final String STORED_ENTITY_LOOT_TABLE_KEY = "storedEntityLootTable";
@@ -45,7 +44,7 @@ public class HusbandryBook extends BaseStorageBook {
 
     private static final int INVENTORY_SIZE = 6;
 
-    private int maxCooldown = ModConfig.HusbandryBookCooldown * 20;
+    private final int maxCooldown = ModConfig.HusbandryBookCooldown * 20;
 
 
     public HusbandryBook(Settings settings) {
@@ -102,6 +101,7 @@ public class HusbandryBook extends BaseStorageBook {
 
         var compound = stack.getNbt();
 
+        assert compound != null;
         var numberOfKills = compound.getInt(NUMBER_OF_KILLS_KEY);
 
         return (numberOfKills > 0);
@@ -112,6 +112,7 @@ public class HusbandryBook extends BaseStorageBook {
             return;
 
         var compound = stack.getNbt();
+        assert compound != null;
         var storedEntityName = compound.getString(STORED_ENTITY_NAME_KEY);
         if(!storedEntityName.equals(entity.getName().getString()))
             return;
@@ -125,13 +126,28 @@ public class HusbandryBook extends BaseStorageBook {
     }
 
     @Override
-    public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
+    public void customBookTick(ItemStack stack, World world, BlockEntity be) {
         if (world.isClient)
             return;
 
-        PlayerEntity player = (PlayerEntity) entity;
+        if(!stack.getNbt().contains("indexed"))
+            return;
 
-        if(!(entity instanceof PlayerEntity))
+        if(!stack.hasNbt())
+            return;
+
+        if(!(be instanceof LibraryBlockEntity))
+            return;
+
+        tryGenerateResources(stack, world);
+    }
+
+    @Override
+    public void customBookTick(ItemStack stack, World world, Entity entity) {
+        if (world.isClient)
+            return;
+
+        if(!(entity instanceof PlayerEntity player))
             return;
 
         if(player.isCreative())
@@ -140,9 +156,13 @@ public class HusbandryBook extends BaseStorageBook {
         if(!stack.hasNbt())
             return;
 
+        tryGenerateResources(stack, world);
+    }
+
+    public void tryGenerateResources(ItemStack stack, World world){
         NbtCompound compound = stack.getNbt();
 
-        var storedEntityName = compound.getString(STORED_ENTITY_NAME_KEY);
+        assert compound != null;
         var storedEntityLootTable = new Identifier(compound.getString(STORED_ENTITY_LOOT_TABLE_KEY));
         var numberOfKills = compound.getInt(NUMBER_OF_KILLS_KEY);
         var storedEntityId = compound.getString(STORED_ENTITY_ID_KEY);
@@ -161,20 +181,8 @@ public class HusbandryBook extends BaseStorageBook {
             var inventory = new SingleItemStackingInventory(stack, INVENTORY_SIZE);
             Entity storedEntity = EntityType.get(storedEntityId).get().create(world);
 
-            var source = player.getDamageSources().playerAttack(player);
-
-            LootContextParameterSet context = new LootContextParameterSet.Builder((ServerWorld) world)
-                    .add(LootContextParameters.THIS_ENTITY, storedEntity)
-                    .add(LootContextParameters.ORIGIN, player.getPos())
-                    .add(LootContextParameters.DAMAGE_SOURCE, source)
-                    .add(LootContextParameters.KILLER_ENTITY, player)
-                    .add(LootContextParameters.DIRECT_KILLER_ENTITY, player)
-                    .add(LootContextParameters.LAST_DAMAGE_PLAYER, player)
-                    .build(LootContextTypes.ENTITY);
-
-
-            LootTable lootTable = world.getServer().getLootManager().getLootTable(storedEntityLootTable);
-            var loot = lootTable.generateLoot(context);
+            var player = FakePlayer.get((ServerWorld) world);
+            var loot = MysticalUtil.generateEntityLoot(player, storedEntity, storedEntityLootTable);
 
             if (storedEntity instanceof SheepEntity) // Dumb hack because sheep dont have wool in a drop table. TODO: Fix this
                 loot.add(new ItemStack(Items.WHITE_WOOL, 1 + world.random.nextInt(2)));
@@ -184,6 +192,11 @@ public class HusbandryBook extends BaseStorageBook {
                     itemStack.setCount(0);
             }
         }
+    }
+
+    @Override
+    public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
+        customBookTick(stack, world, entity);
     }
 
     public void updateUseTime(ItemStack stack, long time){
@@ -203,15 +216,13 @@ public class HusbandryBook extends BaseStorageBook {
         List<String> itemNames = new ArrayList<>();
         for (ItemStack inventoryStack : inventory.storedItems) {
             var itemName = inventoryStack.getItem().getName().getString();
-            if(itemNames.contains(itemName) || Objects.equals(itemName, Items.AIR.getName().getString()))
-                continue;
+            if(itemNames.contains(itemName) || Objects.equals(itemName, Items.AIR.getName().getString())) {
+            }
             else{
                 itemNames.add(itemName);
             }
         }
-
-
-
+        
         var compound = stack.getNbt();
         if (compound == null)
             return;

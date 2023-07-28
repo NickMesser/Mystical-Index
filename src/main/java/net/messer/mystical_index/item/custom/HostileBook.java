@@ -1,13 +1,19 @@
 package net.messer.mystical_index.item.custom;
 
+import net.fabricmc.fabric.api.entity.FakePlayer;
 import net.messer.config.ModConfig;
+import net.messer.mystical_index.block.custom.LibraryInventoryBlock;
+import net.messer.mystical_index.block.entity.LibraryBlockEntity;
+import net.messer.mystical_index.item.custom.base_books.BaseGeneratingBook;
+import net.messer.mystical_index.item.custom.base_books.BaseStorageBook;
 import net.messer.mystical_index.item.inventory.SingleItemStackingInventory;
+import net.messer.util.MysticalUtil;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -28,7 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class HostileBook extends BaseStorageBook {
+public class HostileBook extends BaseGeneratingBook {
 
     private static final String STORED_ENTITY_NAME_KEY = "storedEntityName";
     private static final String STORED_ENTITY_LOOT_TABLE_KEY = "storedEntityLootTable";
@@ -119,20 +125,10 @@ public class HostileBook extends BaseStorageBook {
 
     @Override
     public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
-        if (world.isClient)
-            return;
+        customBookTick(stack, world, entity);
+    }
 
-        PlayerEntity player = (PlayerEntity) entity;
-
-        if(!(entity instanceof PlayerEntity))
-            return;
-
-        if(player.isCreative())
-            return;
-
-        if(!stack.hasNbt())
-            return;
-
+    public void tryGenerateResources(ItemStack stack, World world){
         NbtCompound compound = stack.getNbt();
 
         var storedEntityLootTable = new Identifier(compound.getString(STORED_ENTITY_LOOT_TABLE_KEY));
@@ -150,29 +146,51 @@ public class HostileBook extends BaseStorageBook {
 
         if(difference > (maxCooldown - (numberOfKills * 20L))){
             updateUseTime(stack, currentTime);
+
             var inventory = new SingleItemStackingInventory(stack, INVENTORY_SIZE);
             Entity storedEntity = EntityType.get(storedEntityId).get().create(world);
+            FakePlayer player = FakePlayer.get((ServerWorld) world);
 
-            var source = player.getDamageSources().playerAttack(player);
-
-            LootContextParameterSet context = new LootContextParameterSet.Builder((ServerWorld) world)
-                    .add(LootContextParameters.THIS_ENTITY, storedEntity)
-                    .add(LootContextParameters.ORIGIN, player.getPos())
-                    .add(LootContextParameters.DAMAGE_SOURCE, source)
-                    .add(LootContextParameters.KILLER_ENTITY, player)
-                    .add(LootContextParameters.DIRECT_KILLER_ENTITY, player)
-                    .add(LootContextParameters.LAST_DAMAGE_PLAYER, player)
-                    .build(LootContextTypes.ENTITY);
-
-
-            LootTable lootTable = world.getServer().getLootManager().getLootTable(storedEntityLootTable);
-            var loot = lootTable.generateLoot(context);
+            List<ItemStack> loot = MysticalUtil.generateEntityLoot(player, storedEntity, storedEntityLootTable);
             for(ItemStack itemStack : loot) {
                 if (!inventory.tryAddStack(itemStack, true))
                     itemStack.setCount(0);
             }
         }
+    }
 
+    @Override
+    public void customBookTick(ItemStack stack, World world, BlockEntity be) {
+        if (world.isClient)
+            return;
+
+        if(!stack.getNbt().contains("indexed"))
+            return;
+
+        if(!stack.hasNbt())
+            return;
+
+        if(!(be instanceof LibraryBlockEntity))
+            return;
+
+        tryGenerateResources(stack, world);
+    }
+
+    @Override
+    public void customBookTick(ItemStack stack, World world, Entity entity) {
+        if (world.isClient)
+            return;
+
+        if(!(entity instanceof PlayerEntity player))
+            return;
+
+        if(player.isCreative())
+            return;
+
+        if(!stack.hasNbt())
+            return;
+
+        tryGenerateResources(stack, world);
     }
 
     public void updateUseTime(ItemStack stack, long time){
@@ -188,7 +206,14 @@ public class HostileBook extends BaseStorageBook {
         if(!stack.hasNbt())
             return;
 
+        var compound = stack.getNbt();
+        if (compound == null)
+            return;
 
+        if(compound.contains("indexed") && !compound.contains(STORED_ENTITY_NAME_KEY)){
+            tooltip.add(Text.literal("§a+Indexed"));
+            return;
+        }
 
         SingleItemStackingInventory inventory = new SingleItemStackingInventory(stack, INVENTORY_SIZE);
         List<String> itemNames = new ArrayList<>();
@@ -201,16 +226,24 @@ public class HostileBook extends BaseStorageBook {
             }
         }
 
-        var compound = stack.getNbt();
-        if (compound == null)
-            return;
-
         var storedEntityName = compound.getString(STORED_ENTITY_NAME_KEY);
         var numberOfKills = compound.getInt(NUMBER_OF_KILLS_KEY);
 
-        tooltip.add(Text.literal("Cooldown: " + ((maxCooldown - (20 * numberOfKills))/20) + " seconds"));
+        
+        var timeLastUsed = compound.getLong("lastUsedTime");
+        var difference = world.getTime() % 24000 - timeLastUsed;
+        var timeLeft = (difference - (maxCooldown - (numberOfKills * 20L)));
 
-        tooltip.add(Text.literal("§a"+numberOfKills + "x " + "§f" + storedEntityName));
+        if((timeLeft/20) * -1 < 0)
+            timeLeft = 0;
+
+        tooltip.add(Text.literal("Cooldown: " + ((maxCooldown - (20 * numberOfKills))/20) + " seconds"));
+        tooltip.add(Text.literal("Time left: " + ((timeLeft/20) * -1) + " seconds"));
+
+        if(numberOfKills >= ModConfig.HostileBookMaxKills)
+            tooltip.add(Text.literal("§cMax kills reached"));
+        else
+            tooltip.add(Text.literal("§a"+numberOfKills + "x " + "§f" + storedEntityName));
 
         for(String itemName : itemNames){
             var currentAmount = 0;
@@ -221,6 +254,9 @@ public class HostileBook extends BaseStorageBook {
 
             tooltip.add(Text.literal("§a"+currentAmount + "x " + "§f" + itemName));
         }
+
+        if(compound.contains("indexed") && compound.contains(STORED_ENTITY_NAME_KEY))
+            tooltip.add(Text.literal("§aIndexed"));
 
         if(Screen.hasShiftDown()){
             tooltip.add(Text.translatable("tooltip.mystical_index.hostile_book_shift0"));

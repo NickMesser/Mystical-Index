@@ -3,28 +3,24 @@ package net.messer.mystical_index.block.entity;
 import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
-import net.fabricmc.fabric.api.transfer.v1.storage.base.CombinedStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.fabricmc.fabric.impl.transfer.item.ItemVariantImpl;
-import net.messer.mystical_index.item.custom.BaseStorageBook;
+import net.messer.mystical_index.item.custom.base_books.BaseStorageBook;
 import net.messer.mystical_index.item.inventory.LibraryCombinedStorage;
 import net.messer.mystical_index.item.inventory.SimpleBookInventory;
 import net.messer.mystical_index.screen.LibraryInventoryScreenHandler;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventories;
-import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.SimpleInventory;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -93,5 +89,16 @@ public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandle
     @Override
     public ScreenHandler createMenu(int syncId, PlayerInventory inv, PlayerEntity player) {
         return new LibraryInventoryScreenHandler(syncId,inv, storedBooks);
+    }
+
+    public static void tick(World world, BlockPos pos, BlockState state, LibraryBlockEntity be) {
+        var storedBooks = be.storedBooks;
+        for (var book : storedBooks.stacks) {
+            if (book.getItem() instanceof BaseStorageBook storageBook) {
+                storageBook.customBookTick(book, world, be);
+            }
+        }
+        storedBooks.markDirty();
+        return;
     }
 }

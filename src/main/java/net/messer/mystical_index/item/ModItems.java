@@ -18,6 +18,9 @@ public class ModItems {
     public static final Item FLUID_BOOK = registerItem("fluid_book",
             new FluidBook(new FabricItemSettings().maxCount(1)));
 
+    public static final Item FARMING_BOOK = registerItem("farming_book",
+            new FarmingBook(new FabricItemSettings().maxCount(1)));
+
     public static final Item STORAGE_BOOK = registerItem("storage_book",
             new StorageBook(new FabricItemSettings().maxCount(1)));
 
