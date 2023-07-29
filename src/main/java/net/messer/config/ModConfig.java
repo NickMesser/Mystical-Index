@@ -32,6 +32,8 @@ public class ModConfig extends MidnightConfig {
     @Comment public static Comment BookOfFarmingTitle;
     @Entry public static int BookOfFarmingDefaultCooldown = 120;
     @Entry public static int BookOfFarmingMaxStacks = 100;
-    @Entry public static Map<String, Integer> BookOfFarmingCooldowns = new HashMap<>();
+    @Entry public static Map<String, Integer> BookOfFarmingCooldowns = new HashMap<>(){
+        "minecraft:wheat" = 120
+    };
 
 }

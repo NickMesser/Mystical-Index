@@ -222,7 +222,7 @@ public class HusbandryBook extends BaseGeneratingBook {
                 itemNames.add(itemName);
             }
         }
-        
+
         var compound = stack.getNbt();
         if (compound == null)
             return;
