@@ -198,15 +198,6 @@ public class HusbandryBook extends BaseGeneratingBook {
     public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
         customBookTick(stack, world, entity);
     }
-
-    public void updateUseTime(ItemStack stack, long time){
-        NbtCompound compound = stack.getNbt();
-
-        if(compound == null)
-            compound = new NbtCompound();
-
-        compound.putLong("lastUsedTime", time);
-    }
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
         if(!stack.hasNbt())

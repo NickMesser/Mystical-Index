@@ -29,5 +29,8 @@
   "tooltip.mystical_index.villager_book": "Hold §eSHIFT§r for more info.",
   "item.mystical_index.empty_villager_book": "Empty Villager Book",
   "item.mystical_index.baby_villager_book" : "Baby Villager Book",
-  "item.mystical_index.farming_book": "Book of Farming"
+  "item.mystical_index.farming_book": "Book of Farming",
+  "tooltip.mystical_index.farming_book": "Hold §eSHIFT§r for more info.",
+  "tooltip.mystical_index.farming_book_shift0": "§eRIGHT CLICK§r a crop to set this book.",
+  "tooltip.mystical_index.farming_book_shift1": "Crows will grow over time in the book."
 }

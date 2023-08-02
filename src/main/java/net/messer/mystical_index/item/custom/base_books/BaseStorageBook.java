@@ -17,9 +17,7 @@ public class BaseStorageBook extends Item {
     }
 
     public void customBookTick(ItemStack stack, World world, Entity entity){
-        MysticalIndex.LOGGER.info("Entity ticking a book!");
     }
     public void customBookTick(ItemStack stack, World world, BlockEntity be){
-        MysticalIndex.LOGGER.info("BlockEntity ticking a book!");
     }
 }

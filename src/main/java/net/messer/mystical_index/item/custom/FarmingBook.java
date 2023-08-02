@@ -1,5 +1,6 @@
 package net.messer.mystical_index.item.custom;
 
+import net.fabricmc.loader.impl.util.StringUtil;
 import net.messer.config.ModConfig;
 import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.block.entity.LibraryBlockEntity;
@@ -41,15 +42,19 @@ public class FarmingBook extends BaseGeneratingBook {
         if(context.getWorld().isClient)
             return super.useOnBlock(context);
 
-        if(context.getStack().hasNbt()) // check if book has a cropBlock assigned to it
+        var itemStack = context.getStack();
+        var world = context.getWorld();
+        var compound = itemStack.getOrCreateNbt();
+
+        if(compound.contains("cropBlock")) // check if book has a cropBlock assigned to it
             return super.useOnBlock(context);
 
         Block block = context.getWorld().getBlockState(context.getBlockPos()).getBlock();
         if(block instanceof CropBlock cropBlock){
-            addCrop(context.getStack(), cropBlock);
+            addCrop(itemStack, cropBlock);
             var currentTime = context.getWorld().getTime() % 24000;
             updateUseTime(context.getStack(), currentTime);
-            context.getWorld().removeBlock(context.getBlockPos(), false);
+            world.removeBlock(context.getBlockPos(), false);
         }
 
         return super.useOnBlock(context);
@@ -59,6 +64,7 @@ public class FarmingBook extends BaseGeneratingBook {
         NbtCompound compound = stack.getOrCreateNbt();
         var cropBlockId = Registries.BLOCK.getId(cropBlock).toString();
         compound.putString("cropBlock", cropBlockId);
+        stack.setCustomName(Text.of("Book Of Farming: " + StringUtil.capitalize(cropBlock.asItem().toString())));
     }
 
     public CropBlock getCrop(ItemStack stack){
@@ -158,15 +164,6 @@ public class FarmingBook extends BaseGeneratingBook {
         tryGenerateResources(stack, world);
     }
 
-    public void updateUseTime(ItemStack stack, long time){
-        NbtCompound compound = stack.getNbt();
-
-        if(compound == null)
-            compound = new NbtCompound();
-
-        compound.putLong("lastUsedTime", time);
-    }
-
     @Override
     public boolean hasGlint(ItemStack stack) {
         return stack.hasNbt();
@@ -175,6 +172,11 @@ public class FarmingBook extends BaseGeneratingBook {
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
         SingleItemStackingInventory inventory = this.getInventory(stack);
+        if(stack.getNbt() == null)
+            return;
+
+        var compound = stack.getNbt();
+
         List<String> itemNames = new ArrayList<>();
         for (ItemStack inventoryStack : inventory.storedItems) {
             var itemName = inventoryStack.getItem().getName().getString();
@@ -194,6 +196,9 @@ public class FarmingBook extends BaseGeneratingBook {
 
             tooltip.add(Text.literal("§a"+currentAmount + "x " + "§f" + itemName));
         }
+
+        if(compound.contains("indexed"))
+            tooltip.add(Text.literal("§aIndexed"));
 
         super.appendTooltip(stack, world, tooltip, context);
     }

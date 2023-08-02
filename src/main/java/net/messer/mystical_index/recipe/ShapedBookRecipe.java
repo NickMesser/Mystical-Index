@@ -38,6 +38,8 @@ public class ShapedBookRecipe extends ShapedRecipe {
 
         for(var item : recipeInputInventory.getInputStacks()){
             if(item.getItem() instanceof BaseGeneratingBook){
+                if (item.getNbt().contains("indexed"))
+                        return ItemStack.EMPTY;
                 NbtCompound newCompound = new NbtCompound();
                 newCompound.copyFrom(item.getOrCreateNbt());
                 newCompound.putBoolean("indexed", true);

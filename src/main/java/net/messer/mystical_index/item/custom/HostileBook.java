@@ -192,15 +192,6 @@ public class HostileBook extends BaseGeneratingBook {
 
         tryGenerateResources(stack, world);
     }
-
-    public void updateUseTime(ItemStack stack, long time){
-        NbtCompound compound = stack.getNbt();
-
-        if(compound == null)
-            compound = new NbtCompound();
-
-        compound.putLong("lastUsedTime", time);
-    }
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
         if(!stack.hasNbt())
@@ -209,11 +200,6 @@ public class HostileBook extends BaseGeneratingBook {
         var compound = stack.getNbt();
         if (compound == null)
             return;
-
-        if(compound.contains("indexed") && !compound.contains(STORED_ENTITY_NAME_KEY)){
-            tooltip.add(Text.literal("§a+Indexed"));
-            return;
-        }
 
         SingleItemStackingInventory inventory = new SingleItemStackingInventory(stack, INVENTORY_SIZE);
         List<String> itemNames = new ArrayList<>();
@@ -255,7 +241,7 @@ public class HostileBook extends BaseGeneratingBook {
             tooltip.add(Text.literal("§a"+currentAmount + "x " + "§f" + itemName));
         }
 
-        if(compound.contains("indexed") && compound.contains(STORED_ENTITY_NAME_KEY))
+        if(compound.contains("indexed"))
             tooltip.add(Text.literal("§aIndexed"));
 
         if(Screen.hasShiftDown()){
