@@ -64,6 +64,7 @@ public class ModItems {
         addToItemGroup(ItemGroups.FUNCTIONAL, Item.fromBlock(ModBlocks.LIBRARY));
         addToItemGroup(ItemGroups.TOOLS, EMPTY_VILLAGER_BOOK);
         addToItemGroup(ItemGroups.TOOLS, BABY_VILLAGER_BOOK);
+        addToItemGroup(ItemGroups.TOOLS, FARMING_BOOK);
     }
 
     private static void addToItemGroup(RegistryKey<ItemGroup> group, Item item) {

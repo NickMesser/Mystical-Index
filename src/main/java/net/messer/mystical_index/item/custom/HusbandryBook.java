@@ -200,8 +200,30 @@ public class HusbandryBook extends BaseGeneratingBook {
     }
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        if(!stack.hasNbt())
-            return;
+        if(stack.getNbt() != null){
+            var compound = stack.getNbt();
+
+            var storedEntityName = compound.getString(STORED_ENTITY_NAME_KEY);
+            var numberOfKills = compound.getInt(NUMBER_OF_KILLS_KEY);
+
+            if(storedEntityName.equals(""))
+                return;
+
+            if(numberOfKills >= ModConfig.HusbandryBookMaxKills)
+                tooltip.add(Text.literal("§cMax kills reached"));
+            else
+                tooltip.add(Text.literal("§aKills: " + numberOfKills));
+
+            var timeLastUsed = compound.getLong("lastUsedTime");
+            var difference = world.getTime() % 24000 - timeLastUsed;
+            var timeLeft = (difference - (maxCooldown - (numberOfKills * 20L)));
+
+            if((timeLeft/20) * -1 < 0)
+                timeLeft = 0;
+
+            tooltip.add(Text.literal("Cooldown: " + ((maxCooldown - (20 * numberOfKills))/20) + " seconds"));
+            tooltip.add(Text.literal("Time left: " + ((timeLeft/20) * -1) + " seconds"));
+        }
 
         SingleItemStackingInventory inventory = new SingleItemStackingInventory(stack, INVENTORY_SIZE);
         List<String> itemNames = new ArrayList<>();
@@ -214,16 +236,6 @@ public class HusbandryBook extends BaseGeneratingBook {
             }
         }
 
-        var compound = stack.getNbt();
-        if (compound == null)
-            return;
-
-        var storedEntityName = compound.getString(STORED_ENTITY_NAME_KEY);
-        var numberOfKills = compound.getInt(NUMBER_OF_KILLS_KEY);
-        tooltip.add(Text.literal("Cooldown: " + ((maxCooldown - (20 * numberOfKills))/20) + " seconds"));
-
-        tooltip.add(Text.literal("§a"+numberOfKills + "x " + "§f" + storedEntityName));
-
         for(String itemName : itemNames){
             var currentAmount = 0;
             for(ItemStack inventoryStack : inventory.storedItems) {
@@ -233,6 +245,9 @@ public class HusbandryBook extends BaseGeneratingBook {
 
             tooltip.add(Text.literal("§a"+currentAmount + "x " + "§f" + itemName));
         }
+
+        if(stack.getNbt() != null && stack.getNbt().contains("indexed"))
+            tooltip.add(Text.translatable("§aIndexed"));
 
         if(Screen.hasShiftDown()){
             tooltip.add(Text.translatable("tooltip.mystical_index.husbandry_book_shift0"));

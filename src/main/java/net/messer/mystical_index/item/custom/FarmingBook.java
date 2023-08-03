@@ -10,6 +10,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.CropBlock;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -172,10 +173,7 @@ public class FarmingBook extends BaseGeneratingBook {
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
         SingleItemStackingInventory inventory = this.getInventory(stack);
-        if(stack.getNbt() == null)
-            return;
 
-        var compound = stack.getNbt();
 
         List<String> itemNames = new ArrayList<>();
         for (ItemStack inventoryStack : inventory.storedItems) {
@@ -197,9 +195,18 @@ public class FarmingBook extends BaseGeneratingBook {
             tooltip.add(Text.literal("§a"+currentAmount + "x " + "§f" + itemName));
         }
 
-        if(compound.contains("indexed"))
-            tooltip.add(Text.literal("§aIndexed"));
+        if(stack.getNbt() != null){
+            var compound = stack.getNbt();
 
+            if(compound.contains("indexed"))
+                tooltip.add(Text.literal("§aIndexed"));
+        }
+        if(Screen.hasShiftDown()){
+            tooltip.add(Text.translatable("tooltip.mystical_index.farming_book_shift0"));
+            tooltip.add(Text.translatable("tooltip.mystical_index.farming_book_shift1"));
+        } else {
+            tooltip.add(Text.translatable("tooltip.mystical_index.farming_book"));
+        }
         super.appendTooltip(stack, world, tooltip, context);
     }
 }

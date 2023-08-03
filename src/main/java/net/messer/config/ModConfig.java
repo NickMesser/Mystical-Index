@@ -34,8 +34,7 @@ public class ModConfig extends MidnightConfig {
     @Entry public static int BookOfFarmingMaxStacks = 5;
     @Entry public static Map<String, Integer> BookOfFarmingCooldowns = new HashMap<>(){
         {
-            put("minecraft:wither_rose", 300);
+            put("minecraft:carrot", 120);
         }
     };
-
 }
