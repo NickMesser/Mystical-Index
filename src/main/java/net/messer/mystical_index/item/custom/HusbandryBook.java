@@ -130,10 +130,10 @@ public class HusbandryBook extends BaseGeneratingBook {
         if (world.isClient)
             return;
 
-        if(!stack.getNbt().contains("indexed"))
+        if(!stack.hasNbt())
             return;
 
-        if(!stack.hasNbt())
+        if(!stack.getNbt().contains("indexed"))
             return;
 
         if(!(be instanceof LibraryBlockEntity))
