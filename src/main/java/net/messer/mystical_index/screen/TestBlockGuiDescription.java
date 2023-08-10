@@ -24,12 +24,13 @@ public class TestBlockGuiDescription extends SyncedGuiDescription {
         root.setInsets(Insets.ROOT_PANEL);
 
         WPlainPanel plainPanel = new WPlainPanel();
-        root.add(plainPanel, 0, 0, 50,50);
+        plainPanel.setSize(100, 100);
 
         WItem items = new WItem(testItemsList);
 
-        WScrollPanel scrollPanel = new WScrollPanel(items);
-        root.add(scrollPanel, 0, 1);
+        WScrollPanel scrollPanel = new WScrollPanel(plainPanel);
+        scrollPanel.setSize(100, 100);
+        root.add(scrollPanel, 4, 2);
 
         WItemSlot itemSlot = WItemSlot.of(blockInventory, 0);
         root.add(itemSlot, 4, 1);
