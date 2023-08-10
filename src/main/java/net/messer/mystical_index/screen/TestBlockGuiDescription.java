@@ -35,16 +35,6 @@ public class TestBlockGuiDescription extends SyncedGuiDescription {
 
     public TestBlockGuiDescription(int syncId, PlayerInventory playerInventory, ScreenHandlerContext context) {
         super(ModScreenHandlers.TEST_BLOCK_SCREEN_HANDLER, syncId, playerInventory, getBlockInventory(context, 100), getBlockPropertyDelegate(context));
-        context.get((world, pos) -> {
-            var blockEntity = world.getBlockEntity(pos);
-            if (blockEntity instanceof ImplementedInventory) {
-                var blockInventory = ((ImplementedInventory) blockEntity).getItems();
-                for (int i = 0; i < INVENTORY_SIZE; i++) {
-                    var itemStack = blockInventory.get(i);
-                    INVENTORY.setStack(i, itemStack);
-                }
-            }
-        )};
 
         var blockInventory = getBlockInventory(context, 100);
         for (int i = 0; i < INVENTORY_SIZE; i++) {
@@ -80,11 +70,12 @@ public class TestBlockGuiDescription extends SyncedGuiDescription {
             if (world.isClient()) return;
             var amount = buf.readDouble();
             if(amount > 0){
-                currentIndex += 9;
-            }
-            if(amount < 0){
                 currentIndex -= 9;
             }
+            if(amount < 0){
+                currentIndex += 9;
+            }
+            scrollBar.setValue(currentIndex);
             if(currentIndex >= 81 )
                 currentIndex = 81;
             if(currentIndex <= 0)
