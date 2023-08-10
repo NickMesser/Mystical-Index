@@ -101,6 +101,7 @@ public interface ImplementedInventory extends Inventory {
         if (stack.getCount() > stack.getMaxCount()) {
             stack.setCount(stack.getMaxCount());
         }
+        this.markDirty();
     }
 
     /**
@@ -128,5 +129,6 @@ public interface ImplementedInventory extends Inventory {
     default boolean canPlayerUse(PlayerEntity player) {
         return true;
     }
+
 }
 

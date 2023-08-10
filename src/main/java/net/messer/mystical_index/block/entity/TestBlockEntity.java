@@ -18,7 +18,7 @@ import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.Nullable;
 
 public class TestBlockEntity extends BlockEntity implements NamedScreenHandlerFactory, ImplementedInventory {
-    private final DefaultedList<ItemStack> items = DefaultedList.ofSize(2, ItemStack.EMPTY);
+    private final DefaultedList<ItemStack> items = DefaultedList.ofSize(100, ItemStack.EMPTY);
     public TestBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.TEST_BLOCK_ENTITY, pos, state);
     }
