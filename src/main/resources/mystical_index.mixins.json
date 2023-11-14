@@ -7,6 +7,7 @@
     "ItemStackPickupMixin",
     "MobEntityMixin",
     "PassiveEntityAccessor",
+    "PistonEntityMixin",
     "VillagerEntityInvoker",
     "VillagerEntityMixin"
   ],

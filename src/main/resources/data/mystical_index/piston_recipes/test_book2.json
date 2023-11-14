@@ -1,0 +1,18 @@
+{
+  "input" : [
+    {
+      "item" : "minecraft:cobblestone",
+      "amount": 1
+    },
+    {
+      "item" : "minecraft:paper",
+      "amount": 1
+    }
+  ],
+  "output" :[
+    {
+      "item" : "mystical_index:fluid_book",
+      "amount": 1
+    }
+  ]
+}
