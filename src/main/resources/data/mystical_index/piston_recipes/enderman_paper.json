@@ -1,0 +1,21 @@
+{
+  "input" : [
+    {
+      "item" : "minecraft:ender_pearl",
+      "amount": 1,
+      "nbt": ""
+    },
+    {
+      "item" : "minecraft:paper",
+      "amount": 1,
+      "nbt" : ""
+    }
+  ],
+  "output" :[
+    {
+      "item" : "mystical_index:entity_paper",
+      "amount": 1,
+      "nbt" : "{'entity':'minecraft:enderman'}"
+    }
+  ]
+}

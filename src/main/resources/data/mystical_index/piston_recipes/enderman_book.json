@@ -1,0 +1,21 @@
+{
+  "input" : [
+    {
+      "item" : "mystical_index:entity_paper",
+      "amount": 1,
+      "nbt": "{'entity':'minecraft:enderman'}"
+    },
+    {
+      "item" : "mystical_index:storage_book",
+      "amount": 1,
+      "nbt" : ""
+    }
+  ],
+  "output" :[
+    {
+      "item" : "mystical_index:hostile_book",
+      "amount": 1,
+      "nbt" : ""
+    }
+  ]
+}

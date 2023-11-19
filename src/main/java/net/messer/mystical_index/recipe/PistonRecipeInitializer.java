@@ -20,12 +20,11 @@ import java.util.List;
 
 public class PistonRecipeInitializer implements SimpleSynchronousResourceReloadListener {
 
-    private static PistonRecipeInitializer INSTANCE = new PistonRecipeInitializer();
+    private static final PistonRecipeInitializer INSTANCE = new PistonRecipeInitializer();
 
-    private static  List<PistonRecipe> pistonRecipes = new ArrayList<>(0);
+    private static final List<PistonRecipe> pistonRecipes = new ArrayList<>();
 
-    public static PistonRecipeInitializer getInstance()
-    {
+    public static PistonRecipeInitializer getInstance() {
         return INSTANCE;
     }
 
@@ -40,9 +39,9 @@ public class PistonRecipeInitializer implements SimpleSynchronousResourceReloadL
 
     @Override
     public void reload(ResourceManager manager) {
-        for(Identifier id : manager.findResources("piston_recipes", path -> path.getPath().endsWith(".json")).keySet()) {
-            var resource = manager.getResource(id);
-            try(InputStream stream = resource.get().getInputStream()) {
+        pistonRecipes.clear();
+        for (Identifier id : manager.findResources("piston_recipes", path -> path.getPath().endsWith(".json")).keySet()) {
+            try (InputStream stream = manager.getResource(id).get().getInputStream()) {
                 Reader reader = new InputStreamReader(stream);
                 JsonElement json = JsonParser.parseReader(reader);
                 processInputs(json.getAsJsonObject());
@@ -54,38 +53,56 @@ public class PistonRecipeInitializer implements SimpleSynchronousResourceReloadL
 
     protected void processInputs(JsonObject json) {
         PistonRecipe recipe = new PistonRecipe();
-        JsonArray inputs = json.getAsJsonArray("input");
+        JsonArray inputs = JsonHelper.getArray(json, "input");
         for (JsonElement input : inputs) {
-            String itemName = JsonHelper.getString(input.getAsJsonObject(), "item");
-            int amount = JsonHelper.getInt(input.getAsJsonObject(), "amount");
-            var item = Registries.ITEM.get(Identifier.tryParse(itemName));
-            recipe.addInput(item, amount);
+            JsonObject inputObj = input.getAsJsonObject();
+            String itemName = JsonHelper.getString(inputObj, "item");
+            int amount = JsonHelper.getInt(inputObj, "amount");
+            String nbtData = inputObj.has("nbt") ? inputObj.get("nbt").getAsString() : null;
+            Item item = Registries.ITEM.get(new Identifier(itemName));
+            recipe.addInput(item, amount, nbtData);
         }
-        JsonArray outputs = json.getAsJsonArray("output");
+        JsonArray outputs = JsonHelper.getArray(json, "output");
         for (JsonElement output : outputs) {
-            String itemName = JsonHelper.getString(output.getAsJsonObject(), "item");
-            int amount = JsonHelper.getInt(output.getAsJsonObject(), "amount");
-            var item = Registries.ITEM.get(Identifier.tryParse(itemName));
-            recipe.addOutput(item, amount);
+            JsonObject outputObj = output.getAsJsonObject();
+            String itemName = JsonHelper.getString(outputObj, "item");
+            int amount = JsonHelper.getInt(outputObj, "amount");
+            String nbtData = outputObj.has("nbt") ? outputObj.get("nbt").getAsString() : null;
+            Item item = Registries.ITEM.get(new Identifier(itemName));
+            recipe.addOutput(item, amount, nbtData);
         }
         pistonRecipes.add(recipe);
     }
-    public PistonRecipe getRecipe(List<ItemStack> inputStacks) {
-        for (var recipe : pistonRecipes) {
-            var recipeInputs = recipe.getInputs();
 
-            if (inputStacks.size() != recipeInputs.size()) {
-                continue;
+    public PistonRecipe getRecipe(List<ItemStack> inputStacks) {
+        for (PistonRecipe recipe : pistonRecipes) {
+            boolean inputsContainNBT = recipe.getInputs().values().stream().anyMatch(itemEntry -> itemEntry.nbt.isPresent());
+
+            if(inputsContainNBT){
+                boolean isMatch = recipe.getInputs().keySet().stream().allMatch(item ->
+                        inputStacks.stream().anyMatch(stack ->
+                                stack.getItem().equals(item) &&
+                                        stack.getCount() == recipe.getInputs().get(item).count &&
+                                        stack.getNbt().equals(recipe.getInputs().get(item).nbt.get())
+                        )
+                );
+                boolean allInputsCovered = recipe.getInputs().keySet().stream().allMatch(item ->
+                        inputStacks.stream().anyMatch(stack -> stack.getItem().equals(item))
+                );
+                if (isMatch && allInputsCovered) {
+                    return recipe;
+                }
             }
 
-            boolean isMatch = inputStacks.stream().allMatch(stack ->
-                    recipeInputs.getOrDefault(stack.getItem(), Integer.valueOf(0)).equals(stack.getCount())
+            boolean isMatch = recipe.getInputs().keySet().stream().allMatch(item ->
+                    inputStacks.stream().anyMatch(stack ->
+                            stack.getItem().equals(item) &&
+                                    stack.getCount() == recipe.getInputs().get(item).count
+                    )
             );
-
-            boolean allInputsCovered = recipeInputs.keySet().stream().allMatch(item ->
+            boolean allInputsCovered = recipe.getInputs().keySet().stream().allMatch(item ->
                     inputStacks.stream().anyMatch(stack -> stack.getItem().equals(item))
             );
-
             if (isMatch && allInputsCovered) {
                 return recipe;
             }

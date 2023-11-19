@@ -32,5 +32,6 @@
   "item.mystical_index.farming_book": "Book of Farming",
   "tooltip.mystical_index.farming_book": "Hold §eSHIFT§r for more info.",
   "tooltip.mystical_index.farming_book_shift0": "§eRIGHT CLICK§r a crop to set this book.",
-  "tooltip.mystical_index.farming_book_shift1": "Crows will grow over time in the book."
+  "tooltip.mystical_index.farming_book_shift1": "Crows will grow over time in the book.",
+  "item.mystical_index.entity_paper": "Entity Paper"
 }

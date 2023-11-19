@@ -45,6 +45,9 @@ public class ModItems {
     public static final Item EMPTY_VILLAGER_BOOK = registerItem("empty_villager_book",
             new EmptyVillagerBook(new FabricItemSettings().maxCount(1)));
 
+    public static final Item ENTITY_PAPER = registerItem("entity_paper",
+            new EntityPaper(new FabricItemSettings().maxCount(1)));
+
     private static Item registerItem(String name, Item item){
         return Registry.register(Registries.ITEM, new Identifier(MysticalIndex.MOD_ID, name), item);
     }
@@ -65,6 +68,7 @@ public class ModItems {
         addToItemGroup(ItemGroups.TOOLS, EMPTY_VILLAGER_BOOK);
         addToItemGroup(ItemGroups.TOOLS, BABY_VILLAGER_BOOK);
         addToItemGroup(ItemGroups.TOOLS, FARMING_BOOK);
+        addToItemGroup(ItemGroups.TOOLS, ENTITY_PAPER);
     }
 
     private static void addToItemGroup(RegistryKey<ItemGroup> group, Item item) {

@@ -1,5 +1,6 @@
 package net.messer.mixin;
 
+import net.fabricmc.fabric.api.entity.FakePlayer;
 import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.recipe.PistonRecipeInitializer;
@@ -9,6 +10,9 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.StringNbtReader;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
@@ -28,6 +32,9 @@ public class PistonEntityMixin {
     @Inject(method = "pushEntities", at = @At(value = "INVOKE", target = "Ljava/util/List;isEmpty()Z"), locals = LocalCapture.CAPTURE_FAILSOFT)
     private static void tryCrafting(World world, BlockPos pos, float f, PistonBlockEntity blockEntity, CallbackInfo ci, Direction direction, double d, VoxelShape voxelShape, Box box, List list)
     {
+        if(world.isClient)
+            return;
+
         var otherBlock = world.getBlockState(blockEntity.getPos().add(direction.getVector()));
         if(direction == Direction.DOWN && otherBlock.getBlock() == Blocks.IRON_BLOCK){
             var itemEntityList = list.stream()
@@ -51,15 +58,13 @@ public class PistonEntityMixin {
             // Consume inputs
             var inputs = recipe.getInputs();
             for(var input: inputs.keySet()){
-                var count = inputs.get(input);
-                for(int i = 0; i < count; i++){
-                    for(var entity: itemEntityList){
-                        var itemEntity = (ItemEntity) entity;
-                        var itemStack = itemEntity.getStack();
-                        if(itemStack.getItem() == input){
-                            itemStack.decrement(count);
-                            break;
-                        }
+                var itemEntry = inputs.get(input);
+                for(var entity: itemEntityList){
+                    var itemEntity = (ItemEntity) entity;
+                    var itemStack = itemEntity.getStack();
+                    if(itemStack.getItem() == input){
+                        itemStack.decrement(itemEntry.count);
+                        break;
                     }
                 }
             }
@@ -67,10 +72,12 @@ public class PistonEntityMixin {
             // Output crafted items
             var craftedItems = recipe.getOutputs();
             for(var craftedItem: craftedItems.keySet()){
-                var count = craftedItems.get(craftedItem);
-                for(int i = 0; i < count; i++){
-                    world.spawnEntity(new ItemEntity(world, itemPos.getX(), itemPos.getY(), itemPos.getZ(), new ItemStack(craftedItem)));
-                }
+                var itemEntry = craftedItems.get(craftedItem);
+                var itemStack = new ItemStack(craftedItem, itemEntry.count);
+                itemStack.setNbt(itemEntry.nbt.orElse(null));
+                itemStack.onCraft(world, FakePlayer.get((ServerWorld) world), itemStack.getCount());
+                var itemEntity = new ItemEntity(world, itemPos.getX(), itemPos.getY(), itemPos.getZ(), itemStack);
+                world.spawnEntity(itemEntity);
             }
         }
     }
