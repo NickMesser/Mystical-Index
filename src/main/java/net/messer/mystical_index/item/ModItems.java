@@ -46,7 +46,7 @@ public class ModItems {
             new EmptyVillagerBook(new FabricItemSettings().maxCount(1)));
 
     public static final Item ENTITY_PAPER = registerItem("entity_paper",
-            new EntityPaper(new FabricItemSettings().maxCount(1)));
+            new EntityPaper(new FabricItemSettings().maxCount(64)));
 
     private static Item registerItem(String name, Item item){
         return Registry.register(Registries.ITEM, new Identifier(MysticalIndex.MOD_ID, name), item);

@@ -1,0 +1,19 @@
+{
+  "type": "mystical_index:paper_shaped",
+  "pattern": [
+    "PPP",
+    "PEP",
+    "PPP"
+  ],
+  "key": {
+    "P": {
+      "item": "mystical_index:entity_paper"
+    },
+    "E": {
+      "item": "minecraft:egg"
+    }
+  },
+  "result": {
+    "item": "minecraft:pig_spawn_egg"
+  }
+}

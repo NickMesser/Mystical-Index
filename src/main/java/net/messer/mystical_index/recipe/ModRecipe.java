@@ -11,9 +11,11 @@ import net.minecraft.util.Identifier;
 public class ModRecipe {
 
     public static RecipeSerializer<ShapedBookRecipe> BOOK_SHAPED;
+    public static RecipeSerializer<EntityPaperRecicpe> PAPER_SHAPED;
 
     public static void registerRecipes() {
         MysticalIndex.LOGGER.info("Registering recipes");
+        PAPER_SHAPED = Registry.register(Registries.RECIPE_SERIALIZER, new Identifier(MysticalIndex.MOD_ID, "paper_shaped"), new EntityPaperRecicpe.Serializer());
         BOOK_SHAPED = Registry.register(Registries.RECIPE_SERIALIZER, new Identifier(MysticalIndex.MOD_ID, "book_shaped"), new ShapedBookRecipe.Serializer());
     }
 }
