@@ -7,6 +7,7 @@ import com.google.gson.JsonParser;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.Registries;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
@@ -76,34 +77,52 @@ public class PistonRecipeInitializer implements SimpleSynchronousResourceReloadL
 
     public PistonRecipe getRecipe(List<ItemStack> inputStacks) {
         for (PistonRecipe recipe : pistonRecipes) {
-            boolean inputsContainNBT = recipe.getInputs().values().stream().anyMatch(itemEntry -> itemEntry.nbt.isPresent());
+            var recipeInputs = recipe.getInputs();
 
+            // Check for size match first.
+            if(recipe.getInputs().size() != inputStacks.size())
+                continue;
+
+            // check for nbt inputs and compare against input stacks
+            boolean inputsContainNBT = recipe.getInputs().values().stream().anyMatch(itemEntry -> itemEntry.nbt.isPresent());
+            boolean inputStacksContainNBT = inputStacks.stream().anyMatch(stack -> stack.getNbt() != null);
+
+            if(inputsContainNBT != inputStacksContainNBT)
+                continue;
+
+            boolean nbtMatches = true;
             if(inputsContainNBT){
-                boolean isMatch = recipe.getInputs().keySet().stream().allMatch(item ->
-                        inputStacks.stream().anyMatch(stack ->
-                                stack.getItem().equals(item) &&
-                                        stack.getCount() == recipe.getInputs().get(item).count &&
-                                        stack.getNbt().equals(recipe.getInputs().get(item).nbt.get())
-                        )
-                );
-                boolean allInputsCovered = recipe.getInputs().keySet().stream().allMatch(item ->
-                        inputStacks.stream().anyMatch(stack -> stack.getItem().equals(item))
-                );
-                if (isMatch && allInputsCovered) {
-                    return recipe;
+                for(var input: recipeInputs.keySet()){
+                    var entry = recipeInputs.get(input);
+                    var nbt = entry.nbt.orElse(null);
+                    if(nbt == null)
+                        continue;
+                    var nbtKeys = nbt.getKeys();
+                    for(var key: nbtKeys){
+                        if(!inputStacks.stream().anyMatch(stack -> stack.getOrCreateNbt().contains(key) &&
+                                stack.getOrCreateNbt().get(key).equals(nbt.get(key)))){
+
+                            nbtMatches = false;
+                            break;
+                        }
+                    }
                 }
             }
 
+            // Check that count matches
             boolean isMatch = recipe.getInputs().keySet().stream().allMatch(item ->
                     inputStacks.stream().anyMatch(stack ->
                             stack.getItem().equals(item) &&
                                     stack.getCount() == recipe.getInputs().get(item).count
                     )
             );
+
+            //check that all inputs are covered
             boolean allInputsCovered = recipe.getInputs().keySet().stream().allMatch(item ->
                     inputStacks.stream().anyMatch(stack -> stack.getItem().equals(item))
             );
-            if (isMatch && allInputsCovered) {
+
+            if (isMatch && allInputsCovered && nbtMatches) {
                 return recipe;
             }
         }
