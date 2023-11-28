@@ -8,7 +8,9 @@ import net.messer.mystical_index.item.inventory.SingleItemStackingInventory;
 import net.messer.util.MysticalUtil;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.item.BundleTooltipData;
 import net.minecraft.client.item.TooltipContext;
+import net.minecraft.client.item.TooltipData;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -34,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class HusbandryBook extends BaseGeneratingBook {
 
@@ -197,6 +200,16 @@ public class HusbandryBook extends BaseGeneratingBook {
     @Override
     public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
         customBookTick(stack, world, entity);
+    }
+
+    @Override
+    public Optional<TooltipData> getTooltipData(ItemStack stack) {
+        var storageInventory = new SingleItemStackingInventory(stack, INVENTORY_SIZE);
+        if(storageInventory.isEmpty())
+            return Optional.empty();
+
+
+        return Optional.of(new BundleTooltipData(storageInventory.storedItems, INVENTORY_SIZE * 64));
     }
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {

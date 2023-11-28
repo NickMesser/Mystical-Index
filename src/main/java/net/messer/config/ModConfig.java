@@ -31,6 +31,9 @@ public class ModConfig extends MidnightConfig {
 
     @Comment public static Comment BookOfFarmingTitle;
     @Entry public static int BookOfFarmingDefaultCooldown = 120;
+
+    @Comment public static Comment EntityPaperTitle;
+    @Entry public static List<String> EntityPaperBlackList = List.of("minecraft:ender_dragon", "minecraft:wither");
     @Entry public static int BookOfFarmingMaxStacks = 5;
     @Entry public static Map<String, Integer> BookOfFarmingCooldowns = new HashMap<>(){
         {

@@ -1,0 +1,21 @@
+{
+  "input" : [
+    {
+      "item" : "minecraft:blaze_rod",
+      "amount": 2,
+      "nbt": ""
+    },
+    {
+      "item" : "minecraft:paper",
+      "amount": 1,
+      "nbt" : ""
+    }
+  ],
+  "output" :[
+    {
+      "item" : "mystical_index:entity_paper",
+      "amount": 1,
+      "nbt" : "{'entity':'minecraft:blaze'}"
+    }
+  ]
+}

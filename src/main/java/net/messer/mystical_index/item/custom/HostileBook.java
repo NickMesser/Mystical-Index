@@ -10,7 +10,9 @@ import net.messer.mystical_index.item.inventory.SingleItemStackingInventory;
 import net.messer.util.MysticalUtil;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.item.BundleTooltipData;
 import net.minecraft.client.item.TooltipContext;
+import net.minecraft.client.item.TooltipData;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -33,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class HostileBook extends BaseGeneratingBook {
 
@@ -92,6 +95,76 @@ public class HostileBook extends BaseGeneratingBook {
 
         updateUseTime(stack, maxCooldown);
         return super.useOnEntity(stack, user, entity, hand);
+    }
+
+    public void addEntityToBook(ItemStack stack, LivingEntity entity){
+        var entityName = Registries.ENTITY_TYPE.getId(entity.getType()).toString();
+        if(ModConfig.HusbandryBookBlackList.contains(entityName) || ModConfig.HostileBookBlackList.contains(entityName))
+        {
+            return;
+        }
+
+        var compound = stack.getNbt();
+
+        if(compound == null)
+            compound = stack.getOrCreateNbt();
+
+        var numberOfKills = compound.getInt(NUMBER_OF_KILLS_KEY);
+        if(numberOfKills > 0){
+            return;
+        }
+
+        var lootTableId = entity.getType().getLootTableId();
+
+        stack.setCustomName(Text.literal("Book of " + entity.getName().getString()));
+        compound.putString(STORED_ENTITY_NAME_KEY, entity.getName().getString());
+        compound.putString(STORED_ENTITY_LOOT_TABLE_KEY, lootTableId.toString());
+        compound.putInt(NUMBER_OF_KILLS_KEY, 0);
+        compound.putString(STORED_ENTITY_ID_KEY, entityName);
+
+        updateUseTime(stack, maxCooldown);
+    }
+
+    public void increaseKills(ItemStack stack, int amount){
+        var compound = stack.getNbt();
+        if(compound == null)
+            return;
+
+        var numberOfKills = compound.getInt(NUMBER_OF_KILLS_KEY);
+        if(numberOfKills >= ModConfig.HostileBookMaxKills)
+            return;
+
+        compound.putInt(NUMBER_OF_KILLS_KEY, numberOfKills + amount);
+    }
+
+    public void addEntityToBook(ItemStack stack, String entityId){
+        if(ModConfig.HusbandryBookBlackList.contains(entityId) || ModConfig.HostileBookBlackList.contains(entityId))
+        {
+            return;
+        }
+
+        var compound = stack.getNbt();
+
+        if(compound == null)
+            compound = stack.getOrCreateNbt();
+
+        var numberOfKills = compound.getInt(NUMBER_OF_KILLS_KEY);
+        if(numberOfKills > 0){
+            return;
+        }
+
+        var entity = EntityType.get(entityId).get();
+
+        var lootTableId = entity.getLootTableId();
+
+        stack.setCustomName(Text.literal("Book of " + entity.getName().getString()));
+        compound.putString(STORED_ENTITY_NAME_KEY, entity.getName().getString());
+        compound.putString(STORED_ENTITY_LOOT_TABLE_KEY, lootTableId.toString());
+        compound.putInt(NUMBER_OF_KILLS_KEY, 0);
+        compound.putString(STORED_ENTITY_ID_KEY, entityId);
+
+        updateUseTime(stack, maxCooldown);
+
     }
 
     @Override
@@ -192,6 +265,17 @@ public class HostileBook extends BaseGeneratingBook {
 
         tryGenerateResources(stack, world);
     }
+
+
+    @Override
+    public Optional<TooltipData> getTooltipData(ItemStack stack) {
+        var storageInventory = new SingleItemStackingInventory(stack, INVENTORY_SIZE);
+        if(storageInventory.isEmpty())
+            return Optional.empty();
+
+
+        return Optional.of(new BundleTooltipData(storageInventory.storedItems, INVENTORY_SIZE * 64));
+    }
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
         if(stack.getNbt() != null){
@@ -217,27 +301,6 @@ public class HostileBook extends BaseGeneratingBook {
 
             tooltip.add(Text.literal("Cooldown: " + ((maxCooldown - (20 * numberOfKills))/20) + " seconds"));
             tooltip.add(Text.literal("Time left: " + ((timeLeft/20) * -1) + " seconds"));
-        }
-
-        SingleItemStackingInventory inventory = new SingleItemStackingInventory(stack, INVENTORY_SIZE);
-        List<String> itemNames = new ArrayList<>();
-        for (ItemStack inventoryStack : inventory.storedItems) {
-            var itemName = inventoryStack.getItem().getName().getString();
-            if(itemNames.contains(itemName) || Objects.equals(itemName, Items.AIR.getName().getString())) {
-            }
-            else{
-                itemNames.add(itemName);
-            }
-        }
-
-        for(String itemName : itemNames){
-            var currentAmount = 0;
-            for(ItemStack inventoryStack : inventory.storedItems) {
-                if(inventoryStack.getItem().getName().getString().equals(itemName))
-                    currentAmount += inventoryStack.getCount();
-            }
-
-            tooltip.add(Text.literal("§a"+currentAmount + "x " + "§f" + itemName));
         }
 
         if(stack.getNbt() != null && stack.getNbt().contains("indexed"))

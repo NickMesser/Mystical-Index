@@ -5,7 +5,9 @@ import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.inventory.SingleItemStackingInventory;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.item.BundleTooltipData;
 import net.minecraft.client.item.TooltipContext;
+import net.minecraft.client.item.TooltipData;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -20,6 +22,7 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Optional;
 
 public class SaturationBook extends Item {
     public SaturationBook(Settings settings) {
@@ -81,6 +84,16 @@ public class SaturationBook extends Item {
     public boolean hasGlint(ItemStack stack) {
         var storageInventory = new SingleItemStackingInventory(stack, ModConfig.SaturationBookMaxStacks);
         return !storageInventory.isEmpty();
+    }
+
+    @Override
+    public Optional<TooltipData> getTooltipData(ItemStack stack) {
+        var storageInventory = new SingleItemStackingInventory(stack, ModConfig.SaturationBookMaxStacks);
+        if(storageInventory.isEmpty())
+            return Optional.empty();
+
+
+        return Optional.of(new BundleTooltipData(storageInventory.storedItems, ModConfig.SaturationBookMaxStacks * 64));
     }
 
     @Override

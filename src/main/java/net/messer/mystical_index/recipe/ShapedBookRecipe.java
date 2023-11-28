@@ -6,6 +6,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
+import com.mojang.serialization.Codec;
 import net.messer.mystical_index.item.custom.HostileBook;
 import net.messer.mystical_index.item.custom.base_books.BaseGeneratingBook;
 import net.minecraft.inventory.RecipeInputInventory;
@@ -25,8 +26,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class ShapedBookRecipe extends ShapedRecipe {
-    public ShapedBookRecipe(Identifier id, String group, CraftingRecipeCategory category, int width, int height, DefaultedList<Ingredient> input, ItemStack output) {
-        super(id, group, category, width, height, input, output);
+
+    public ShapedBookRecipe(String group, CraftingRecipeCategory category, int width, int height, DefaultedList<Ingredient> ingredients, ItemStack result, boolean showNotification) {
+        super(group, category, width, height, ingredients, result, showNotification);
     }
 
     @Override
@@ -57,6 +59,7 @@ public class ShapedBookRecipe extends ShapedRecipe {
 
     public static class Serializer implements RecipeSerializer<ShapedBookRecipe>
     {
+        private static final Codec<ShapedBookRecipe> CODEC;
         public Serializer() {
         }
 
@@ -69,7 +72,7 @@ public class ShapedBookRecipe extends ShapedRecipe {
             int j = strings.length;
             DefaultedList<Ingredient> defaultedList = createPatternMatrix(strings, map, i, j);
             ItemStack itemStack = ShapedRecipe.outputFromJson(JsonHelper.getObject(jsonObject, "result"));
-            return new ShapedBookRecipe(identifier, string, craftingRecipeCategory, i, j, defaultedList, itemStack);
+            return new ShapedBookRecipe(identifier, string, craftingRecipeCategory, i, j, defaultedList, itemStack, true);
         }
 
         public ShapedBookRecipe read(Identifier identifier, PacketByteBuf packetByteBuf) {
@@ -83,8 +86,19 @@ public class ShapedBookRecipe extends ShapedRecipe {
                 defaultedList.set(k, Ingredient.fromPacket(packetByteBuf));
             }
 
-            ItemStack k = packetByteBuf.readItemStack();
-            return new ShapedBookRecipe(identifier, string, craftingRecipeCategory, i, j, defaultedList, k);
+            ItemStack itemStack = packetByteBuf.readItemStack();
+            boolean bl = packetByteBuf.readBoolean();
+            return new ShapedBookRecipe(string, craftingRecipeCategory, i, j, defaultedList, itemStack, bl);
+        }
+
+        @Override
+        public Codec<ShapedBookRecipe> codec() {
+            return null;
+        }
+
+        @Override
+        public ShapedBookRecipe read(PacketByteBuf buf) {
+            return null;
         }
 
         public void write(PacketByteBuf packetByteBuf, ShapedBookRecipe shapedRecipe) {

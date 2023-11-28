@@ -4,7 +4,9 @@ import net.messer.config.ModConfig;
 import net.messer.mystical_index.item.custom.base_books.BaseStorageBook;
 import net.messer.mystical_index.item.inventory.SingleItemStackingInventory;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.item.BundleTooltipData;
 import net.minecraft.client.item.TooltipContext;
+import net.minecraft.client.item.TooltipData;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.*;
 import net.minecraft.registry.Registries;
@@ -17,6 +19,7 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Optional;
 
 
 public class StorageBook extends BaseStorageBook {
@@ -78,6 +81,16 @@ public class StorageBook extends BaseStorageBook {
     public boolean hasGlint(ItemStack stack) {
         var storageInventory = new SingleItemStackingInventory(stack, ModConfig.StorageBookMaxStacks);
         return !storageInventory.isEmpty();
+    }
+
+    @Override
+    public Optional<TooltipData> getTooltipData(ItemStack stack) {
+        var storageInventory = new SingleItemStackingInventory(stack, ModConfig.StorageBookMaxStacks);
+        if(storageInventory.isEmpty())
+            return Optional.empty();
+
+
+        return Optional.of(new BundleTooltipData(storageInventory.storedItems, ModConfig.StorageBookMaxStacks * 64));
     }
 
     @Override

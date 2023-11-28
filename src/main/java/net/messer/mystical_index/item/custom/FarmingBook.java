@@ -11,7 +11,9 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.CropBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.item.BundleTooltipData;
 import net.minecraft.client.item.TooltipContext;
+import net.minecraft.client.item.TooltipData;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -168,6 +170,16 @@ public class FarmingBook extends BaseGeneratingBook {
     @Override
     public boolean hasGlint(ItemStack stack) {
         return stack.hasNbt();
+    }
+
+    @Override
+    public Optional<TooltipData> getTooltipData(ItemStack stack) {
+        var storageInventory = new SingleItemStackingInventory(stack, ModConfig.BookOfFarmingMaxStacks);
+        if(storageInventory.isEmpty())
+            return Optional.empty();
+
+
+        return Optional.of(new BundleTooltipData(storageInventory.storedItems, ModConfig.BookOfFarmingMaxStacks * 64));
     }
 
     @Override

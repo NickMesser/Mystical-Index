@@ -21,11 +21,9 @@ public class PlayerKillEvent {
         ServerEntityCombatEvents.AFTER_KILLED_OTHER_ENTITY.register((world, player, entity) -> {
             if (entity.isDead() && entity != player) {
                 var entityName = Registries.ENTITY_TYPE.getId(entity.getType()).toString();
+
                 if(ModConfig.HusbandryBookBlackList.contains(entityName) || ModConfig.HostileBookBlackList.contains(entityName))
-                {
-                    player.sendMessage(Text.literal("Mob is blacklisted from book."));
                     return;
-                }
 
                 if(player instanceof PlayerEntity) {
                     dropEntityPaper(world, (PlayerEntity) player, entity);
@@ -42,16 +40,19 @@ public class PlayerKillEvent {
     }
 
     public static void dropEntityPaper(World world, PlayerEntity player, Entity entityId){
+
+        //Check if entity is blacklisted
+        if(ModConfig.EntityPaperBlackList.contains(Registries.ENTITY_TYPE.getId(entityId.getType()).toString()))
+            return;
+
         // Check if entity has spawn egg
         if(SpawnEggItem.forEntity(entityId.getType()) == null)
             return;
 
-        // Randomize drop chance that also scales with looting.
+        // Randomize drop chance that also scales with luck.
         var dropChance = 0.05f + (player.getLuck() * 0.1f);
         if(world.random.nextFloat() > dropChance)
             return;
-
-        player.sendMessage(Text.literal(dropChance + " " + world.random.nextFloat()));
 
         // Create entity paper and drop it
         var entityPaper = new ItemStack(ModItems.ENTITY_PAPER);
