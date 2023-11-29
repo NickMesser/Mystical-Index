@@ -97,10 +97,10 @@ public class LibraryInventoryBlock extends BlockWithEntity implements BlockEntit
     public void appendTooltip(ItemStack stack, @Nullable BlockView world, List<Text> tooltip, TooltipContext options) {
         tooltip.add(Text.translatable("tooltip.mystical_index.library"));
     }
-
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-        return checkType(type, ModBlockEntities.LIBRARY_BLOCK_ENTITY, LibraryBlockEntity::tick);
+        return validateTicker(type, ModBlockEntities.LIBRARY_BLOCK_ENTITY,
+                LibraryBlockEntity::tick);
     }
 }

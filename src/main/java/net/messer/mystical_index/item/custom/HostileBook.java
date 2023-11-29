@@ -237,9 +237,6 @@ public class HostileBook extends BaseGeneratingBook {
         if (world.isClient)
             return;
 
-        if(!stack.getNbt().contains("indexed"))
-            return;
-
         if(!stack.hasNbt())
             return;
 
@@ -302,9 +299,6 @@ public class HostileBook extends BaseGeneratingBook {
             tooltip.add(Text.literal("Cooldown: " + ((maxCooldown - (20 * numberOfKills))/20) + " seconds"));
             tooltip.add(Text.literal("Time left: " + ((timeLeft/20) * -1) + " seconds"));
         }
-
-        if(stack.getNbt() != null && stack.getNbt().contains("indexed"))
-            tooltip.add(Text.translatable("§aIndexed"));
 
         if(Screen.hasShiftDown()){
             tooltip.add(Text.translatable("tooltip.mystical_index.hostile_book_shift0"));

@@ -133,9 +133,6 @@ public class HusbandryBook extends BaseGeneratingBook {
         if (world.isClient)
             return;
 
-        if(!stack.getNbt().contains("indexed"))
-            return;
-
         if(!stack.hasNbt())
             return;
 
@@ -237,30 +234,6 @@ public class HusbandryBook extends BaseGeneratingBook {
             tooltip.add(Text.literal("Cooldown: " + ((maxCooldown - (20 * numberOfKills))/20) + " seconds"));
             tooltip.add(Text.literal("Time left: " + ((timeLeft/20) * -1) + " seconds"));
         }
-
-        SingleItemStackingInventory inventory = new SingleItemStackingInventory(stack, INVENTORY_SIZE);
-        List<String> itemNames = new ArrayList<>();
-        for (ItemStack inventoryStack : inventory.storedItems) {
-            var itemName = inventoryStack.getItem().getName().getString();
-            if(itemNames.contains(itemName) || Objects.equals(itemName, Items.AIR.getName().getString())) {
-            }
-            else{
-                itemNames.add(itemName);
-            }
-        }
-
-        for(String itemName : itemNames){
-            var currentAmount = 0;
-            for(ItemStack inventoryStack : inventory.storedItems) {
-                if(inventoryStack.getItem().getName().getString().equals(itemName))
-                    currentAmount += inventoryStack.getCount();
-            }
-
-            tooltip.add(Text.literal("§a"+currentAmount + "x " + "§f" + itemName));
-        }
-
-        if(stack.getNbt() != null && stack.getNbt().contains("indexed"))
-            tooltip.add(Text.translatable("§aIndexed"));
 
         if(Screen.hasShiftDown()){
             tooltip.add(Text.translatable("tooltip.mystical_index.husbandry_book_shift0"));

@@ -141,9 +141,6 @@ public class FarmingBook extends BaseGeneratingBook {
         if (world.isClient)
             return;
 
-        if(!stack.getNbt().contains("indexed"))
-            return;
-
         if(!stack.hasNbt())
             return;
 
@@ -158,7 +155,7 @@ public class FarmingBook extends BaseGeneratingBook {
         if(world.isClient)
             return;
 
-        if(!(entity instanceof PlayerEntity player))
+        if(!(entity instanceof PlayerEntity))
             return;
 
         if (!stack.hasNbt())
@@ -184,35 +181,6 @@ public class FarmingBook extends BaseGeneratingBook {
 
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        SingleItemStackingInventory inventory = this.getInventory(stack);
-
-
-        List<String> itemNames = new ArrayList<>();
-        for (ItemStack inventoryStack : inventory.storedItems) {
-            var itemName = inventoryStack.getItem().getName().getString();
-            if(itemNames.contains(itemName) || Objects.equals(itemName, Items.AIR.getName().getString())) {
-            }
-            else{
-                itemNames.add(itemName);
-            }
-        }
-
-        for(String itemName : itemNames){
-            var currentAmount = 0;
-            for(ItemStack inventoryStack : inventory.storedItems) {
-                if(inventoryStack.getItem().getName().getString().equals(itemName))
-                    currentAmount += inventoryStack.getCount();
-            }
-
-            tooltip.add(Text.literal("§a"+currentAmount + "x " + "§f" + itemName));
-        }
-
-        if(stack.getNbt() != null){
-            var compound = stack.getNbt();
-
-            if(compound.contains("indexed"))
-                tooltip.add(Text.literal("§aIndexed"));
-        }
         if(Screen.hasShiftDown()){
             tooltip.add(Text.translatable("tooltip.mystical_index.farming_book_shift0"));
             tooltip.add(Text.translatable("tooltip.mystical_index.farming_book_shift1"));
