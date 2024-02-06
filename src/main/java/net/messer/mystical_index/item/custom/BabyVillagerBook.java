@@ -1,12 +1,10 @@
 package net.messer.mystical_index.item.custom;
 
-import net.messer.mixin.PassiveEntityAccessor;
 import net.messer.mystical_index.item.ModItems;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnReason;
-import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
@@ -30,13 +28,12 @@ public class BabyVillagerBook extends Item {
     }
 
     @Override
-    public void onCraft(ItemStack stack, World world, PlayerEntity player) {
+    public void onCraft(ItemStack stack, World world) {
         if(world.isClient())
             return;
 
         createAndAddBabyVillagerToBook(stack, (ServerWorld) world);
-
-        super.onCraft(stack, world, player);
+        super.onCraft(stack, world);
     }
 
     @Override

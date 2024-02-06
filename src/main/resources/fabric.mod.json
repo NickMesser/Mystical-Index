@@ -23,6 +23,9 @@
     ],
     "client": [
       "net.messer.mystical_index.MysticalIndexClient"
+    ],
+    "rei_client": [
+      "net.messer.mystical_index.compat.MysticalIndexREIClientPlugin"
     ]
   },
   "mixins": [

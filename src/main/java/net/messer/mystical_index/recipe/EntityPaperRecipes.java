@@ -11,7 +11,6 @@ import net.minecraft.recipe.RecipeSerializer;
 import net.minecraft.recipe.SpecialCraftingRecipe;
 import net.minecraft.recipe.book.CraftingRecipeCategory;
 import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.world.World;
 
 public class EntityPaperRecipes extends SpecialCraftingRecipe {
@@ -21,6 +20,7 @@ public class EntityPaperRecipes extends SpecialCraftingRecipe {
 
     @Override
     public boolean matches(RecipeInputInventory recipeInputInventory, World world) {
+        MysticalIndex.LOGGER.info("Checking recipe");
         if (!this.fits(recipeInputInventory.getWidth(), recipeInputInventory.getHeight())) {
             return false;
         } else {
@@ -43,7 +43,8 @@ public class EntityPaperRecipes extends SpecialCraftingRecipe {
 
     @Override
     public ItemStack craft(RecipeInputInventory inventory, DynamicRegistryManager registryManager) {
-        var firstItem = inventory.getInputStacks().get(0);
+        //var firstItem = inventory.getInputStacks().get(0);
+        var firstItem = inventory.getStack(0);
         if(firstItem.getNbt() == null)
             return ItemStack.EMPTY;
 
@@ -52,7 +53,7 @@ public class EntityPaperRecipes extends SpecialCraftingRecipe {
             return ItemStack.EMPTY;
 
         boolean allNbtMatch = true;
-        for(var item : inventory.getInputStacks()){
+        for(var item : inventory.getHeldStacks()){
             if(item.getItem() == Items.EGG)
                 continue;
 

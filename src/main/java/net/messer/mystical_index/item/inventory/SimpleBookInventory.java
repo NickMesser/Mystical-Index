@@ -55,7 +55,7 @@ public class SimpleBookInventory {
 
         @Override
         public void setStack(int slot, ItemStack stack) {
-            this.stacks.set(slot, stack);
+            this.setStack(slot, stack);
             if (!stack.isEmpty() && stack.getCount() > this.getMaxCountPerStack()) {
                 stack.setCount(this.getMaxCountPerStack());
             }
@@ -63,7 +63,7 @@ public class SimpleBookInventory {
 
         @Override
         public void clear() {
-            this.stacks.clear();
+            this.getHeldStacks().clear();
         }
     };
 
