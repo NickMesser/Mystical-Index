@@ -4,7 +4,6 @@ import me.shedaniel.rei.api.client.gui.Renderer;
 import me.shedaniel.rei.api.client.gui.widgets.Widget;
 import me.shedaniel.rei.api.client.registry.display.DisplayCategory;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
-import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
 import me.shedaniel.rei.api.common.util.EntryStacks;
 import net.messer.mystical_index.MysticalIndex;
 import net.minecraft.item.Items;
@@ -13,14 +12,14 @@ import net.minecraft.util.Identifier;
 
 import java.util.List;
 
-public class PistonCraftingCategory implements DisplayCategory<BasicDisplay> {
+public class PistonCraftingCategory implements DisplayCategory<PistonCraftingDisplay> {
 
     public static final Identifier IDENTIFIER = new Identifier(MysticalIndex.MOD_ID, "textures/gui/piston_crafting_gui.png");
 
     public static  final CategoryIdentifier<PistonCraftingDisplay> PISTON_CRAFTING = CategoryIdentifier.of(MysticalIndex.MOD_ID);
 
     @Override
-    public CategoryIdentifier<? extends BasicDisplay> getCategoryIdentifier() {
+    public CategoryIdentifier<? extends PistonCraftingDisplay> getCategoryIdentifier() {
         return PISTON_CRAFTING;
     }
 
@@ -35,7 +34,7 @@ public class PistonCraftingCategory implements DisplayCategory<BasicDisplay> {
     }
 
     @Override
-    public List<Widget> setupDisplay(BasicDisplay display, me.shedaniel.math.Rectangle bounds) {
+    public List<Widget> setupDisplay(PistonCraftingDisplay display, me.shedaniel.math.Rectangle bounds) {
         return DisplayCategory.super.setupDisplay(display, bounds);
     }
 }

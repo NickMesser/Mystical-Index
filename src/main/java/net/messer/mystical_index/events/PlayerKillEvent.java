@@ -54,7 +54,7 @@ public class PlayerKillEvent {
         var entityPaper = new ItemStack(ModItems.ENTITY_PAPER);
         var nbt = entityPaper.getOrCreateNbt();
         nbt.putString("entity", Registries.ENTITY_TYPE.getId(entityId.getType()).toString());
-        entityPaper.onCraftByPlayer(world, FakePlayer.get((ServerWorld) world), 1);
+        entityPaper.onCraft(world, FakePlayer.get((ServerWorld) world), 1);
         entityId.dropStack(entityPaper);
     }
 }

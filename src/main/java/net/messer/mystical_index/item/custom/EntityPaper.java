@@ -17,7 +17,7 @@ public class EntityPaper extends Item {
     }
 
     @Override
-    public void onCraft(ItemStack stack, World world) {
+    public void onCraft(ItemStack stack, World world, PlayerEntity player) {
         var nbt = stack.getNbt();
         if (nbt == null)
             nbt = stack.getOrCreateNbt();
@@ -25,7 +25,7 @@ public class EntityPaper extends Item {
         var entityId = nbt.getString("entity");
         var entityType = EntityType.get(entityId).get();
         stack.setCustomName(Text.of( entityType.getName().getString() + " Paper"));
-        super.onCraft(stack, world);
+        super.onCraft(stack, world, player);
     }
 
     @Override

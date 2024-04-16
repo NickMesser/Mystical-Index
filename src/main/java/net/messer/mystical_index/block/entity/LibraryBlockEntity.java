@@ -36,7 +36,7 @@ public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandle
         @Override
         public void markDirty() {
             combinedContents.clear();
-            for (var itemStack : storedBooks.getHeldStacks()) {
+            for (var itemStack : storedBooks.stacks) {
                 if(itemStack.getItem() instanceof BaseStorageBook storageBook){
                     if(storageBook.getInventory(itemStack).isEmpty())
                         continue;
@@ -48,7 +48,7 @@ public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandle
                     public long insert(Object resource, long maxAmount, TransactionContext transaction) {
                         var stack = ((ItemVariantImpl) resource).toStack((int)maxAmount);
                         var stackCopy = stack.copy();
-                        for(var book: storedBooks.getHeldStacks()){
+                        for(var book: storedBooks.stacks){
                             if(book.getItem() instanceof BaseStorageBook storageBook){
                                 var storage = storageBook.getInventory(book);
                                 if(storage.tryAddStack(stack, false)){
@@ -67,13 +67,13 @@ public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandle
     public void readNbt(NbtCompound nbt) {
         super.readNbt(nbt);
         storedBooks.clear();
-        Inventories.readNbt(nbt, storedBooks.getHeldStacks());
+        Inventories.readNbt(nbt, storedBooks.stacks);
         storedBooks.markDirty();
     }
 
     @Override
     protected void writeNbt(NbtCompound nbt) {
-        Inventories.writeNbt(nbt, storedBooks.getHeldStacks());
+        Inventories.writeNbt(nbt, storedBooks.stacks);
     }
 
     public LibraryBlockEntity(BlockPos pos, BlockState state) {
@@ -93,7 +93,7 @@ public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandle
 
     public static void tick(World world, BlockPos pos, BlockState state, LibraryBlockEntity be) {
         var storedBooks = be.storedBooks;
-        for (var book : storedBooks.getHeldStacks()) {
+        for (var book : storedBooks.stacks) {
             if (book.getItem() instanceof BaseStorageBook storageBook) {
                 storageBook.customBookTick(book, world, be);
             }

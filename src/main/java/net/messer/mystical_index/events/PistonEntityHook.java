@@ -130,7 +130,7 @@ public class PistonEntityHook {
                 var itemEntry = craftedItems.get(craftedItem);
                 var itemStack = new ItemStack(craftedItem, itemEntry.count);
                 itemStack.setNbt(itemEntry.nbt.orElse(null));
-                itemStack.onCraftByPlayer(world, FakePlayer.get((ServerWorld) world), itemStack.getCount());
+                itemStack.onCraft(world, FakePlayer.get((ServerWorld) world), itemStack.getCount());
                 var itemEntity = new ItemEntity(world, itemPos.getX(), itemPos.getY(), itemPos.getZ(), itemStack);
                 world.spawnEntity(itemEntity);
                 world.playSound(null, itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(), SoundEvents.BLOCK_SLIME_BLOCK_PLACE, SoundCategory.BLOCKS, 2f, 2f);

@@ -68,7 +68,7 @@ public class FluidBook extends Item {
                         if(variant != fluidStorage.variant && fluidStorage.variant.getFluid() != Fluids.EMPTY)
                             return super.use(world, user, hand);
 
-                        ItemStack itemStack2 = fluidDrainable.tryDrainFluid(user ,world, blockPos, blockState);
+                        ItemStack itemStack2 = fluidDrainable.tryDrainFluid(world, blockPos, blockState);
                         if (!itemStack2.isEmpty()) {
                             fluidDrainable.getBucketFillSound().ifPresent((sound) -> {
                                 user.playSound(sound, 1.0F, 1.0F);
@@ -117,7 +117,7 @@ public class FluidBook extends Item {
             BlockState blockState = world.getBlockState(pos);
             Block block = blockState.getBlock();
             boolean bl = blockState.canBucketPlace(fluidStorage.variant.getFluid());
-            boolean bl2 = blockState.isAir() || bl || block instanceof FluidFillable && ((FluidFillable)block).canFillWithFluid(player, world, pos, blockState, fluidStorage.variant.getFluid());
+            boolean bl2 = blockState.isAir() || bl || block instanceof FluidFillable && ((FluidFillable)block).canFillWithFluid(world, pos, blockState, fluidStorage.variant.getFluid());
             if (!bl2) {
                 return hitResult != null && this.placeFluid(player, world, hitResult.getBlockPos().offset(hitResult.getSide()), (BlockHitResult)null, fluidBook);
             } else if (world.getDimension().ultrawarm() && fluidStorage.variant.getFluid().isIn(FluidTags.WATER)) {

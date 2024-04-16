@@ -11,11 +11,13 @@ import net.minecraft.recipe.RecipeSerializer;
 import net.minecraft.recipe.SpecialCraftingRecipe;
 import net.minecraft.recipe.book.CraftingRecipeCategory;
 import net.minecraft.registry.DynamicRegistryManager;
+import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
 
 public class EntityPaperRecipes extends SpecialCraftingRecipe {
-    public EntityPaperRecipes(CraftingRecipeCategory category) {
-        super(category);
+
+    public EntityPaperRecipes(Identifier id, CraftingRecipeCategory category) {
+        super(id, category);
     }
 
     @Override
@@ -30,7 +32,6 @@ public class EntityPaperRecipes extends SpecialCraftingRecipe {
                     case 4:
                         if(!(itemStack.getItem() == Items.EGG))
                             return false;
-                        break;
                     default:
                         if(!(itemStack.getItem() == ModItems.ENTITY_PAPER))
                             return false;
@@ -53,7 +54,7 @@ public class EntityPaperRecipes extends SpecialCraftingRecipe {
             return ItemStack.EMPTY;
 
         boolean allNbtMatch = true;
-        for(var item : inventory.getHeldStacks()){
+        for(var item : inventory.getInputStacks()){
             if(item.getItem() == Items.EGG)
                 continue;
 

@@ -28,12 +28,12 @@ public class BabyVillagerBook extends Item {
     }
 
     @Override
-    public void onCraft(ItemStack stack, World world) {
+    public void onCraft(ItemStack stack, World world, PlayerEntity player) {
         if(world.isClient())
             return;
 
         createAndAddBabyVillagerToBook(stack, (ServerWorld) world);
-        super.onCraft(stack, world);
+        super.onCraft(stack, world, player);
     }
 
     @Override
