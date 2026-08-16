@@ -10,6 +10,12 @@ import net.minecraft.item.Items;
 public class SimpleBookInventory {
     ItemStack bookStack;
 
+    // book.markDirty() writes into contents, and contents.markDirty() writes back into the book.
+    // SimpleInventory.setStack() calls markDirty() on every slot write, so without this guard each
+    // side re-entrantly triggers the other and the copy loops overwrite the book with a
+    // half-cleared inventory. Only the outermost sync is allowed to run.
+    private boolean syncing = false;
+
     public SimpleBookInventory(ItemStack stack){
         bookStack = stack;
         book.addStack(bookStack);
@@ -24,13 +30,20 @@ public class SimpleBookInventory {
     public SimpleInventory book = new SimpleInventory(1){
         @Override
         public void markDirty() {
+            if(syncing)
+                return;
+
             if(bookStack.getItem() instanceof BaseStorageBook storageBook){
-                var content = storageBook.getInventory(bookStack);
-                clearInventory(contents);
-                for(int i = 0; i < content.size(); i++){
-                    contents.setStack(i, content.getStack(i));
+                syncing = true;
+                try {
+                    var content = storageBook.getInventory(bookStack);
+                    clearInventory(contents);
+                    for(int i = 0; i < content.size() && i < contents.size(); i++){
+                        contents.setStack(i, content.getStack(i));
+                    }
+                } finally {
+                    syncing = false;
                 }
-                contents.markDirty();
             }
         }
     };
@@ -38,26 +51,31 @@ public class SimpleBookInventory {
     public SimpleInventory contents = new SimpleInventory(ModConfig.StorageBookMaxStacks * 5){
         @Override
         public void markDirty() {
-            if(bookStack.getItem() instanceof BaseStorageBook storageBook){
-                var content = storageBook.getInventory(bookStack);
-                content.clear();
-                for (int i = 0; i < contents.size(); i++) {
-                    if (i >= content.size())
-                        break;
-                    var stack = contents.getStack(i);
-                    if(stack.isEmpty() || stack.getItem() == Items.AIR)
-                        continue;
-                    content.setStack(i, contents.getStack(i));
-                }
-                content.markDirty();
-            }
-        }
+            if(syncing)
+                return;
 
-        @Override
-        public void setStack(int slot, ItemStack stack) {
-            this.setStack(slot, stack);
-            if (!stack.isEmpty() && stack.getCount() > this.getMaxCountPerStack()) {
-                stack.setCount(this.getMaxCountPerStack());
+            if(bookStack.getItem() instanceof BaseStorageBook storageBook){
+                syncing = true;
+                try {
+                    var content = storageBook.getInventory(bookStack);
+                    // Only the mirrored range may be cleared. A book with more slots than this
+                    // mirror (a high tier Book of Holding) would otherwise lose everything past
+                    // the end of the mirror, since the restore loop below cannot reach it.
+                    for (int i = 0; i < content.size() && i < contents.size(); i++) {
+                        content.setStack(i, ItemStack.EMPTY);
+                    }
+                    for (int i = 0; i < contents.size(); i++) {
+                        if (i >= content.size())
+                            break;
+                        var stack = contents.getStack(i);
+                        if(stack.isEmpty() || stack.getItem() == Items.AIR)
+                            continue;
+                        content.setStack(i, contents.getStack(i));
+                    }
+                    content.markDirty();
+                } finally {
+                    syncing = false;
+                }
             }
         }
 

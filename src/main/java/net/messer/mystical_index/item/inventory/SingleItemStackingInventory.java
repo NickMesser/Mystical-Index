@@ -2,7 +2,6 @@ package net.messer.mystical_index.item.inventory;
 import net.messer.config.ModConfig;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventories;
-import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -13,7 +12,7 @@ import net.minecraft.util.collection.DefaultedList;
 
 import java.util.Iterator;
 
-public class SingleItemStackingInventory implements Inventory {
+public class SingleItemStackingInventory implements BookInventory {
     public final ItemStack stack;
     public final int inventorySize;
     public final DefaultedList<ItemStack> storedItems;
@@ -70,6 +69,13 @@ public class SingleItemStackingInventory implements Inventory {
     }
 
 
+    // Network-facing insert. A bound book is a single type by definition, so it never takes a new
+    // one whatever the caller asks for. The Boolean overload below is the internal bypass.
+    @Override
+    public boolean tryAddStack(ItemStack stack, boolean allowNewTypes){
+        return tryAddStack(stack, Boolean.FALSE);
+    }
+
     public boolean tryAddStack(ItemStack stack, Boolean bypassItemCheck){
         if(stack.getItem() != currentlyStoredItem && !bypassItemCheck)
             return false;
@@ -85,7 +91,7 @@ public class SingleItemStackingInventory implements Inventory {
                     stack.decrement(remainder);
                     this.markDirty();
                     if(stack.getCount() > 0)
-                        return tryAddStack(stack, true);
+                        return tryAddStack(stack, Boolean.TRUE);
                     else
                         return true;
                 }
@@ -166,15 +172,21 @@ public class SingleItemStackingInventory implements Inventory {
 
     @Override
     public ItemStack removeStack(int slot) {
-        return Inventories.removeStack(storedItems, slot);
+        ItemStack removed = Inventories.removeStack(storedItems, slot);
+        this.markDirty();
+        return removed;
     }
 
     @Override
     public void setStack(int slot, ItemStack stack) {
         this.storedItems.set(slot, stack);
-        this.currentlyStoredItem = stack.getItem();
-        if (!stack.isEmpty() && stack.getCount() > this.getMaxCountPerStack()) {
-            stack.setCount(this.getMaxCountPerStack());
+        // Only a real item redefines what this book stores; clearing a slot must not reset the
+        // filter to air, or emptying the book forgets what it was bound to.
+        if (!stack.isEmpty()) {
+            this.currentlyStoredItem = stack.getItem();
+            if (stack.getCount() > this.getMaxCountPerStack()) {
+                stack.setCount(this.getMaxCountPerStack());
+            }
         }
 
         this.markDirty();

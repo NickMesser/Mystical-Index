@@ -4,7 +4,7 @@ import net.messer.config.ModConfig;
 import net.messer.mystical_index.item.custom.base_books.BaseStorageBook;
 import net.messer.mystical_index.item.inventory.SingleItemStackingInventory;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.item.BundleTooltipData;
+import net.messer.mystical_index.item.inventory.BookContentsTooltipData;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.client.item.TooltipData;
 import net.minecraft.entity.player.PlayerEntity;
@@ -62,15 +62,19 @@ public class StorageBook extends BaseStorageBook {
 
 
 
-        if(currentBookInventory.currentlyStoredItem instanceof BlockItem blockItem && currentBookInventory.tryRemoveOneItem()){
+        if(currentBookInventory.currentlyStoredItem instanceof BlockItem blockItem){
             var hitBlockPos = context.getBlockPos();
             var direction = context.getSide();
             var newBlockPos = hitBlockPos.offset(direction);
             var world = context.getWorld();
-            if(world.canPlayerModifyAt(player, newBlockPos) && player.canPlaceOn(newBlockPos, direction, heldBookStack) && world.canSetBlock(newBlockPos)){
-                var soundEvent = blockItem.getBlock().getSoundGroup(null).getPlaceSound();
+            // Validate placement before consuming: taking the item out first voided it whenever
+            // the block could not actually be placed.
+            if(world.canPlayerModifyAt(player, newBlockPos) && player.canPlaceOn(newBlockPos, direction, heldBookStack) && world.canSetBlock(newBlockPos)
+                    && currentBookInventory.tryRemoveOneItem()){
+                var placedState = blockItem.getBlock().getDefaultState();
+                var soundEvent = placedState.getSoundGroup().getPlaceSound();
                 context.getWorld().playSound(null, newBlockPos,soundEvent, SoundCategory.BLOCKS, 1.0f,1.0f);
-                context.getWorld().setBlockState(newBlockPos, blockItem.getBlock().getDefaultState());
+                context.getWorld().setBlockState(newBlockPos, placedState);
             }
         }
 
@@ -90,25 +94,11 @@ public class StorageBook extends BaseStorageBook {
             return Optional.empty();
 
 
-        return Optional.of(new BundleTooltipData(storageInventory.storedItems, ModConfig.StorageBookMaxStacks * 64));
+        return Optional.of(BookContentsTooltipData.fromInventory(storageInventory));
     }
 
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        if(stack.hasGlint()){
-            SingleItemStackingInventory inventory = new SingleItemStackingInventory(stack, ModConfig.StorageBookMaxStacks);
-            int currentAmount = 0;
-            for (ItemStack inventoryStack : inventory.storedItems) {
-                if(inventoryStack.getItem() == Items.AIR)
-                    continue;
-                currentAmount += inventoryStack.getCount();
-            }
-
-            Item storedItem = inventory.currentlyStoredItem;
-            tooltip.add(Text.literal("§a"+currentAmount + "x " + "§f" + storedItem.getName().getString()));
-            tooltip.add(Text.literal(""));
-        }
-
         if(Screen.hasShiftDown()){
             tooltip.add(Text.translatable("tooltip.mystical_index.storage_book_shift0"));
             tooltip.add(Text.translatable("tooltip.mystical_index.storage_book_shift1"));

@@ -10,6 +10,19 @@ public class ModConfig extends MidnightConfig {
     @Entry public static int StorageBookMaxStacks = 10;
     @Entry public static List<String> StorageBookBlockBlacklist = List.of("minecraft:shulker_box");
 
+    @Comment public static Comment BookOfHoldingTitle;
+    @Entry public static int HoldingBookTier1Types = 10;
+    @Entry public static int HoldingBookTier1StacksPerType = 1;
+    @Entry public static int HoldingBookTier2Types = 20;
+    @Entry public static int HoldingBookTier2StacksPerType = 2;
+    @Entry public static int HoldingBookTier3Types = 30;
+    @Entry public static int HoldingBookTier3StacksPerType = 4;
+    @Entry public static int HoldingBookTier4Types = 40;
+    @Entry public static int HoldingBookTier4StacksPerType = 8;
+
+    @Comment public static Comment LecternTitle;
+    @Entry public static int LecternRange = 16;
+
     @Comment public static Comment BoogMangetismTitle;
     @Entry public static int MagnetismRange = 5;
 

@@ -31,7 +31,7 @@ public class SingleFluidStackingInventory {
         }
     };
 
-    public boolean IsFluidEmpty(){
+    public boolean hasFluid(){
         return fluidStorage.amount != 0;
     }
 
@@ -46,15 +46,20 @@ public class SingleFluidStackingInventory {
     }
 
     public void writeNbt(){
-        NbtCompound tag = new NbtCompound();
+        // Merge into the existing compound: replacing it wholesale would drop the custom name
+        // and everything else already on the stack.
+        NbtCompound tag = stack.getOrCreateNbt();
         tag.put("fluidVariant", fluidStorage.variant.toNbt());
         tag.putLong("amount", fluidStorage.amount);
-        stack.setNbt(tag);
     }
 
     public void readNbt(ItemStack stack){
-        fluidStorage.variant = FluidVariant.fromNbt(stack.getNbt().getCompound("fluidVariant"));
-        fluidStorage.amount = stack.getNbt().getLong("amount");
+        NbtCompound tag = stack.getNbt();
+        if(tag == null)
+            return;
+
+        fluidStorage.variant = FluidVariant.fromNbt(tag.getCompound("fluidVariant"));
+        fluidStorage.amount = tag.getLong("amount");
         if(fluidStorage.variant.getFluid() != Fluids.EMPTY)
             stack.setCustomName(Text.literal("Book of " +
                     Registries.FLUID.getId(fluidStorage.variant.getFluid()).getPath().substring(0,1).toUpperCase() +

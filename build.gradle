@@ -32,6 +32,10 @@ dependencies {
 
 	// REI Stuff
 	modCompileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:${project.rei_version}"
+	// Full REI on the compile classpath too: the default plugin classes (BuiltinPlugin,
+	// DefaultCraftingDisplay) are needed to register displays into the vanilla crafting
+	// category without a runtime ClassCastException. Still compileOnly - no hard dependency.
+	modCompileOnly "me.shedaniel:RoughlyEnoughItems-fabric:${project.rei_version}"
 	modRuntimeOnly "me.shedaniel:RoughlyEnoughItems-fabric:${project.rei_version}"
 }
 

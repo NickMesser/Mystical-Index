@@ -49,31 +49,21 @@ public class BabyVillagerBook extends Item {
             return;
 
         NbtCompound nbt = stack.getNbt();
-        VillagerEntity villagerEntity = (VillagerEntity) EntityType.loadEntityWithPassengers(nbt.getCompound("Entity"), world, (entityx) -> entityx);
 
-        if(villagerEntity == null)
-            return;
-
-        villagerEntity.setBreedingAge(villagerEntity.getBreedingAge() + 1);
+        // Growth is driven entirely by the stored timestamp. Loading the villager here just to
+        // bump a breeding age that was never written back allocated an entity every tick.
         var timeUntilAdult = nbt.getLong("timeUntilAdult");
-        if(world.getTime() > timeUntilAdult)
+        if(world.getTime() > timeUntilAdult && entity instanceof PlayerEntity player)
         {
-            if(entity instanceof PlayerEntity player)
-            {
-                var inventorySlot = player.getInventory().getSlotWithStack(stack);
-                player.getInventory().setStack(inventorySlot, ItemStack.EMPTY);
-
-                ItemStack newVillagerStack = new ItemStack(ModItems.VILLAGER_BOOK);
-                var villagerBook = (VillagerBook) newVillagerStack.getItem();
-                villagerBook.createAndAddVillager(newVillagerStack,(ServerWorld) world);
-                player.getInventory().setStack(inventorySlot, newVillagerStack);
-                stack.decrement(1);
-                villagerEntity.remove(Entity.RemovalReason.DISCARDED);
-                return;
-            }
+            ItemStack newVillagerStack = new ItemStack(ModItems.VILLAGER_BOOK);
+            var villagerBook = (VillagerBook) newVillagerStack.getItem();
+            villagerBook.createAndAddVillager(newVillagerStack,(ServerWorld) world);
+            // getSlotWithStack matches on item type only, so it could return a different baby
+            // book's slot, or -1 when the book is not in the main inventory.
+            stack.decrement(1);
+            player.getInventory().offerOrDrop(newVillagerStack);
+            return;
         }
-
-        villagerEntity.remove(Entity.RemovalReason.DISCARDED);
 
         super.inventoryTick(stack, world, entity, slot, selected);
     }
@@ -92,15 +82,15 @@ public class BabyVillagerBook extends Item {
             return;
         }
 
-        VillagerEntity villagerEntity = (VillagerEntity) EntityType.loadEntityWithPassengers(nbt.getCompound("Entity"), world, (entityx) -> entityx);
-        if (villagerEntity == null)
+        if (world == null)
             return;
 
-        var timeUntilAdult = nbt.getLong("timeUntilAdult") - villagerEntity.getEntityWorld().getTime();
+        // Only the remaining time is needed, so read it straight from NBT instead of
+        // deserialising a villager on every tooltip frame.
+        var timeUntilAdult = Math.max(0, nbt.getLong("timeUntilAdult") - world.getTime());
         var secondsUntilAdult = timeUntilAdult / 20;
         var minutesUntilAdult = secondsUntilAdult / 60;
         tooltip.add(Text.of("§6Time until adult:§6 " + minutesUntilAdult + " minutes" + " " + secondsUntilAdult % 60 + " seconds"));
-        villagerEntity.remove(Entity.RemovalReason.DISCARDED);
         super.appendTooltip(stack, world, tooltip, context);
     }
     public VillagerEntity createChild(ServerWorld serverWorld) {

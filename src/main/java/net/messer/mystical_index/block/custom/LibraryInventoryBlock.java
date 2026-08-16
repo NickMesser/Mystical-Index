@@ -58,8 +58,10 @@ public class LibraryInventoryBlock extends BlockWithEntity implements BlockEntit
     public void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
         if (!state.isOf(newState.getBlock())) {
             BlockEntity blockEntity = world.getBlockEntity(pos);
-            if (blockEntity instanceof Inventory) {
-                ItemScatterer.spawn(world, pos, (Inventory)blockEntity);
+            // LibraryBlockEntity does not implement Inventory itself — it holds one. Testing the
+            // block entity dropped every stored book on break.
+            if (blockEntity instanceof LibraryBlockEntity libraryBlockEntity) {
+                ItemScatterer.spawn(world, pos, libraryBlockEntity.storedBooks);
                 world.updateComparators(pos, this);
             }
 

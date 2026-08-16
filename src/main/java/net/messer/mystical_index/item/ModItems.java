@@ -24,6 +24,18 @@ public class ModItems {
     public static final Item STORAGE_BOOK = registerItem("storage_book",
             new StorageBook(new FabricItemSettings().maxCount(1)));
 
+    public static final Item HOLDING_BOOK_TIER1 = registerItem("holding_book_1",
+            new TieredStorageBook(new FabricItemSettings().maxCount(1), 1));
+
+    public static final Item HOLDING_BOOK_TIER2 = registerItem("holding_book_2",
+            new TieredStorageBook(new FabricItemSettings().maxCount(1), 2));
+
+    public static final Item HOLDING_BOOK_TIER3 = registerItem("holding_book_3",
+            new TieredStorageBook(new FabricItemSettings().maxCount(1), 3));
+
+    public static final Item HOLDING_BOOK_TIER4 = registerItem("holding_book_4",
+            new TieredStorageBook(new FabricItemSettings().maxCount(1), 4));
+
     public static final Item HUSBANDRY_BOOK = registerItem("husbandry_book",
             new HusbandryBook(new FabricItemSettings().maxCount(1)));
 
@@ -60,11 +72,16 @@ public class ModItems {
     public static void addItemsToItemGroup(){
         addToItemGroup(ItemGroups.TOOLS, FLUID_BOOK);
         addToItemGroup(ItemGroups.TOOLS, STORAGE_BOOK);
+        addToItemGroup(ItemGroups.TOOLS, HOLDING_BOOK_TIER1);
+        addToItemGroup(ItemGroups.TOOLS, HOLDING_BOOK_TIER2);
+        addToItemGroup(ItemGroups.TOOLS, HOLDING_BOOK_TIER3);
+        addToItemGroup(ItemGroups.TOOLS, HOLDING_BOOK_TIER4);
         addToItemGroup(ItemGroups.TOOLS, HUSBANDRY_BOOK);
         addToItemGroup(ItemGroups.TOOLS, HOSTILE_BOOK);
         addToItemGroup(ItemGroups.TOOLS, SATURATION_BOOK);
         addToItemGroup(ItemGroups.TOOLS, MAGNETISM_BOOK);
         addToItemGroup(ItemGroups.FUNCTIONAL, Item.fromBlock(ModBlocks.LIBRARY));
+        addToItemGroup(ItemGroups.FUNCTIONAL, Item.fromBlock(ModBlocks.MYSTICAL_LECTERN));
         addToItemGroup(ItemGroups.TOOLS, EMPTY_VILLAGER_BOOK);
         addToItemGroup(ItemGroups.TOOLS, BABY_VILLAGER_BOOK);
         addToItemGroup(ItemGroups.TOOLS, FARMING_BOOK);

@@ -22,19 +22,17 @@ public class EntityPaperRecipes extends SpecialCraftingRecipe {
 
     @Override
     public boolean matches(RecipeInputInventory recipeInputInventory, World world) {
-        MysticalIndex.LOGGER.info("Checking recipe");
         if (!this.fits(recipeInputInventory.getWidth(), recipeInputInventory.getHeight())) {
             return false;
         } else {
             for(int i = 0; i < recipeInputInventory.size(); ++i) {
                 ItemStack itemStack = recipeInputInventory.getStack(i);
-                switch (i) {
-                    case 4:
-                        if(!(itemStack.getItem() == Items.EGG))
-                            return false;
-                    default:
-                        if(!(itemStack.getItem() == ModItems.ENTITY_PAPER))
-                            return false;
+                // Centre slot takes the egg, every other slot takes entity paper.
+                if (i == 4) {
+                    if (itemStack.getItem() != Items.EGG)
+                        return false;
+                } else if (itemStack.getItem() != ModItems.ENTITY_PAPER) {
+                    return false;
                 }
             }
 
@@ -58,14 +56,24 @@ public class EntityPaperRecipes extends SpecialCraftingRecipe {
             if(item.getItem() == Items.EGG)
                 continue;
 
-            if(!item.getNbt().equals(nbt))
+            if(!nbt.equals(item.getNbt()))
                 allNbtMatch = false;
         }
 
         if(!allNbtMatch)
             return ItemStack.EMPTY;
 
-        return SpawnEggItem.forEntity(EntityType.get(nbt.getString("entity")).get()).getDefaultStack();
+        // The stored id can name an entity that no longer exists (removed mod) or one with no
+        // spawn egg, so neither lookup is guaranteed to resolve.
+        var entityType = EntityType.get(nbt.getString("entity")).orElse(null);
+        if(entityType == null)
+            return ItemStack.EMPTY;
+
+        var spawnEgg = SpawnEggItem.forEntity(entityType);
+        if(spawnEgg == null)
+            return ItemStack.EMPTY;
+
+        return spawnEgg.getDefaultStack();
     }
 
     @Override

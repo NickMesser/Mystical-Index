@@ -1,6 +1,7 @@
 package net.messer.mystical_index.item.custom.base_books;
 
 import net.messer.mystical_index.MysticalIndex;
+import net.messer.mystical_index.item.inventory.BookInventory;
 import net.messer.mystical_index.item.inventory.SingleItemStackingInventory;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.Entity;
@@ -12,7 +13,7 @@ public class BaseStorageBook extends Item {
     public BaseStorageBook(Settings settings) {
         super(settings);
     }
-    public SingleItemStackingInventory getInventory(ItemStack stack){
+    public BookInventory getInventory(ItemStack stack){
         return new SingleItemStackingInventory(stack, 64);
     }
 

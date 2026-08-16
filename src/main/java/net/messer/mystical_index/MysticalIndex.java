@@ -10,6 +10,7 @@ import net.messer.mystical_index.block.entity.ModBlockEntities;
 import net.messer.mystical_index.events.PlayerKillEvent;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.provider.PaperColorProvider;
+import net.messer.mystical_index.network.LecternNetworking;
 import net.messer.mystical_index.recipe.ModRecipe;
 import net.messer.mystical_index.recipe.PistonRecipeInitializer;
 import net.messer.mystical_index.screen.ModScreenHandlers;
@@ -45,6 +46,7 @@ public class MysticalIndex implements ModInitializer {
 		ModRecipe.registerRecipes();
 
 		ModScreenHandlers.registerScreenHandlers();
+		LecternNetworking.registerServerReceivers();
 
 		PaperColorProvider.register();
 	}

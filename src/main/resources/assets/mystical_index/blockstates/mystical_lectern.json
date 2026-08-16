@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "mystical_index:block/mystical_lectern"
+    },
+    "facing=south": {
+      "model": "mystical_index:block/mystical_lectern",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "mystical_index:block/mystical_lectern",
+      "y": 270
+    },
+    "facing=east": {
+      "model": "mystical_index:block/mystical_lectern",
+      "y": 90
+    }
+  }
+}

@@ -66,7 +66,7 @@ public class MagnetismBook extends Item {
 
     @Override
     public ActionResult useOnBlock(ItemUsageContext context) {
-        if(context.getWorld().isClient || !context.getPlayer().isSneaking())
+        if(context.getWorld().isClient || context.getPlayer() == null || !context.getPlayer().isSneaking())
             return super.useOnBlock(context);
 
         Block hitBlock = context.getWorld().getBlockState(context.getBlockPos()).getBlock();
@@ -129,7 +129,9 @@ public class MagnetismBook extends Item {
 
         for (Item item : itemFilters) {
             NbtCompound nbtCompound = new NbtCompound();
-            nbtCompound.putString("ItemName", item.toString());
+            // Item.toString() returns only the path, so modded items round-tripped back as
+            // minecraft:<path> and resolved to air. Store the full identifier.
+            nbtCompound.putString("ItemName", Registries.ITEM.getId(item).toString());
             nbtList.add(nbtCompound);
         }
 

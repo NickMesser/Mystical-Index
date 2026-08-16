@@ -13,7 +13,9 @@ import net.minecraft.util.Identifier;
 public class ModScreenHandlers {
 
     public static ScreenHandlerType<LibraryInventoryScreenHandler> LIBRARY_INVENTORY_SCREEN_HANDLER;
+    public static ScreenHandlerType<MysticalLecternScreenHandler> MYSTICAL_LECTERN_SCREEN_HANDLER;
     public static void registerScreenHandlers() {
         LIBRARY_INVENTORY_SCREEN_HANDLER = ScreenHandlerRegistry.registerSimple(new Identifier(MysticalIndex.MOD_ID, "library_inventory"), LibraryInventoryScreenHandler::new);
+        MYSTICAL_LECTERN_SCREEN_HANDLER = ScreenHandlerRegistry.registerSimple(new Identifier(MysticalIndex.MOD_ID, "mystical_lectern"), MysticalLecternScreenHandler::new);
     }
 }

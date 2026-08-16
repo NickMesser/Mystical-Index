@@ -4,6 +4,7 @@ import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.block.custom.LibraryInventoryBlock;
+import net.messer.mystical_index.block.custom.MysticalLecternBlock;
 import net.minecraft.block.Block;
 import net.minecraft.item.BlockItem;
 import net.minecraft.registry.Registries;
@@ -14,6 +15,9 @@ public class ModBlocks {
 
     public static final Block LIBRARY = registerBlock("library",
             new LibraryInventoryBlock(FabricBlockSettings.create().strength(1.5f)));
+
+    public static final Block MYSTICAL_LECTERN = registerBlock("mystical_lectern",
+            new MysticalLecternBlock(FabricBlockSettings.create().strength(2.5f).nonOpaque()));
 
     private static Block registerBlock(String name, Block block){
         registerBlockItem(name, block);

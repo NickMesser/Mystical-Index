@@ -59,7 +59,7 @@ public class PistonEntityHook {
                             }
                         }
                         if(stack.getItem() instanceof HostileBook hostileBook && !entityId.equals("")){
-                            hostileBook.addEntityToBook(stack, entityId);
+                            hostileBook.addEntityToBook(stack, entityId, world);
                             hostileBook.increaseKills(stack, 1);
                             for(var item : itemStacks){
                                 if(item.getItem() != ModItems.ENTITY_PAPER)
@@ -71,8 +71,10 @@ public class PistonEntityHook {
                         }
                     }
 
+                    // A generating book that still has no NBT (or one the branch above did not
+                    // claim) reaches here with a null compound.
                     var compound = stack.getNbt();
-                    if(compound.contains("storedEntityId")){
+                    if(compound != null && compound.contains("storedEntityId")){
                         var storedEntityId = compound.getString("storedEntityId");
                         // Check if other input items have matching nbt
                         boolean allNbtMatch = true;
@@ -81,8 +83,10 @@ public class PistonEntityHook {
                             if(item.getItem() != ModItems.ENTITY_PAPER)
                                 continue;
 
-                            if(!item.hasNbt())
+                            if(!item.hasNbt()){
                                 allNbtMatch = false;
+                                continue;
+                            }
 
                             if(!item.getNbt().getString("entity").equals(storedEntityId))
                                 allNbtMatch = false;

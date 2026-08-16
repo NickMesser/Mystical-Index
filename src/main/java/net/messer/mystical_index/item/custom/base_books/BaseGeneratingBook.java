@@ -11,10 +11,9 @@ public class BaseGeneratingBook extends BaseStorageBook{
     }
 
     public void updateUseTime(ItemStack stack, long time){
-        NbtCompound compound = stack.getNbt();
-
-        if(compound == null)
-            compound = new NbtCompound();
+        // getOrCreateNbt() attaches the compound to the stack; a bare `new NbtCompound()` would
+        // be discarded and the write silently lost.
+        NbtCompound compound = stack.getOrCreateNbt();
 
         compound.putLong("lastUsedTime", time);
     }

@@ -2,6 +2,7 @@ package net.messer.mystical_index.events;
 
 import net.messer.config.ModConfig;
 import net.messer.mystical_index.item.ModItems;
+import net.messer.mystical_index.item.custom.TieredStorageBook;
 import net.messer.mystical_index.item.custom.VillagerBook;
 import net.messer.mystical_index.item.inventory.SingleItemStackingInventory;
 import net.minecraft.entity.LivingEntity;
@@ -24,7 +25,8 @@ public class MixinHooks {
     public static boolean interceptPickup(PlayerInventory playerInventory, ItemStack itemPickedUp) {
         var player = playerInventory.player;
 
-        if(ModConfig.StorageBookBlockBlacklist.contains(Registries.ITEM.getId(itemPickedUp.getItem())) || player.getWorld().isClient()){
+        // The blacklist holds strings; comparing it against an Identifier never matched.
+        if(ModConfig.StorageBookBlockBlacklist.contains(Registries.ITEM.getId(itemPickedUp.getItem()).toString()) || player.getWorld().isClient()){
             return false;
         }
 
@@ -33,10 +35,12 @@ public class MixinHooks {
                 var potentialBook = playerInventory.getStack(i);
                 if (potentialBook.getItem() == ModItems.SATURATION_BOOK) {
                     SingleItemStackingInventory bookInventory = new SingleItemStackingInventory(potentialBook, ModConfig.SaturationBookMaxStacks);
-                    return bookInventory.tryAddStack(itemPickedUp, Boolean.FALSE);
+                    if(bookInventory.tryAddStack(itemPickedUp, Boolean.FALSE))
+                        return true;
+
+                    break;
                 }
             }
-            return false;
         }
 
         if(itemPickedUp.getItem() instanceof BlockItem){
@@ -44,10 +48,28 @@ public class MixinHooks {
                 var potentialBook = playerInventory.getStack(i);
                 if (potentialBook.getItem() == ModItems.STORAGE_BOOK) {
                     var bookInventory = new SingleItemStackingInventory(potentialBook, ModConfig.StorageBookMaxStacks);
-                    return bookInventory.tryAddStack(itemPickedUp, Boolean.FALSE);
+                    if(bookInventory.tryAddStack(itemPickedUp, Boolean.FALSE))
+                        return true;
+
+                    break;
                 }
             }
         }
+
+        // Books of Holding get a pass for every pickup the books above did not consume, but only
+        // for types they already hold: a pocket book must not claim a type slot on its own. A
+        // partial absorb leaves a remainder for the next book, or for the player's own inventory.
+        for (int i = 0; i < playerInventory.size(); i++) {
+            var potentialBook = playerInventory.getStack(i);
+            if (potentialBook.getItem() instanceof TieredStorageBook tiered) {
+                if(tiered.getInventory(potentialBook).tryAddStack(itemPickedUp, false))
+                    return true;
+
+                if(itemPickedUp.isEmpty())
+                    return true;
+            }
+        }
+
         return false;
     }
 

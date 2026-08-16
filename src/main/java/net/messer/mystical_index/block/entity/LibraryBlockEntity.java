@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
 import net.fabricmc.fabric.impl.transfer.item.ItemVariantImpl;
 import net.messer.mystical_index.item.custom.base_books.BaseStorageBook;
 import net.messer.mystical_index.item.inventory.LibraryCombinedStorage;
+import net.messer.mystical_index.item.inventory.LibraryNetwork;
 import net.messer.mystical_index.item.inventory.SimpleBookInventory;
 import net.messer.mystical_index.screen.LibraryInventoryScreenHandler;
 import net.minecraft.block.BlockState;
@@ -47,16 +48,10 @@ public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandle
                     @Override
                     public long insert(Object resource, long maxAmount, TransactionContext transaction) {
                         var stack = ((ItemVariantImpl) resource).toStack((int)maxAmount);
-                        var stackCopy = stack.copy();
-                        for(var book: storedBooks.stacks){
-                            if(book.getItem() instanceof BaseStorageBook storageBook){
-                                var storage = storageBook.getInventory(book);
-                                if(storage.tryAddStack(stack, false)){
-                                    return stackCopy.getCount();
-                                }
-                            }
-                        }
-                        return 0;
+                        // Books already bound to this item fill first, then an unbound Book of
+                        // Holding claims the rest. The return value is the real amount taken;
+                        // reporting the full requested amount made the caller void the remainder.
+                        return LibraryNetwork.insertIntoLibrary(LibraryBlockEntity.this, stack);
                     }
                 };
                 LibraryBlockEntity.this.markDirty();

@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "LBL",
+    "BCB",
+    "LBL"
+  ],
+  "key": {
+    "L": {
+      "item": "minecraft:leather"
+    },
+    "B": {
+      "item": "minecraft:book"
+    },
+    "C": {
+      "item": "minecraft:chest"
+    }
+  },
+  "result": {
+    "item": "mystical_index:holding_book_1"
+  }
+}

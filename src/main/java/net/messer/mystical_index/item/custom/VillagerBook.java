@@ -10,6 +10,7 @@ import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemUsage;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.Registries;
@@ -44,7 +45,7 @@ public class VillagerBook extends Item {
         NbtCompound nbt = stack.getNbt();
         World world = context.getWorld();
 
-        if(player.isSneaking() && stack.hasNbt()){
+        if(player != null && player.isSneaking() && stack.hasNbt()){
             var server = context.getWorld().getServer();
             var jobSiteWorld = server.getWorld(context.getWorld().getRegistryKey());
             var poiType = jobSiteWorld.getPointOfInterestStorage().getType(context.getBlockPos()).orElse(null);
@@ -70,12 +71,15 @@ public class VillagerBook extends Item {
                     return entityx;
                 });
 
-                if(entity != null)
-                    nbt.remove("Entity");
+                // If the villager could not be placed, keep the book intact rather than trading it
+                // for an empty one and losing the stored villager.
+                if(entity == null)
+                    return super.useOnBlock(context);
+
+                nbt.remove("Entity");
 
                 ItemStack emptyVillagerStack = new ItemStack(ModItems.EMPTY_VILLAGER_BOOK);
-                stack.decrement(1);
-                player.setStackInHand(context.getHand(), emptyVillagerStack);
+                player.setStackInHand(context.getHand(), ItemUsage.exchangeStack(stack, player, emptyVillagerStack));
                 return super.useOnBlock(context);
             }
 
@@ -90,6 +94,9 @@ public class VillagerBook extends Item {
                 entityx.refreshPositionAndAngles(context.getBlockPos().getX(), context.getBlockPos().getY(), context.getBlockPos().getZ(), entityx.getYaw(), entityx.getPitch());
                 return entityx;
             });
+
+            if(villagerEntity == null)
+                return super.useOnBlock(context);
 
             if(villagerEntity.getVillagerData().getProfession() == VillagerProfession.NONE || villagerEntity.getExperience() == 0)
             {

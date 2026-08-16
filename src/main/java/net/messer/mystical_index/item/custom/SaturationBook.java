@@ -5,7 +5,7 @@ import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.inventory.SingleItemStackingInventory;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.item.BundleTooltipData;
+import net.messer.mystical_index.item.inventory.BookContentsTooltipData;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.client.item.TooltipData;
 import net.minecraft.entity.Entity;
@@ -93,17 +93,11 @@ public class SaturationBook extends Item {
             return Optional.empty();
 
 
-        return Optional.of(new BundleTooltipData(storageInventory.storedItems, ModConfig.SaturationBookMaxStacks * 64));
+        return Optional.of(BookContentsTooltipData.fromInventory(storageInventory));
     }
 
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        if(stack.hasGlint()){
-            SingleItemStackingInventory inventory = new SingleItemStackingInventory(stack, ModConfig.SaturationBookMaxStacks);
-            tooltip.add(Text.literal("§a"+ inventory.getCountOfStoredItem() + "x " + "§f" + inventory.currentlyStoredItem.getName().getString()));
-            tooltip.add(Text.literal(""));
-        }
-
         if(Screen.hasShiftDown()){
             tooltip.add(Text.translatable("tooltip.mystical_index.saturation_book_shift0"));
             tooltip.add(Text.translatable("tooltip.mystical_index.saturation_book_shift1"));

@@ -59,7 +59,7 @@ public class FluidBook extends Item {
             BlockPos blockPos2 = blockPos.offset(direction);
             if (world.canPlayerModifyAt(user, blockPos) && user.canPlaceOn(blockPos2, direction, itemStack)) {
                 var blockState = world.getBlockState(blockPos);
-                if (fluidStorage.variant.getFluid() == Fluids.EMPTY || fluidStorage.amount <= fluidStorage.getCapacity() && blockState.getBlock() instanceof FluidDrainable) {
+                if (fluidStorage.variant.getFluid() == Fluids.EMPTY || fluidStorage.amount + FluidConstants.BUCKET <= fluidStorage.getCapacity() && blockState.getBlock() instanceof FluidDrainable) {
                     if (blockState.getBlock() instanceof FluidDrainable) {
                         FluidDrainable fluidDrainable = (FluidDrainable)blockState.getBlock();
                         FluidVariant variant = FluidVariant.of(blockState.getFluidState().getFluid());
@@ -67,6 +67,16 @@ public class FluidBook extends Item {
 
                         if(variant != fluidStorage.variant && fluidStorage.variant.getFluid() != Fluids.EMPTY)
                             return super.use(world, user, hand);
+
+                        // Check there is room *before* draining: tryDrainFluid removes the source
+                        // block, so a rejected insert afterwards would destroy the fluid.
+                        try (Transaction test = Transaction.openOuter()){
+                            if (fluidStorage.insert(variant, FluidConstants.BUCKET, test) < FluidConstants.BUCKET) {
+                                test.abort();
+                                return TypedActionResult.fail(itemStack);
+                            }
+                            test.abort();
+                        }
 
                         ItemStack itemStack2 = fluidDrainable.tryDrainFluid(world, blockPos, blockState);
                         if (!itemStack2.isEmpty()) {
@@ -160,7 +170,7 @@ public class FluidBook extends Item {
     @Override
     public boolean hasGlint(ItemStack stack) {
         var fluidInventory = new SingleFluidStackingInventory(stack);
-        return fluidInventory.IsFluidEmpty();
+        return fluidInventory.hasFluid();
     }
 
     @Override

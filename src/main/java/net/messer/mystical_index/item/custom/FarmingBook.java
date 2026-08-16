@@ -11,7 +11,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.CropBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.item.BundleTooltipData;
+import net.messer.mystical_index.item.inventory.BookContentsTooltipData;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.client.item.TooltipData;
 import net.minecraft.entity.Entity;
@@ -87,7 +87,7 @@ public class FarmingBook extends BaseGeneratingBook {
 
     @Override
     public SingleItemStackingInventory getInventory(ItemStack stack) {
-        return new SingleItemStackingInventory(stack, 5);
+        return new SingleItemStackingInventory(stack, ModConfig.BookOfFarmingMaxStacks);
     }
 
     @Override
@@ -108,6 +108,9 @@ public class FarmingBook extends BaseGeneratingBook {
             updateUseTime(stack, currentTime);
 
         var crop = getCrop(stack);
+        if(crop == null)
+            return;
+
         var cropId = Registries.BLOCK.getId(crop).toString();
         var cooldown = ModConfig.BookOfFarmingDefaultCooldown;
         if(BookOfFarmingCooldowns.get(cropId) != null)
@@ -118,20 +121,17 @@ public class FarmingBook extends BaseGeneratingBook {
             return;
 
         updateUseTime(stack, currentTime);
-        if(crop == null)
-            return;
 
         BlockState cropGrownState = crop.getDefaultState().with(CropBlock.AGE, crop.getMaxAge());
 
         var bookInventory = getInventory(stack);
         var cropLoot = Block.getDroppedStacks(cropGrownState, (ServerWorld) world, new BlockPos(0,0,0), null);
         for (ItemStack itemStack : cropLoot) {
-            if(itemStack.getItem() != crop.asItem()){
-                itemStack.setCount(itemStack.getCount() + new Random().nextInt(0, 4));
-                if(!bookInventory.tryAddStack(itemStack, true))
-                    itemStack.setCount(0);
-            }
-            if(!bookInventory.tryAddStack(itemStack, true))
+            // Non-seed drops (the actual produce) get a small random bonus.
+            if(itemStack.getItem() != crop.asItem())
+                itemStack.setCount(itemStack.getCount() + world.random.nextInt(4));
+
+            if(!bookInventory.tryAddStack(itemStack, Boolean.TRUE))
                 itemStack.setCount(0);
         }
     }
@@ -176,7 +176,7 @@ public class FarmingBook extends BaseGeneratingBook {
             return Optional.empty();
 
 
-        return Optional.of(new BundleTooltipData(storageInventory.storedItems, ModConfig.BookOfFarmingMaxStacks * 64));
+        return Optional.of(BookContentsTooltipData.fromInventory(storageInventory));
     }
 
     @Override

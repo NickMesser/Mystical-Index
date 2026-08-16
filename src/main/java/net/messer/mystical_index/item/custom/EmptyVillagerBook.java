@@ -8,6 +8,7 @@ import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemUsage;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -29,18 +30,16 @@ public class EmptyVillagerBook extends Item {
                 var bookItem = (BabyVillagerBook) newStack.getItem();
                 bookItem.addBabyVillagerToBook(newStack, villagerEntity);
                 entity.remove(Entity.RemovalReason.DISCARDED);
-                stack.decrement(1);
-                user.setStackInHand(hand, newStack);
+                // exchangeStack consumes one book and routes the filled one to the inventory when
+                // the player is holding more than one; setStackInHand alone destroyed the rest.
+                user.setStackInHand(hand, ItemUsage.exchangeStack(stack, user, newStack));
             } else{
                 ItemStack newStack = new ItemStack(ModItems.VILLAGER_BOOK);
                 var bookItem = (VillagerBook) newStack.getItem();
                 bookItem.addVillagerToBook(newStack, (VillagerEntity) entity);
                 entity.remove(Entity.RemovalReason.DISCARDED);
-                stack.decrement(1);
-                user.setStackInHand(hand, newStack);
+                user.setStackInHand(hand, ItemUsage.exchangeStack(stack, user, newStack));
             }
-
-            super.useOnEntity(stack, user, entity, hand);
         }
         return super.useOnEntity(stack, user, entity, hand);
     }

@@ -22,9 +22,12 @@ public class EntityPaper extends Item {
         if (nbt == null)
             nbt = stack.getOrCreateNbt();
 
+        // Paper crafted without a bound entity has no usable id here.
         var entityId = nbt.getString("entity");
-        var entityType = EntityType.get(entityId).get();
-        stack.setCustomName(Text.of( entityType.getName().getString() + " Paper"));
+        var entityType = EntityType.get(entityId).orElse(null);
+        if (entityType != null)
+            stack.setCustomName(Text.of( entityType.getName().getString() + " Paper"));
+
         super.onCraft(stack, world, player);
     }
 
