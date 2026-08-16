@@ -140,14 +140,18 @@ public class TieredStorageBook extends BaseStorageBook {
 
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        tooltip.add(Text.literal("§7Tier " + getTierNumeral()));
+        tooltip.add(Text.translatable("tooltip.mystical_index.holding_book.tier", getTierNumeral()));
 
         var inventory = getInventory(stack);
         var summaries = inventory.getTypeSummaries();
         var stacksPerType = inventory.stacksPerType;
 
-        tooltip.add(Text.literal("§7Types: " + summaries.size() + "/" + inventory.getTypeCapacity()
-                + " - " + stacksPerType + (stacksPerType == 1 ? " stack" : " stacks") + " each"));
+        if(stacksPerType == 1)
+            tooltip.add(Text.translatable("tooltip.mystical_index.holding_book.types_single",
+                    summaries.size(), inventory.getTypeCapacity(), stacksPerType));
+        else
+            tooltip.add(Text.translatable("tooltip.mystical_index.holding_book.types_multiple",
+                    summaries.size(), inventory.getTypeCapacity(), stacksPerType));
 
         // The per-type list lives in BookContentsTooltipComponent's grid now.
         tooltip.add(Text.literal(""));

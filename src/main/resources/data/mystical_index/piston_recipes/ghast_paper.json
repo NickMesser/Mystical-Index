@@ -20,7 +20,7 @@
     {
       "item" : "mystical_index:entity_paper",
       "amount": 1,
-      "nbt" : "{'entity':'minecraft:zombie'}"
+      "nbt" : "{'entity':'minecraft:ghast'}"
     }
   ]
 }

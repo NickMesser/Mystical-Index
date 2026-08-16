@@ -50,14 +50,24 @@ public class BabyVillagerBook extends Item {
 
         NbtCompound nbt = stack.getNbt();
 
+        // getLong returns 0 for a missing key, so without this guard a book carrying unrelated
+        // NBT would "mature" on the next tick.
+        if(!nbt.contains("timeUntilAdult"))
+            return;
+
         // Growth is driven entirely by the stored timestamp. Loading the villager here just to
         // bump a breeding age that was never written back allocated an entity every tick.
         var timeUntilAdult = nbt.getLong("timeUntilAdult");
         if(world.getTime() > timeUntilAdult && entity instanceof PlayerEntity player)
         {
             ItemStack newVillagerStack = new ItemStack(ModItems.VILLAGER_BOOK);
-            var villagerBook = (VillagerBook) newVillagerStack.getItem();
-            villagerBook.createAndAddVillager(newVillagerStack,(ServerWorld) world);
+            // Carry the captured villager over (biome type, name, trades, xp) instead of spawning
+            // a fresh plains villager, and clear the breeding age so the matured book holds an
+            // adult. This mirrors how addVillagerToBook stores the villager under "Entity".
+            NbtCompound entityNbt = nbt.getCompound("Entity").copy();
+            entityNbt.putInt("Age", 0);
+            newVillagerStack.getOrCreateNbt().put("Entity", entityNbt);
+            newVillagerStack.setCustomName(Text.translatable("item.mystical_index.villager_book"));
             // getSlotWithStack matches on item type only, so it could return a different baby
             // book's slot, or -1 when the book is not in the main inventory.
             stack.decrement(1);
@@ -78,7 +88,7 @@ public class BabyVillagerBook extends Item {
         NbtCompound nbt = stack.getNbt();
 
         if(nbt == null) {
-            tooltip.add(Text.of("§aCraft to create a baby villager!"));
+            tooltip.add(Text.translatable("tooltip.mystical_index.baby_villager_book.craft"));
             return;
         }
 
@@ -90,7 +100,7 @@ public class BabyVillagerBook extends Item {
         var timeUntilAdult = Math.max(0, nbt.getLong("timeUntilAdult") - world.getTime());
         var secondsUntilAdult = timeUntilAdult / 20;
         var minutesUntilAdult = secondsUntilAdult / 60;
-        tooltip.add(Text.of("§6Time until adult:§6 " + minutesUntilAdult + " minutes" + " " + secondsUntilAdult % 60 + " seconds"));
+        tooltip.add(Text.translatable("tooltip.mystical_index.baby_villager_book.time_until_adult", minutesUntilAdult, secondsUntilAdult % 60));
         super.appendTooltip(stack, world, tooltip, context);
     }
     public VillagerEntity createChild(ServerWorld serverWorld) {
@@ -112,7 +122,7 @@ public class BabyVillagerBook extends Item {
         nbt.put("Entity", entityNbt);
         nbt.putLong("timeUntilAdult", timeUntilAdult);
         child.remove(Entity.RemovalReason.DISCARDED);
-        stack.setCustomName(Text.of("Baby Villager Book"));
+        stack.setCustomName(Text.translatable("item.mystical_index.baby_villager_book"));
     }
 
     public void addBabyVillagerToBook(ItemStack stack, VillagerEntity villagerEntity) {
@@ -123,6 +133,6 @@ public class BabyVillagerBook extends Item {
         villagerEntity.saveSelfNbt(entityNbt);
         nbt.put("Entity", entityNbt);
         nbt.putLong("timeUntilAdult", timeUntilAdult);
-        stack.setCustomName(Text.of("Baby Villager Book"));
+        stack.setCustomName(Text.translatable("item.mystical_index.baby_villager_book"));
     }
 }

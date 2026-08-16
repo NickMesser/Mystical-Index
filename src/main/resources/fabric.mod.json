@@ -14,7 +14,7 @@
   },
 
   "license": "GNU",
-  "icon": "assets/modid/icon.png",
+  "icon": "assets/mystical_index/icon.png",
 
   "environment": "*",
   "entrypoints": {
@@ -37,9 +37,6 @@
     "fabric": "*",
     "minecraft": "1.20.x",
     "java": ">=17"
-  },
-  "suggests": {
-    "another-mod": "*"
   },
   "accessWidener": "mysticalindex.accesswidener"
 }

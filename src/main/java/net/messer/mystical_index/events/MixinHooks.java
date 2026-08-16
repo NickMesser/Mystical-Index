@@ -37,8 +37,6 @@ public class MixinHooks {
                     SingleItemStackingInventory bookInventory = new SingleItemStackingInventory(potentialBook, ModConfig.SaturationBookMaxStacks);
                     if(bookInventory.tryAddStack(itemPickedUp, Boolean.FALSE))
                         return true;
-
-                    break;
                 }
             }
         }
@@ -50,8 +48,6 @@ public class MixinHooks {
                     var bookInventory = new SingleItemStackingInventory(potentialBook, ModConfig.StorageBookMaxStacks);
                     if(bookInventory.tryAddStack(itemPickedUp, Boolean.FALSE))
                         return true;
-
-                    break;
                 }
             }
         }
@@ -92,9 +88,15 @@ public class MixinHooks {
         if(!(stack.getItem() instanceof VillagerBook))
             return;
 
-        var compound = stack.getNbt();
-        compound.remove("Entity");
+        // Only persist trades actually driven by the book. VillagerBook.use() spins up a throwaway
+        // villager that is never registered in the world, so getEntityById can never resolve back
+        // to it. A real world villager the player traded with while merely holding a book IS
+        // registered; writing it back would overwrite the book's stored villager with a copy of
+        // the world one.
+        if(entity.getWorld().getEntityById(entity.getId()) == entity && !entity.isRemoved())
+            return;
 
+        var compound = stack.getNbt();
         NbtCompound entityNbt = new NbtCompound();
         entity.saveSelfNbt(entityNbt);
         compound.remove("Entity");

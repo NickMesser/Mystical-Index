@@ -1,5 +1,6 @@
 package net.messer.mystical_index.screen;
 
+import net.messer.mystical_index.block.ModBlocks;
 import net.messer.mystical_index.item.custom.base_books.BaseStorageBook;
 import net.messer.mystical_index.item.inventory.LibraryBookSlot;
 import net.minecraft.entity.player.PlayerEntity;
@@ -8,22 +9,30 @@ import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenHandler;
+import net.minecraft.screen.ScreenHandlerContext;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.world.World;
 
 public class LibraryInventoryScreenHandler extends ScreenHandler {
     private final Inventory inventory;
     private final World world;
+    private final ScreenHandlerContext context;
 
+    // Client side: no world/pos to bind to, so canUse can never test the block.
     public LibraryInventoryScreenHandler(int syncId, PlayerInventory playerInventory) {
-        this(syncId, playerInventory,new SimpleInventory(5));
+        this(syncId, playerInventory, new SimpleInventory(5), ScreenHandlerContext.EMPTY);
     }
 
     public LibraryInventoryScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory) {
+        this(syncId, playerInventory, inventory, ScreenHandlerContext.EMPTY);
+    }
+
+    public LibraryInventoryScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory, ScreenHandlerContext context) {
         super(ModScreenHandlers.LIBRARY_INVENTORY_SCREEN_HANDLER, syncId);
         checkSize(inventory,5);
         this.inventory = inventory;
         this.world = playerInventory.player.getWorld();
+        this.context = context;
         inventory.onOpen(playerInventory.player);
 
         for (int i = 0; i < 5; i++) {
@@ -69,7 +78,10 @@ public class LibraryInventoryScreenHandler extends ScreenHandler {
 
     @Override
     public boolean canUse(PlayerEntity player) {
-        return this.inventory.canPlayerUse(player);
+        // SimpleInventory.canPlayerUse is always true, so the screen never closed when the block
+        // was broken or the player walked away — books dropped in then vanished into an orphaned
+        // handler. Bind to the block instead so the screen auto-closes.
+        return canUse(context, player, ModBlocks.LIBRARY);
     }
 
     public static boolean isStorageBook(ItemStack itemStack){

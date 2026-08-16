@@ -3,7 +3,6 @@ package net.messer.mystical_index.recipe;
 import net.minecraft.item.Item;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.StringNbtReader;
-import org.spongepowered.asm.mixin.injection.selectors.ElementNode;
 
 import java.util.*;
 
@@ -12,8 +11,8 @@ public class PistonRecipe {
     private Map<Item, ItemEntry> outputs;
 
     public PistonRecipe() {
-        this.inputs = new HashMap<>();
-        this.outputs = new HashMap<>();
+        this.inputs = new LinkedHashMap<>();
+        this.outputs = new LinkedHashMap<>();
     }
 
     public void addInput(Item item, int count, String nbt) {
@@ -32,14 +31,6 @@ public class PistonRecipe {
 
     public Map<Item, ItemEntry> getOutputs() {
         return outputs;
-    }
-
-    public Optional<NbtCompound> getInputNbt(Item item) {
-        return inputs.containsKey(item) ? inputs.get(item).nbt : Optional.empty();
-    }
-
-    public Optional<NbtCompound> getOutputNbt(Item item) {
-        return outputs.containsKey(item) ? outputs.get(item).nbt : Optional.empty();
     }
 
     public static class ItemEntry {

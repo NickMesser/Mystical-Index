@@ -18,8 +18,12 @@ public class LecternClientNetworking {
         ClientPlayNetworking.registerGlobalReceiver(LecternNetworking.CONTENTS, (client, handler, buf, responseSender) -> {
             int syncId = buf.readVarInt();
             int size = buf.readVarInt();
+            // A hostile server can claim a huge size to OOM the client before anything is validated.
+            // Drop the packet on a nonsense length, and only pre-size the list within a sane bound.
+            if (size < 0 || size > 65536)
+                return;
 
-            List<LibraryNetwork.Entry> entries = new ArrayList<>();
+            List<LibraryNetwork.Entry> entries = new ArrayList<>(Math.min(size, 4096));
             for (int i = 0; i < size; i++) {
                 var variant = ItemVariant.fromPacket(buf);
                 entries.add(new LibraryNetwork.Entry(variant, buf.readVarLong()));

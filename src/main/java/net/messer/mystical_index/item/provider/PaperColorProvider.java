@@ -20,7 +20,11 @@ public class PaperColorProvider {
         if(compound == null) return 0xFFFFFF;
 
         var entityId = compound.getString("entity");
-        var entity = EntityType.get(entityId).get();
+        // A missing/blank/unresolvable id (removed mod, anvil rename) leaves the Optional empty;
+        // .get() there crashed rendering every frame. Fall back to a default colour instead.
+        var entity = EntityType.get(entityId).orElse(null);
+        if(entity == null) return 0xFFFFFF;
+
         var spawnEgg = SpawnEggItem.forEntity(entity);
         if(spawnEgg == null) return 0xFFFFFF;
 

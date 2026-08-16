@@ -21,11 +21,14 @@ public class PlayerKillEvent {
             if (entity.isDead() && entity != player) {
                 var entityName = Registries.ENTITY_TYPE.getId(entity.getType()).toString();
 
-                if(ModConfig.HusbandryBookBlackList.contains(entityName) || ModConfig.HostileBookBlackList.contains(entityName))
-                    return;
-
                 if(player instanceof PlayerEntity) {
+                    // Entity-paper drop has its own EntityPaperBlackList gate inside dropEntityPaper,
+                    // so it must run before the husbandry/hostile blacklist return below.
                     dropEntityPaper(world, (PlayerEntity) player, entity);
+
+                    if(ModConfig.HusbandryBookBlackList.contains(entityName) || ModConfig.HostileBookBlackList.contains(entityName))
+                        return;
+
                     var offHandStack = ((PlayerEntity) player).getEquippedStack(EquipmentSlot.OFFHAND);
                     if(offHandStack.getItem() instanceof HusbandryBook husbandryBook) {
                         husbandryBook.onKill(offHandStack, entity);

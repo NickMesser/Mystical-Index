@@ -2,6 +2,7 @@ package net.messer.mystical_index.item.custom;
 
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariantAttributes;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.messer.mystical_index.item.inventory.SingleFluidStackingInventory;
@@ -14,7 +15,6 @@ import net.minecraft.fluid.Fluids;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.particle.ParticleTypes;
-import net.minecraft.registry.Registries;
 import net.minecraft.registry.tag.FluidTags;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
@@ -89,6 +89,9 @@ public class FluidBook extends Item {
                                 fluidStorage.insert(variant, FluidConstants.BUCKET, transaction);
                                 transaction.commit();
                             }
+                            // Name the book after the fluid it now holds (previously a side effect
+                            // of reading NBT, which ran every render frame).
+                            updateStoredFluidName(itemStack, fluidStorage);
                             return super.use(world, user, hand);
                         }
                     }
@@ -102,6 +105,8 @@ public class FluidBook extends Item {
                             fluidStorage.extract(fluidStorage.variant, FluidConstants.BUCKET, transaction);
                             transaction.commit();
                         }
+                        // Refresh the book's name, clearing it once the last bucket is drained.
+                        updateStoredFluidName(itemStack, fluidStorage);
 
                         if (user instanceof ServerPlayerEntity) {
                             Criteria.PLACED_BLOCK.trigger((ServerPlayerEntity)user, fluidDrainable, itemStack);
@@ -167,6 +172,17 @@ public class FluidBook extends Item {
         world.emitGameEvent(player, GameEvent.FLUID_PLACE, pos);
     }
 
+    // Keeps the book's display name in sync with its contents. Cleared when empty so the item
+    // falls back to its default name instead of showing a stale fluid.
+    private void updateStoredFluidName(ItemStack stack, SingleVariantStorage<FluidVariant> fluidStorage) {
+        if(fluidStorage.amount == 0 || fluidStorage.variant.getFluid() == Fluids.EMPTY){
+            stack.setCustomName(null);
+            return;
+        }
+
+        stack.setCustomName(Text.translatable("item.mystical_index.fluid_book.named", FluidVariantAttributes.getName(fluidStorage.variant)));
+    }
+
     @Override
     public boolean hasGlint(ItemStack stack) {
         var fluidInventory = new SingleFluidStackingInventory(stack);
@@ -176,13 +192,12 @@ public class FluidBook extends Item {
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
         if(stack.hasGlint()){
-            if(stack.hasGlint()){
-                SingleFluidStackingInventory inventory = new SingleFluidStackingInventory(stack);
-                String storedLiquid  = Registries.FLUID.getId(inventory.fluidStorage.variant.getFluid()).getPath();
+            SingleFluidStackingInventory inventory = new SingleFluidStackingInventory(stack);
 
-                tooltip.add(Text.literal("§a"+ (inventory.fluidStorage.amount / FluidConstants.BUCKET)+ " Bucket(s) of " + "§f" + storedLiquid));
-                tooltip.add(Text.literal(""));
-            }
+            tooltip.add(Text.translatable("tooltip.mystical_index.fluid_book.contents",
+                    inventory.fluidStorage.amount / FluidConstants.BUCKET,
+                    FluidVariantAttributes.getName(inventory.fluidStorage.variant)));
+            tooltip.add(Text.literal(""));
         }
 
         tooltip.add(Text.translatable("tooltip.mystical_index.fluid_book"));

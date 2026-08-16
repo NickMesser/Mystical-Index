@@ -1,6 +1,5 @@
 package net.messer.mystical_index.item.custom;
 
-import net.fabricmc.loader.impl.util.StringUtil;
 import net.messer.config.ModConfig;
 import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.block.entity.LibraryBlockEntity;
@@ -29,16 +28,12 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 
 public class FarmingBook extends BaseGeneratingBook {
     public FarmingBook(Settings settings) {
         super(settings);
     }
-
-    public static Map<String, Integer> BookOfFarmingCooldowns = ModConfig.BookOfFarmingCooldowns;
-    public static int defaultCooldown = ModConfig.BookOfFarmingDefaultCooldown;
 
     @Override
     public ActionResult useOnBlock(ItemUsageContext context) {
@@ -47,17 +42,29 @@ public class FarmingBook extends BaseGeneratingBook {
 
         var itemStack = context.getStack();
         var world = context.getWorld();
+        var player = context.getPlayer();
+        var pos = context.getBlockPos();
         var compound = itemStack.getOrCreateNbt();
 
-        if(compound.contains("cropBlock")) // check if book has a cropBlock assigned to it
+        if(compound.contains("cropBlock")) { // check if book has a cropBlock assigned to it
+            // Sneak-right-click a block while bound to unbind the book (mirrors MagnetismBook's reset).
+            if(player != null && player.isSneaking()){
+                compound.remove("cropBlock");
+                itemStack.removeCustomName();
+                player.sendMessage(Text.translatable("message.mystical_index.farming_unbound"), true);
+            }
             return super.useOnBlock(context);
+        }
 
-        Block block = context.getWorld().getBlockState(context.getBlockPos()).getBlock();
+        Block block = world.getBlockState(pos).getBlock();
         if(block instanceof CropBlock cropBlock){
+            // Do not let the book grief crops the player cannot modify (protected/adventure).
+            if(player == null || !world.canPlayerModifyAt(player, pos))
+                return super.useOnBlock(context);
+
             addCrop(itemStack, cropBlock);
-            var currentTime = context.getWorld().getTime() % 24000;
-            updateUseTime(context.getStack(), currentTime);
-            world.removeBlock(context.getBlockPos(), false);
+            updateUseTime(itemStack, world.getTime());
+            world.breakBlock(pos, true, player);
         }
 
         return super.useOnBlock(context);
@@ -67,7 +74,7 @@ public class FarmingBook extends BaseGeneratingBook {
         NbtCompound compound = stack.getOrCreateNbt();
         var cropBlockId = Registries.BLOCK.getId(cropBlock).toString();
         compound.putString("cropBlock", cropBlockId);
-        stack.setCustomName(Text.of("Book Of Farming: " + StringUtil.capitalize(cropBlock.asItem().toString())));
+        stack.setCustomName(Text.translatable("item.mystical_index.farming_book.named", cropBlock.asItem().getName()));
     }
 
     public CropBlock getCrop(ItemStack stack){
@@ -101,11 +108,13 @@ public class FarmingBook extends BaseGeneratingBook {
         if(compound == null)
             return;
 
-        var currentTime = world.getTime() % 24000;
+        var currentTime = world.getTime();
         var lastUsedTime = compound.getLong("lastUsedTime");
         var difference = currentTime - lastUsedTime;
-        if(difference < 0)
+        if(difference < 0){
             updateUseTime(stack, currentTime);
+            return;
+        }
 
         var crop = getCrop(stack);
         if(crop == null)
@@ -113,11 +122,11 @@ public class FarmingBook extends BaseGeneratingBook {
 
         var cropId = Registries.BLOCK.getId(crop).toString();
         var cooldown = ModConfig.BookOfFarmingDefaultCooldown;
-        if(BookOfFarmingCooldowns.get(cropId) != null)
-            cooldown = BookOfFarmingCooldowns.get(cropId);
+        if(ModConfig.BookOfFarmingCooldowns.get(cropId) != null)
+            cooldown = ModConfig.BookOfFarmingCooldowns.get(cropId);
 
 
-        if((difference) < (cooldown * 20))
+        if(difference < (cooldown * 20L))
             return;
 
         updateUseTime(stack, currentTime);

@@ -30,6 +30,10 @@ public class LecternNetworking {
             // network thread rather than inside the scheduled task.
             int syncId = buf.readVarInt();
             int action = buf.readByte();
+            // Reject any unknown opcode outright. Otherwise it falls through and is executed as an
+            // insert, but read with whatever layout the sender chose, corrupting the rest.
+            if (action != ACTION_EXTRACT && action != ACTION_INSERT)
+                return;
 
             ItemVariant readVariant = ItemVariant.blank();
             if (action == ACTION_EXTRACT)
@@ -49,10 +53,10 @@ public class LecternNetworking {
                         || lectern.syncId != syncId || !lectern.canUse(player))
                     return;
 
-                if (action == ACTION_EXTRACT)
-                    lectern.handleExtract(variant, button, toInventory);
-                else
-                    lectern.handleInsert(button);
+                switch (action) {
+                    case ACTION_EXTRACT -> lectern.handleExtract(variant, button, toInventory);
+                    case ACTION_INSERT -> lectern.handleInsert(button);
+                }
             });
         });
 
@@ -63,13 +67,16 @@ public class LecternNetworking {
             List<List<ItemVariant>> slotCandidates = new ArrayList<>(RECIPE_GRID_SIZE);
             for (int slot = 0; slot < RECIPE_GRID_SIZE; slot++) {
                 int count = buf.readVarInt();
-                List<ItemVariant> candidates = new ArrayList<>();
+                // A hostile client can claim a huge candidate count to drive millions of variant
+                // reads on the netty thread. Drop the whole packet rather than reading past the cap
+                // to "stay aligned": the buffer is discarded on return, so alignment stops mattering.
+                if (count < 0 || count > MAX_RECIPE_CANDIDATES)
+                    return;
 
+                List<ItemVariant> candidates = new ArrayList<>(count);
                 for (int i = 0; i < count; i++) {
-                    // Everything written has to be read even past the cap, or the rest of the
-                    // packet is misaligned. The surplus is simply dropped.
                     var variant = ItemVariant.fromPacket(buf);
-                    if (i < MAX_RECIPE_CANDIDATES && !variant.isBlank())
+                    if (!variant.isBlank())
                         candidates.add(variant);
                 }
 

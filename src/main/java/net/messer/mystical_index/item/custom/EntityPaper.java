@@ -26,7 +26,7 @@ public class EntityPaper extends Item {
         var entityId = nbt.getString("entity");
         var entityType = EntityType.get(entityId).orElse(null);
         if (entityType != null)
-            stack.setCustomName(Text.of( entityType.getName().getString() + " Paper"));
+            stack.setCustomName(Text.translatable("item.mystical_index.entity_paper.named", entityType.getName()));
 
         super.onCraft(stack, world, player);
     }
@@ -41,7 +41,7 @@ public class EntityPaper extends Item {
             compound = stack.getOrCreateNbt();
 
         var entityId = Registries.ENTITY_TYPE.getId(entity.getType()).toString();
-        stack.setCustomName(entity.getType().getName());
+        stack.setCustomName(Text.translatable("item.mystical_index.entity_paper.named", entity.getType().getName()));
         compound.putString("entity", entityId);
         return super.useOnEntity(stack, user, entity, hand);
     }

@@ -54,7 +54,6 @@ public class PistonCraftingCategory implements DisplayCategory<PistonCraftingDis
 
         widgets.add(Widgets.createRecipeBase(bounds));
         widgets.add(Widgets.createArrow(new Point(startPoint.x + 60, startPoint.y + 18)));
-        widgets.add(Widgets.createResultSlotBackground(new Point(startPoint.x + 95, startPoint.y + 19)));
 
         var inputs = display.getInputEntries();
         for (int i = 0; i < inputs.size() && i < 9; i++) {
@@ -63,10 +62,21 @@ public class PistonCraftingCategory implements DisplayCategory<PistonCraftingDis
                     .markInput());
         }
 
+        // Render every output, not just the first. A single output keeps the classic oversized
+        // result slot; multiple outputs stack in a column centred on the same anchor so none is
+        // hidden behind another. The large result background only reads well behind one slot, so it
+        // is drawn for the single-output case; stacked slots rely on their own slot backgrounds.
         var outputs = display.getOutputEntries();
-        if (!outputs.isEmpty()) {
-            widgets.add(Widgets.createSlot(new Point(startPoint.x + 95, startPoint.y + 19))
-                    .entries(outputs.get(0))
+        int resultX = startPoint.x + 95;
+        int resultY = startPoint.y + 19;
+
+        if (outputs.size() <= 1)
+            widgets.add(Widgets.createResultSlotBackground(new Point(resultX, resultY)));
+
+        int firstOutputY = resultY - ((outputs.size() - 1) * 18) / 2;
+        for (int i = 0; i < outputs.size(); i++) {
+            widgets.add(Widgets.createSlot(new Point(resultX, firstOutputY + i * 18))
+                    .entries(outputs.get(i))
                     .markOutput());
         }
 

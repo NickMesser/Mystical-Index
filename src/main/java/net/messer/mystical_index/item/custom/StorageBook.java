@@ -10,10 +10,10 @@ import net.minecraft.client.item.TooltipData;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.*;
 import net.minecraft.registry.Registries;
-import net.minecraft.sound.SoundCategory;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
@@ -34,26 +34,29 @@ public class StorageBook extends BaseStorageBook {
             return super.useOnBlock(context);
 
         PlayerEntity player = context.getPlayer();
+        if(player == null)
+            return super.useOnBlock(context);
+
         Hand hand = context.getHand();
         BlockPos currentBlockPos = context.getBlockPos();
-        ItemStack heldBookStack = player.getStackInHand(hand);
+        ItemStack heldBookStack = context.getStack();
 
-        SingleItemStackingInventory currentBookInventory = new SingleItemStackingInventory(player.getStackInHand(hand), ModConfig.StorageBookMaxStacks);
+        SingleItemStackingInventory currentBookInventory = new SingleItemStackingInventory(context.getStack(), ModConfig.StorageBookMaxStacks);
         if(player.isSneaking()){
             if(currentBookInventory.isEmpty())
             {
                 Item item = context.getWorld().getBlockState(currentBlockPos).getBlock().asItem();
 
                 if(ModConfig.StorageBookBlockBlacklist.contains(Registries.ITEM.getId(item).toString())){
-                    player.sendMessage(Text.literal("This block is blacklisted. Sorry :("), true);
+                    player.sendMessage(Text.translatable("message.mystical_index.block_blacklisted"), true);
                     return super.useOnBlock(context);
                 }
 
                 currentBookInventory.setCurrentlyStoredItem(item);
-                heldBookStack.setCustomName(Text.literal("Book of " + item.getName().getString()));
+                heldBookStack.setCustomName(Text.translatable("item.mystical_index.storage_book.named", item.getName()));
             }
             else{
-                player.sendMessage(Text.literal("Unable to update stored item. Please empty all contents first"), true);
+                player.sendMessage(Text.translatable("message.mystical_index.empty_first"), true);
             }
             return super.useOnBlock(context);
         }
@@ -63,19 +66,14 @@ public class StorageBook extends BaseStorageBook {
 
 
         if(currentBookInventory.currentlyStoredItem instanceof BlockItem blockItem){
-            var hitBlockPos = context.getBlockPos();
-            var direction = context.getSide();
-            var newBlockPos = hitBlockPos.offset(direction);
-            var world = context.getWorld();
-            // Validate placement before consuming: taking the item out first voided it whenever
-            // the block could not actually be placed.
-            if(world.canPlayerModifyAt(player, newBlockPos) && player.canPlaceOn(newBlockPos, direction, heldBookStack) && world.canSetBlock(newBlockPos)
-                    && currentBookInventory.tryRemoveOneItem()){
-                var placedState = blockItem.getBlock().getDefaultState();
-                var soundEvent = placedState.getSoundGroup().getPlaceSound();
-                context.getWorld().playSound(null, newBlockPos,soundEvent, SoundCategory.BLOCKS, 1.0f,1.0f);
-                context.getWorld().setBlockState(newBlockPos, placedState);
-            }
+            // Place through the item pipeline with a throwaway block stack so replaceability,
+            // canPlaceAt, the proper placement state and the place sound are all handled by
+            // vanilla instead of overwriting the target block with a default state. Only draw
+            // one item from the book once a block was actually placed.
+            BlockHitResult hitResult = new BlockHitResult(context.getHitPos(), context.getSide(), context.getBlockPos(), context.hitsInsideBlock());
+            ItemPlacementContext placementContext = new ItemPlacementContext(player, hand, new ItemStack(blockItem), hitResult);
+            if(blockItem.place(placementContext).isAccepted())
+                currentBookInventory.tryRemoveOneItem();
         }
 
         return super.useOnBlock(context);

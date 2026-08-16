@@ -1,9 +1,9 @@
 package net.messer.mystical_index.events;
 
 import net.fabricmc.fabric.api.entity.FakePlayer;
+import net.messer.config.ModConfig;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.custom.HostileBook;
-import net.messer.mystical_index.item.custom.base_books.BaseGeneratingBook;
 import net.messer.mystical_index.recipe.PistonRecipeInitializer;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.PistonBlockEntity;
@@ -46,7 +46,7 @@ public class PistonEntityHook {
             }
 
             for(var stack: itemStacks){
-                if(stack.getItem() instanceof BaseGeneratingBook){
+                if(stack.getItem() instanceof HostileBook hostileBook){
                     if(!stack.hasNbt())
                     {
                         String entityId = "";
@@ -58,53 +58,24 @@ public class PistonEntityHook {
                                 entityId = compound.getString("entity");
                             }
                         }
-                        if(stack.getItem() instanceof HostileBook hostileBook && !entityId.equals("")){
+                        if(!entityId.equals("")){
                             hostileBook.addEntityToBook(stack, entityId, world);
-                            hostileBook.increaseKills(stack, 1);
-                            for(var item : itemStacks){
-                                if(item.getItem() != ModItems.ENTITY_PAPER)
-                                    continue;
-
-                                item.setCount(0);
-                            }
+                            // Credit one kill per paper item consumed (capped), never destroying
+                            // papers we did not credit.
+                            if(chargeBookWithPapers(hostileBook, stack, entityId, itemStacks) > 0)
+                                playChargeEffects(world, blockEntity.getPos());
                             return;
                         }
-                    }
-
-                    // A generating book that still has no NBT (or one the branch above did not
-                    // claim) reaches here with a null compound.
-                    var compound = stack.getNbt();
-                    if(compound != null && compound.contains("storedEntityId")){
-                        var storedEntityId = compound.getString("storedEntityId");
-                        // Check if other input items have matching nbt
-                        boolean allNbtMatch = true;
-                        int matchingItems = 0;
-                        for(var item : itemStacks){
-                            if(item.getItem() != ModItems.ENTITY_PAPER)
-                                continue;
-
-                            if(!item.hasNbt()){
-                                allNbtMatch = false;
-                                continue;
+                    } else {
+                        var compound = stack.getNbt();
+                        if(compound != null && compound.contains("storedEntityId")){
+                            var storedEntityId = compound.getString("storedEntityId");
+                            // pushEntities can fire several times per piston cycle; re-fires find the
+                            // matching papers already at count 0 and so credit nothing.
+                            if(chargeBookWithPapers(hostileBook, stack, storedEntityId, itemStacks) > 0){
+                                playChargeEffects(world, blockEntity.getPos());
+                                return;
                             }
-
-                            if(!item.getNbt().getString("entity").equals(storedEntityId))
-                                allNbtMatch = false;
-
-                            matchingItems++;
-                        }
-                        if(allNbtMatch & compound.contains("numberOfKills")){
-                            var numberOfKills = compound.getInt("numberOfKills");
-                            compound.putInt("numberOfKills", numberOfKills + matchingItems);
-                            for(var item : itemStacks){
-                                if(item.getItem() != ModItems.ENTITY_PAPER)
-                                    continue;
-
-                                item.setCount(0);
-                            }
-                            world.playSound(null, blockEntity.getPos().getX(), blockEntity.getPos().getY(), blockEntity.getPos().getZ(), SoundEvents.BLOCK_SLIME_BLOCK_PLACE, SoundCategory.BLOCKS, 2f, 2f);
-                            ((ServerWorld) world).spawnParticles(ParticleTypes.FLASH, blockEntity.getPos().getX(), blockEntity.getPos().getY(), blockEntity.getPos().getZ(), 1, 0.5, 0.5, 0.5, 0.1);
-                            return;
                         }
                     }
                 }
@@ -141,5 +112,46 @@ public class PistonEntityHook {
                 ((ServerWorld) world).spawnParticles(ParticleTypes.FLASH, itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(), 1, 0.5, 0.5, 0.5, 0.1);
             }
         }
+    }
+
+    // Credits one kill per matching entity-paper item (counting item counts, not stacks), clamped
+    // to ModConfig.HostileBookMaxKills via HostileBook.increaseKills, and decrements exactly the
+    // papers that were credited. Papers already at count 0 (from an earlier fire of the same piston
+    // cycle) are skipped, so re-fires credit nothing. Returns the number of kills credited.
+    private static int chargeBookWithPapers(HostileBook book, ItemStack bookStack, String storedEntityId, List<ItemStack> itemStacks){
+        var compound = bookStack.getNbt();
+        if(compound == null)
+            return 0;
+
+        int remaining = ModConfig.HostileBookMaxKills - compound.getInt("numberOfKills");
+        if(remaining <= 0)
+            return 0;
+
+        int credited = 0;
+        for(var item : itemStacks){
+            if(remaining <= 0)
+                break;
+            if(item.getItem() != ModItems.ENTITY_PAPER)
+                continue;
+            if(item.getCount() <= 0)
+                continue;
+            if(!item.hasNbt() || !item.getNbt().getString("entity").equals(storedEntityId))
+                continue;
+
+            int take = Math.min(item.getCount(), remaining);
+            item.decrement(take);
+            remaining -= take;
+            credited += take;
+        }
+
+        if(credited > 0)
+            book.increaseKills(bookStack, credited);
+
+        return credited;
+    }
+
+    private static void playChargeEffects(World world, BlockPos pos){
+        world.playSound(null, pos.getX(), pos.getY(), pos.getZ(), SoundEvents.BLOCK_SLIME_BLOCK_PLACE, SoundCategory.BLOCKS, 2f, 2f);
+        ((ServerWorld) world).spawnParticles(ParticleTypes.FLASH, pos.getX(), pos.getY(), pos.getZ(), 1, 0.5, 0.5, 0.5, 0.1);
     }
 }

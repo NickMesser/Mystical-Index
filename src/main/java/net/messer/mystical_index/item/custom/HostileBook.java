@@ -16,6 +16,7 @@ import net.minecraft.client.item.TooltipData;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -47,8 +48,6 @@ public class HostileBook extends BaseGeneratingBook {
 
     private static final int INVENTORY_SIZE = 6;
 
-    private int maxCooldown = ModConfig.HostileBookCooldown * 20;
-
 
     public HostileBook(Settings settings) {
         super(settings);
@@ -64,13 +63,18 @@ public class HostileBook extends BaseGeneratingBook {
         if(user.getWorld().isClient)
             return super.useOnEntity(stack, user, entity, hand);
 
+        // Only real mobs may be stored. Players/armor stands would bind to a type whose
+        // EntityType.create() returns null and break loot generation later.
+        if(!(entity instanceof MobEntity))
+            return super.useOnEntity(stack, user, entity, hand);
+
         if((entity instanceof PassiveEntity))
             return super.useOnEntity(stack, user, entity, hand);
 
         var entityName = Registries.ENTITY_TYPE.getId(entity.getType()).toString();
         if(ModConfig.HusbandryBookBlackList.contains(entityName) || ModConfig.HostileBookBlackList.contains(entityName))
         {
-            user.sendMessage(Text.literal("Mob is blacklisted from book."));
+            user.sendMessage(Text.translatable("message.mystical_index.mob_blacklisted"));
             return super.useOnEntity(stack, user, entity, hand);
         }
 
@@ -81,20 +85,20 @@ public class HostileBook extends BaseGeneratingBook {
 
         var numberOfKills = compound.getInt(NUMBER_OF_KILLS_KEY);
         if(numberOfKills > 0){
-            user.sendMessage(Text.literal("Mob already stored in this book."), false);
+            user.sendMessage(Text.translatable("message.mystical_index.mob_already_stored"), false);
             return super.useOnEntity(stack, user, entity, hand);
         }
 
         var lootTableId = entity.getType().getLootTableId();
 
-        stack.setCustomName(Text.literal("Book of " + entity.getName().getString()));
+        stack.setCustomName(Text.translatable("item.mystical_index.hostile_book.named", entity.getName()));
         compound.putString(STORED_ENTITY_NAME_KEY, entity.getName().getString());
         compound.putString(STORED_ENTITY_LOOT_TABLE_KEY, lootTableId.toString());
         compound.putInt(NUMBER_OF_KILLS_KEY, 0);
         compound.putString(STORED_ENTITY_ID_KEY, entityName);
 
-        // lastUsedTime is compared against world.getTime() % 24000, so it must be a timestamp.
-        updateUseTime(stack, user.getWorld().getTime() % 24000);
+        // lastUsedTime is the raw (monotonic) world age; cooldown is now - lastUsedTime.
+        updateUseTime(stack, user.getWorld().getTime());
         return super.useOnEntity(stack, user, entity, hand);
     }
 
@@ -118,13 +122,13 @@ public class HostileBook extends BaseGeneratingBook {
 
         var lootTableId = entity.getType().getLootTableId();
 
-        stack.setCustomName(Text.literal("Book of " + entity.getName().getString()));
+        stack.setCustomName(Text.translatable("item.mystical_index.hostile_book.named", entity.getName()));
         compound.putString(STORED_ENTITY_NAME_KEY, entity.getName().getString());
         compound.putString(STORED_ENTITY_LOOT_TABLE_KEY, lootTableId.toString());
         compound.putInt(NUMBER_OF_KILLS_KEY, 0);
         compound.putString(STORED_ENTITY_ID_KEY, entityName);
 
-        updateUseTime(stack, world.getTime() % 24000);
+        updateUseTime(stack, world.getTime());
     }
 
     public void increaseKills(ItemStack stack, int amount){
@@ -161,13 +165,13 @@ public class HostileBook extends BaseGeneratingBook {
 
         var lootTableId = entity.getLootTableId();
 
-        stack.setCustomName(Text.literal("Book of " + entity.getName().getString()));
+        stack.setCustomName(Text.translatable("item.mystical_index.hostile_book.named", entity.getName()));
         compound.putString(STORED_ENTITY_NAME_KEY, entity.getName().getString());
         compound.putString(STORED_ENTITY_LOOT_TABLE_KEY, lootTableId.toString());
         compound.putInt(NUMBER_OF_KILLS_KEY, 0);
         compound.putString(STORED_ENTITY_ID_KEY, entityId);
 
-        updateUseTime(stack, world.getTime() % 24000);
+        updateUseTime(stack, world.getTime());
 
     }
 
@@ -225,11 +229,14 @@ public class HostileBook extends BaseGeneratingBook {
         if(numberOfKills <= 0)
             return;
 
-        var currentTime = world.getTime() % 24000;
+        var maxCooldown = ModConfig.HostileBookCooldown * 20;
+        var currentTime = world.getTime();
         var lastUsedTime = compound.getLong("lastUsedTime");
         var difference = currentTime - lastUsedTime;
-        if(difference < 0)
+        if(difference < 0){
             updateUseTime(stack, currentTime);
+            return;
+        }
 
         if(difference > (maxCooldown - (numberOfKills * 20L))){
             updateUseTime(stack, currentTime);
@@ -240,6 +247,9 @@ public class HostileBook extends BaseGeneratingBook {
                 return;
 
             Entity storedEntity = storedEntityType.create(world);
+            if(storedEntity == null)
+                return;
+
             FakePlayer player = FakePlayer.get((ServerWorld) world);
 
             List<ItemStack> loot = MysticalUtil.generateEntityLoot(player, storedEntity, storedEntityLootTable);
@@ -299,23 +309,25 @@ public class HostileBook extends BaseGeneratingBook {
             var storedEntityName = compound.getString(STORED_ENTITY_NAME_KEY);
             var numberOfKills = compound.getInt(NUMBER_OF_KILLS_KEY);
 
-            if(storedEntityName.equals(""))
-                return;
+            // Only this stats block is entity-specific; the shift/help lines below must always show.
+            if(!storedEntityName.equals("")){
+                var maxCooldown = ModConfig.HostileBookCooldown * 20;
 
-            if(numberOfKills >= ModConfig.HostileBookMaxKills)
-                tooltip.add(Text.literal("§cMax kills reached"));
-            else
-                tooltip.add(Text.literal("§aKills: " + numberOfKills));
+                if(numberOfKills >= ModConfig.HostileBookMaxKills)
+                    tooltip.add(Text.translatable("tooltip.mystical_index.hostile_book.max_kills"));
+                else
+                    tooltip.add(Text.translatable("tooltip.mystical_index.hostile_book.kills", numberOfKills));
 
-            var timeLastUsed = compound.getLong("lastUsedTime");
-            var difference = world.getTime() % 24000 - timeLastUsed;
-            var timeLeft = (difference - (maxCooldown - (numberOfKills * 20L)));
+                var timeLastUsed = compound.getLong("lastUsedTime");
+                var difference = world.getTime() - timeLastUsed;
+                var timeLeft = (difference - (maxCooldown - (numberOfKills * 20L)));
 
-            if((timeLeft/20) * -1 < 0)
-                timeLeft = 0;
+                if((timeLeft/20) * -1 < 0)
+                    timeLeft = 0;
 
-            tooltip.add(Text.literal("Cooldown: " + ((maxCooldown - (20 * numberOfKills))/20) + " seconds"));
-            tooltip.add(Text.literal("Time left: " + ((timeLeft/20) * -1) + " seconds"));
+                tooltip.add(Text.translatable("tooltip.mystical_index.hostile_book.cooldown", (maxCooldown - (20 * numberOfKills))/20));
+                tooltip.add(Text.translatable("tooltip.mystical_index.hostile_book.time_left", (timeLeft/20) * -1));
+            }
         }
 
         if(Screen.hasShiftDown()){

@@ -57,7 +57,7 @@ public class MagnetismBook extends Item {
 
                 itemFilters.add(hitItem);
                 this.markDirty(stack);
-                user.sendMessage(Text.literal("Added " + hitItem.getName().getString() + " to the filter."), true);
+                user.sendMessage(Text.translatable("message.mystical_index.magnetism_added", hitItem.getName()), true);
                 return super.use(world, user, hand);
             }
         }
@@ -79,7 +79,7 @@ public class MagnetismBook extends Item {
         itemFilters.clear();
         this.markDirty(itemStack);
         if(player != null)
-            player.sendMessage(Text.literal("Cleared all items from the filter."), true);
+            player.sendMessage(Text.translatable("message.mystical_index.magnetism_cleared"), true);
         return super.useOnBlock(context);
     }
 
@@ -144,14 +144,12 @@ public class MagnetismBook extends Item {
             this.readNbt(stack);
             if(!itemFilters.isEmpty()){
                 StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("§aFiltering: ");
-                stringBuilder.append("§e");
                 for (Item item: itemFilters) {
                     stringBuilder.append(item.getName().getString()).append(", ");
                 }
                 stringBuilder.setLength(stringBuilder.length() - 2);
 
-                tooltip.add(Text.literal(stringBuilder.toString()));
+                tooltip.add(Text.translatable("tooltip.mystical_index.magnetism_book.filtering", stringBuilder.toString()));
                 tooltip.add(Text.literal(""));
             }
         }
@@ -162,7 +160,7 @@ public class MagnetismBook extends Item {
             tooltip.add(Text.translatable("tooltip.mystical_index.magnetism_book_shift2"));
             tooltip.add(Text.translatable("tooltip.mystical_index.magnetism_book_shift3"));
         } else {
-            tooltip.add(Text.translatable("tooltip.mystical_index.storage_book"));
+            tooltip.add(Text.translatable("tooltip.mystical_index.magnetism_book"));
         }
         super.appendTooltip(stack, world, tooltip, context);
     }

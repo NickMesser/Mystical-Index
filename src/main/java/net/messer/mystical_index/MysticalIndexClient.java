@@ -6,6 +6,7 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.rendering.v1.TooltipComponentCallback;
 import net.fabricmc.fabric.api.client.screenhandler.v1.ScreenRegistry;
 import net.messer.mystical_index.item.inventory.BookContentsTooltipData;
+import net.messer.mystical_index.item.provider.PaperColorProvider;
 import net.messer.mystical_index.network.LecternClientNetworking;
 import net.messer.mystical_index.screen.BookContentsTooltipComponent;
 import net.messer.mystical_index.screen.LibraryInventoryScreen;
@@ -26,5 +27,9 @@ public class MysticalIndexClient implements ClientModInitializer {
                 data instanceof BookContentsTooltipData contents ? new BookContentsTooltipComponent(contents) : null);
 
         LecternClientNetworking.registerClientReceivers();
+
+        // Item colour providers live on the client only; registering here keeps a dedicated
+        // server from touching the client-only ColorProviderRegistry.
+        PaperColorProvider.register();
     }
 }

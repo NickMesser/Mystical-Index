@@ -2,9 +2,7 @@ package net.messer.mystical_index.recipe;
 
 
 import net.messer.mystical_index.MysticalIndex;
-import net.minecraft.recipe.CraftingDecoratedPotRecipe;
 import net.minecraft.recipe.RecipeSerializer;
-import net.minecraft.recipe.ShapedRecipe;
 import net.minecraft.recipe.SpecialRecipeSerializer;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;

@@ -1,5 +1,6 @@
 package net.messer.mystical_index.item.inventory;
 
+import net.messer.mystical_index.item.custom.base_books.BaseStorageBook;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventories;
 import net.minecraft.item.ItemStack;
@@ -41,9 +42,39 @@ public class MultiTypeBookInventory implements BookInventory {
             return;
         }
 
-        this.storedItems = DefaultedList.ofSize(sizeFor(this.types, this.stacksPerType, storedSlotCount(compound)), ItemStack.EMPTY);
+        var loaded = DefaultedList.ofSize(sizeFor(this.types, this.stacksPerType, storedSlotCount(compound)), ItemStack.EMPTY);
         if (compound != null)
-            readInto(compound, storedItems);
+            readInto(compound, loaded);
+
+        // A tier upgrade re-reads the same flat slot list at a larger stacksPerType, so two types
+        // that used to be adjacent single-slot buckets now share one bucket. bucketVariant only
+        // reports the first, silently orphaning the second. When any bucket holds more than one
+        // variant, repack the whole book by item type so every bucket is single-variant again and
+        // write the fixed layout back. A book that is already correct is left untouched.
+        if (hasMultiVariantBucket(loaded, this.stacksPerType)) {
+            this.storedItems = repack(loaded, this.types, this.stacksPerType);
+            writeNbt();
+        } else {
+            this.storedItems = loaded;
+        }
+    }
+
+    private static boolean hasMultiVariantBucket(DefaultedList<ItemStack> items, int stacksPerType) {
+        for (int start = 0; start < items.size(); start += stacksPerType) {
+            ItemStack variant = ItemStack.EMPTY;
+            for (int slot = start; slot < start + stacksPerType && slot < items.size(); slot++) {
+                var existing = items.get(slot);
+                if (existing.isEmpty())
+                    continue;
+
+                if (variant.isEmpty())
+                    variant = existing;
+                else if (!ItemStack.canCombine(variant, existing))
+                    return true;
+            }
+        }
+
+        return false;
     }
 
     // The only place a stored slot index is decoded. Books written before the int format stored
@@ -107,8 +138,16 @@ public class MultiTypeBookInventory implements BookInventory {
         readInto(compound, legacy);
         compound.remove(LEGACY_ITEM_KEY);
 
+        return repack(legacy, types, stacksPerType);
+    }
+
+    // Groups the contents by item type (canCombine) and lays each group out bucket by bucket, one
+    // type per bucket, padding to the bucket boundary between types. Grace overflow is preserved:
+    // contents needing more buckets than the tier allows get them anyway, so nothing is voided;
+    // such a book drains normally but takes nothing new until it fits.
+    private static DefaultedList<ItemStack> repack(List<ItemStack> contents, int types, int stacksPerType) {
         var groups = new ArrayList<List<ItemStack>>();
-        for (var stack : legacy) {
+        for (var stack : contents) {
             if (stack.isEmpty())
                 continue;
 
@@ -132,15 +171,13 @@ public class MultiTypeBookInventory implements BookInventory {
         for (var group : groups)
             neededBuckets += (group.size() + stacksPerType - 1) / stacksPerType;
 
-        // Grace overflow: contents that need more buckets than the tier allows get them anyway,
-        // so nothing is voided. Such a book drains normally but takes nothing new until it fits.
-        var migrated = DefaultedList.ofSize(clampSlots(Math.max(types, neededBuckets) * stacksPerType, stacksPerType), ItemStack.EMPTY);
+        var repacked = DefaultedList.ofSize(clampSlots(Math.max(types, neededBuckets) * stacksPerType, stacksPerType), ItemStack.EMPTY);
 
         int slot = 0;
         for (var group : groups) {
             for (var stack : group) {
-                if (slot < migrated.size())
-                    migrated.set(slot, stack);
+                if (slot < repacked.size())
+                    repacked.set(slot, stack);
 
                 slot++;
             }
@@ -149,7 +186,7 @@ public class MultiTypeBookInventory implements BookInventory {
                 slot++;
         }
 
-        return migrated;
+        return repacked;
     }
 
     // Same "Items" shape vanilla uses, but the slot index is an int so books can exceed 256 slots.
@@ -217,6 +254,11 @@ public class MultiTypeBookInventory implements BookInventory {
     public boolean tryAddStack(ItemStack stack, boolean allowNewTypes) {
         if (stack.isEmpty())
             return true;
+
+        // No storage book may be stored inside a storage book. Nested books multiply their NBT
+        // ~40^depth until the packet is too large and the player is disconnected.
+        if (stack.getItem() instanceof BaseStorageBook)
+            return false;
 
         int before = stack.getCount();
         int limit = getTypeCapacity();

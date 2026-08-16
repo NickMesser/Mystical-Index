@@ -19,6 +19,7 @@ import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerContext;
 import net.minecraft.screen.slot.CraftingResultSlot;
 import net.minecraft.screen.slot.Slot;
+import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.world.World;
 
@@ -35,6 +36,18 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
     private int tickCounter;
     private List<LibraryNetwork.Entry> lastSent = List.of();
     private List<LibraryNetwork.Entry> clientEntries = List.of();
+
+    // A shift-click drives the vanilla QUICK_MOVE loop, which re-enters quickMove (and the result
+    // slot's refill) once per craft. Everything below is scoped to a single user click so that one
+    // click resolves the library scan and the grid layout once instead of per craft iteration.
+    // MAX_CRAFTS_PER_CLICK bounds how many network-fed refills a single click may perform; without
+    // it a full network drains into the player's inventory in one click and freezes the tick.
+    private static final int MAX_CRAFTS_PER_CLICK = 64;
+    private boolean clickActive;
+    private List<LibraryBlockEntity> clickLibraries;
+    private ItemStack[] clickGridSnapshot;
+    private int clickCrafts;
+    private boolean resultSyncPending;
 
     public MysticalLecternScreenHandler(int syncId, PlayerInventory playerInventory) {
         this(syncId, playerInventory, ScreenHandlerContext.EMPTY);
@@ -75,7 +88,15 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
     }
 
     private List<LibraryBlockEntity> libraries() {
-        return context.get((world, pos) -> LibraryNetwork.findLibraries(world, pos, ModConfig.LecternRange)).orElse(List.of());
+        if (clickLibraries != null)
+            return clickLibraries;
+
+        var found = context.get((world, pos) -> LibraryNetwork.findLibraries(world, pos, ModConfig.LecternRange)).orElse(List.of());
+        // Memoise the scan for the rest of the click: one click can hit this many times (each
+        // craft's refill, plus shift-inserts), and re-scanning chunks every time is the freeze.
+        if (clickActive)
+            clickLibraries = found;
+        return found;
     }
 
     @Override
@@ -100,6 +121,16 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
 
         result.setStack(0, crafted);
         setPreviousTrackedSlot(0, crafted);
+
+        // During a click the auto-refill mutates the grid up to nine times per craft, and each
+        // mutation lands here. Hold the result packet and flush a single update when the click
+        // ends instead of firing one packet per grid mutation. The loop still terminates correctly
+        // because it reads the server-side result slot (set above), not the client packet.
+        if (clickActive) {
+            resultSyncPending = true;
+            return;
+        }
+
         serverPlayer.networkHandler.sendPacket(new ScreenHandlerSlotUpdateS2CPacket(syncId, nextRevision(), 0, crafted));
     }
 
@@ -110,8 +141,73 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
 
     @Override
     public void onClosed(PlayerEntity player) {
+        // The auto-refill keeps the 3x3 grid full and every extract lands the taken stack on the
+        // cursor, so both are full of network items at close. Push them back into storage first and
+        // only offer/drop what the network refuses; the plain dropInventory + super.onClosed path
+        // used to throw stacks on the floor whenever the inventory was full.
+        if (serverPlayer != null) {
+            var libraries = libraries();
+
+            // Handle the cursor before super.onClosed, which would otherwise offer/drop it itself.
+            var cursor = getCursorStack();
+            if (!cursor.isEmpty()) {
+                LibraryNetwork.insert(libraries, cursor);
+                if (!cursor.isEmpty())
+                    player.getInventory().offerOrDrop(cursor);
+                setCursorStack(ItemStack.EMPTY);
+            }
+
+            for (int slot = 0; slot < input.size(); slot++) {
+                var stack = input.removeStack(slot);
+                if (stack.isEmpty())
+                    continue;
+
+                LibraryNetwork.insert(libraries, stack);
+                if (!stack.isEmpty())
+                    player.getInventory().offerOrDrop(stack);
+            }
+        }
+
         super.onClosed(player);
-        context.run((world, pos) -> dropInventory(player, input));
+    }
+
+    @Override
+    public void onSlotClick(int slotIndex, int button, SlotActionType actionType, PlayerEntity player) {
+        // Establish the per-click scope so the library scan and grid snapshot are resolved once for
+        // the whole click (including every iteration of the vanilla QUICK_MOVE loop) and the result
+        // packet is coalesced. The guard keeps the outermost call the sole owner of the scope.
+        boolean owner = !clickActive;
+        if (owner)
+            beginClick();
+        try {
+            super.onSlotClick(slotIndex, button, actionType, player);
+        } finally {
+            if (owner)
+                endClick();
+        }
+    }
+
+    private void beginClick() {
+        clickActive = true;
+        clickLibraries = null;
+        clickGridSnapshot = null;
+        clickCrafts = 0;
+        resultSyncPending = false;
+    }
+
+    private void endClick() {
+        clickActive = false;
+        clickLibraries = null;
+        clickGridSnapshot = null;
+        clickCrafts = 0;
+
+        // Flush the single coalesced result update the click accumulated, if any.
+        if (resultSyncPending) {
+            resultSyncPending = false;
+            if (serverPlayer != null)
+                serverPlayer.networkHandler.sendPacket(
+                        new ScreenHandlerSlotUpdateS2CPacket(syncId, nextRevision(), 0, result.getStack(0)));
+        }
     }
 
     @Override
@@ -147,8 +243,13 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
                 return ItemStack.EMPTY;
 
             slot.onQuickTransfer(current, copied);
-        } else if (!insertItem(current, 10, 46, false)) {
-            return ItemStack.EMPTY;
+        } else {
+            // Grid slot: fill the player inventory first, then push whatever will not fit into the
+            // library network, so a full inventory no longer blocks the shift-click. The shared tail
+            // below still stops the QUICK_MOVE loop once a pass moves nothing (count unchanged).
+            insertItem(current, 10, 46, false);
+            if (!current.isEmpty() && !player.getWorld().isClient && LibraryNetwork.insert(libraries(), current) > 0)
+                networkDirty = true;
         }
 
         if (current.isEmpty())
@@ -324,15 +425,32 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
         @Override
         public void onTakeItem(PlayerEntity player, ItemStack stack) {
             var grid = MysticalLecternScreenHandler.this.input;
-            var snapshot = new ItemStack[9];
-            for (int i = 0; i < 9; i++) {
-                snapshot[i] = grid.getStack(i).copy();
+
+            // The refill always restores the same recipe layout, so the pre-consumption grid is the
+            // same every craft. Snapshot it once per click (before the first craft consumes it) and
+            // reuse it, instead of copying all nine slots on every iteration of the QUICK_MOVE loop.
+            ItemStack[] snapshot = clickGridSnapshot;
+            if (snapshot == null) {
+                snapshot = new ItemStack[9];
+                for (int i = 0; i < 9; i++)
+                    snapshot[i] = grid.getStack(i).copy();
+                if (clickActive)
+                    clickGridSnapshot = snapshot;
             }
 
             super.onTakeItem(player, stack);
 
             if (player.getWorld().isClient)
                 return;
+
+            // Bound the network-fed refills per click. Once the budget is spent the grid is left to
+            // drain, the result slot recomputes to empty, and the QUICK_MOVE loop ends on its own,
+            // capping the expensive extract calls a single shift-click can trigger.
+            if (clickCrafts >= MAX_CRAFTS_PER_CLICK) {
+                networkDirty = true;
+                return;
+            }
+            clickCrafts++;
 
             var libraries = libraries();
             for (int i = 0; i < 9; i++) {

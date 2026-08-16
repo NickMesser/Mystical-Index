@@ -5,11 +5,8 @@ import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
 import net.messer.config.ModConfig;
 import net.messer.mystical_index.MysticalIndex;
-import net.minecraft.fluid.Fluids;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.Registries;
-import net.minecraft.text.Text;
 
 public class SingleFluidStackingInventory {
     public final ItemStack stack;
@@ -58,12 +55,10 @@ public class SingleFluidStackingInventory {
         if(tag == null)
             return;
 
+        // Read only. The custom name is updated from FluidBook's fill/empty paths instead of
+        // here: setting it during a read ran every render frame, reverted anvil renames and
+        // never cleared when the book was drained.
         fluidStorage.variant = FluidVariant.fromNbt(tag.getCompound("fluidVariant"));
         fluidStorage.amount = tag.getLong("amount");
-        if(fluidStorage.variant.getFluid() != Fluids.EMPTY)
-            stack.setCustomName(Text.literal("Book of " +
-                    Registries.FLUID.getId(fluidStorage.variant.getFluid()).getPath().substring(0,1).toUpperCase() +
-                    Registries.FLUID.getId(fluidStorage.variant.getFluid()).getPath().substring(1)));
-
     }
 }

@@ -23,7 +23,7 @@ public class ModConfig extends MidnightConfig {
     @Comment public static Comment LecternTitle;
     @Entry public static int LecternRange = 16;
 
-    @Comment public static Comment BoogMangetismTitle;
+    @Comment public static Comment BookOfMagnetismTitle;
     @Entry public static int MagnetismRange = 5;
 
     @Comment public static Comment BookOfSaturationTitle;
@@ -44,13 +44,13 @@ public class ModConfig extends MidnightConfig {
 
     @Comment public static Comment BookOfFarmingTitle;
     @Entry public static int BookOfFarmingDefaultCooldown = 120;
-
-    @Comment public static Comment EntityPaperTitle;
-    @Entry public static List<String> EntityPaperBlackList = List.of("minecraft:ender_dragon", "minecraft:wither");
     @Entry public static int BookOfFarmingMaxStacks = 5;
     @Entry public static Map<String, Integer> BookOfFarmingCooldowns = new HashMap<>(){
         {
             put("minecraft:carrot", 120);
         }
     };
+
+    @Comment public static Comment EntityPaperTitle;
+    @Entry public static List<String> EntityPaperBlackList = List.of("minecraft:ender_dragon", "minecraft:wither");
 }

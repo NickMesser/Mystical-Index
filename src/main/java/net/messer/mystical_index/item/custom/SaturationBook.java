@@ -54,7 +54,7 @@ public class SaturationBook extends Item {
                 }
             }
             else{
-                player.sendMessage(Text.literal("Unable to update stored item. Please empty all contents first"), true);
+                player.sendMessage(Text.translatable("message.mystical_index.empty_first"), true);
             }
         }
 

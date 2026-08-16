@@ -47,8 +47,6 @@ public class HusbandryBook extends BaseGeneratingBook {
 
     private static final int INVENTORY_SIZE = 6;
 
-    private final int maxCooldown = ModConfig.HusbandryBookCooldown * 20;
-
 
     public HusbandryBook(Settings settings) {
         super(settings);
@@ -70,7 +68,7 @@ public class HusbandryBook extends BaseGeneratingBook {
         var entityName = Registries.ENTITY_TYPE.getId(entity.getType()).toString();
         if(ModConfig.HusbandryBookBlackList.contains(entityName) || ModConfig.HostileBookBlackList.contains(entityName))
         {
-            user.sendMessage(Text.literal("Mob is blacklisted from book."));
+            user.sendMessage(Text.translatable("message.mystical_index.mob_blacklisted"));
             return super.useOnEntity(stack, user, entity, hand);
         }
 
@@ -81,20 +79,20 @@ public class HusbandryBook extends BaseGeneratingBook {
 
         var numberOfKills = compound.getInt(NUMBER_OF_KILLS_KEY);
         if(numberOfKills > 0){
-            user.sendMessage(Text.literal("Mob already stored in this book."), false);
+            user.sendMessage(Text.translatable("message.mystical_index.mob_already_stored"), false);
             return super.useOnEntity(stack, user, entity, hand);
         }
 
         var lootTableId = entity.getType().getLootTableId();
 
-        stack.setCustomName(Text.literal("Book of " + entity.getName().getString()));
+        stack.setCustomName(Text.translatable("item.mystical_index.husbandry_book.named", entity.getName()));
         compound.putString(STORED_ENTITY_NAME_KEY, entity.getName().getString());
         compound.putString(STORED_ENTITY_LOOT_TABLE_KEY, lootTableId.toString());
         compound.putInt(NUMBER_OF_KILLS_KEY, 0);
         compound.putString(STORED_ENTITY_ID_KEY, entityName);
 
-        // lastUsedTime is compared against world.getTime() % 24000, so it must be a timestamp.
-        updateUseTime(stack, user.getWorld().getTime() % 24000);
+        // lastUsedTime is the raw (monotonic) world age; cooldown is now - lastUsedTime.
+        updateUseTime(stack, user.getWorld().getTime());
         return super.useOnEntity(stack, user, entity, hand);
     }
 
@@ -181,11 +179,14 @@ public class HusbandryBook extends BaseGeneratingBook {
         if(numberOfKills <= 0)
             return;
 
-        var currentTime = world.getTime() % 24000;
+        var maxCooldown = ModConfig.HusbandryBookCooldown * 20;
+        var currentTime = world.getTime();
         var lastUsedTime = compound.getLong("lastUsedTime");
         var difference = currentTime - lastUsedTime;
-        if(difference < 0)
+        if(difference < 0){
             updateUseTime(stack, currentTime);
+            return;
+        }
 
         if(difference > (maxCooldown - (numberOfKills * 20L))){
             updateUseTime(stack, currentTime);
@@ -231,23 +232,25 @@ public class HusbandryBook extends BaseGeneratingBook {
             var storedEntityName = compound.getString(STORED_ENTITY_NAME_KEY);
             var numberOfKills = compound.getInt(NUMBER_OF_KILLS_KEY);
 
-            if(storedEntityName.equals(""))
-                return;
+            // Only this stats block is entity-specific; the shift/help lines below must always show.
+            if(!storedEntityName.equals("")){
+                var maxCooldown = ModConfig.HusbandryBookCooldown * 20;
 
-            if(numberOfKills >= ModConfig.HusbandryBookMaxKills)
-                tooltip.add(Text.literal("§cMax kills reached"));
-            else
-                tooltip.add(Text.literal("§aKills: " + numberOfKills));
+                if(numberOfKills >= ModConfig.HusbandryBookMaxKills)
+                    tooltip.add(Text.translatable("tooltip.mystical_index.husbandry_book.max_kills"));
+                else
+                    tooltip.add(Text.translatable("tooltip.mystical_index.husbandry_book.kills", numberOfKills));
 
-            var timeLastUsed = compound.getLong("lastUsedTime");
-            var difference = world.getTime() % 24000 - timeLastUsed;
-            var timeLeft = (difference - (maxCooldown - (numberOfKills * 20L)));
+                var timeLastUsed = compound.getLong("lastUsedTime");
+                var difference = world.getTime() - timeLastUsed;
+                var timeLeft = (difference - (maxCooldown - (numberOfKills * 20L)));
 
-            if((timeLeft/20) * -1 < 0)
-                timeLeft = 0;
+                if((timeLeft/20) * -1 < 0)
+                    timeLeft = 0;
 
-            tooltip.add(Text.literal("Cooldown: " + ((maxCooldown - (20 * numberOfKills))/20) + " seconds"));
-            tooltip.add(Text.literal("Time left: " + ((timeLeft/20) * -1) + " seconds"));
+                tooltip.add(Text.translatable("tooltip.mystical_index.husbandry_book.cooldown", (maxCooldown - (20 * numberOfKills))/20));
+                tooltip.add(Text.translatable("tooltip.mystical_index.husbandry_book.time_left", (timeLeft/20) * -1));
+            }
         }
 
         if(Screen.hasShiftDown()){

@@ -2,19 +2,16 @@ package net.messer.mystical_index;
 
 import eu.midnightdust.lib.config.MidnightConfig;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.messer.config.ModConfig;
 import net.messer.mystical_index.block.ModBlocks;
 import net.messer.mystical_index.block.entity.ModBlockEntities;
 import net.messer.mystical_index.events.PlayerKillEvent;
 import net.messer.mystical_index.item.ModItems;
-import net.messer.mystical_index.item.provider.PaperColorProvider;
 import net.messer.mystical_index.network.LecternNetworking;
 import net.messer.mystical_index.recipe.ModRecipe;
 import net.messer.mystical_index.recipe.PistonRecipeInitializer;
 import net.messer.mystical_index.screen.ModScreenHandlers;
-import net.minecraft.client.color.item.ItemColorProvider;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.item.ItemGroup;
@@ -47,7 +44,5 @@ public class MysticalIndex implements ModInitializer {
 
 		ModScreenHandlers.registerScreenHandlers();
 		LecternNetworking.registerServerReceivers();
-
-		PaperColorProvider.register();
 	}
 }

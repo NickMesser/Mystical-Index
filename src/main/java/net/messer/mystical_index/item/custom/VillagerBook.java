@@ -100,14 +100,14 @@ public class VillagerBook extends Item {
 
             if(villagerEntity.getVillagerData().getProfession() == VillagerProfession.NONE || villagerEntity.getExperience() == 0)
             {
-                player.sendMessage(Text.literal("Set villager profession to: " + profession.toString()), true);
+                player.sendMessage(Text.translatable("message.mystical_index.set_villager_profession", profession.toString()), true);
                 villagerEntity.setVillagerData(villagerEntity.getVillagerData().withProfession(VillagerProfession.NONE));
                 villagerEntity.reinitializeBrain((ServerWorld) world);
                 villagerEntity.setVillagerData(villagerEntity.getVillagerData().withProfession(profession));
                 villagerEntity.reinitializeBrain((ServerWorld) world);
                 addVillagerToBook(stack, villagerEntity);
                 String professionName = profession.toString().substring(0,1).toUpperCase() + profession.toString().substring(1).toLowerCase();
-                stack.setCustomName(Text.of("Book Of " + professionName));
+                stack.setCustomName(Text.translatable("item.mystical_index.villager_book.named", professionName));
             }
         }
 
@@ -127,6 +127,11 @@ public class VillagerBook extends Item {
         if(nbt == null)
             return;
 
+        // loadEntityWithPassengers needs a world; a mod calling getTooltip(null) would NPE here
+        // (BabyVillagerBook and HostileBook guard this the same way).
+        if(world == null)
+            return;
+
         VillagerEntity villagerEntity = (VillagerEntity) EntityType.loadEntityWithPassengers(nbt.getCompound("Entity"), world, (entityx) -> {
             return entityx;
         });
@@ -135,19 +140,19 @@ public class VillagerBook extends Item {
             return;
 
         if(villagerEntity.getVillagerData().getProfession() == VillagerProfession.NONE){
-            tooltip.add(Text.of("§eSHIFT§r + §eRIGHT CLICK§r a profession block"));
-            tooltip.add(Text.of("to set the profession of this villager."));
+            tooltip.add(Text.translatable("tooltip.mystical_index.villager_book.set_profession0"));
+            tooltip.add(Text.translatable("tooltip.mystical_index.villager_book.set_profession1"));
             return;
         }
 
-        tooltip.add(Text.of("§eRIGHT CLICK§r to trade with this villager."));
+        tooltip.add(Text.translatable("tooltip.mystical_index.villager_book.trade"));
         tooltip.add(Text.of(""));
 
         var trades = villagerEntity.getOffers();
         if(trades.isEmpty())
             return;
 
-        tooltip.add(Text.of("§aTrades:§a"));
+        tooltip.add(Text.translatable("tooltip.mystical_index.villager_book.trades_header"));
 
         for (TradeOffer trade : trades) {
             ItemStack firstBuyItemStack = trade.getOriginalFirstBuyItem();
@@ -155,9 +160,14 @@ public class VillagerBook extends Item {
             ItemStack sellItemStack = trade.getSellItem();
 
             if(secondBuyItemStack.isEmpty())
-                tooltip.add(Text.of(firstBuyItemStack.getCount() + " " + firstBuyItemStack.getName().getString() + " for " + sellItemStack.getCount() + " " + sellItemStack.getName().getString()));
+                tooltip.add(Text.translatable("tooltip.mystical_index.villager_book.trade_single",
+                        firstBuyItemStack.getCount(), firstBuyItemStack.getName(),
+                        sellItemStack.getCount(), sellItemStack.getName()));
             else
-                tooltip.add(Text.of(firstBuyItemStack.getCount() + " " + firstBuyItemStack.getName().getString() + " and " + secondBuyItemStack.getCount() + " " + secondBuyItemStack.getName().getString() + " for " + sellItemStack.getCount() + " " + sellItemStack.getName().getString()));
+                tooltip.add(Text.translatable("tooltip.mystical_index.villager_book.trade_double",
+                        firstBuyItemStack.getCount(), firstBuyItemStack.getName(),
+                        secondBuyItemStack.getCount(), secondBuyItemStack.getName(),
+                        sellItemStack.getCount(), sellItemStack.getName()));
         }
 
         super.appendTooltip(stack, world, tooltip, context);
@@ -165,6 +175,11 @@ public class VillagerBook extends Item {
 
     @Override
     public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
+        // Server-side only: the client would deserialize a throwaway villager, run restock/levelUp
+        // on it and play a second copy of the trade sound the server already broadcasts.
+        if(world.isClient())
+            return super.use(world, user, hand);
+
         if(user.isSneaking())
             return super.use(world, user, hand);
 
@@ -198,17 +213,14 @@ public class VillagerBook extends Item {
         world.playSound(null, user.getBlockPos(), SoundEvents.ENTITY_VILLAGER_TRADE, SoundCategory.AMBIENT, 1f, 1.5f);
         user.interact(villagerEntity, hand);
         user.getItemCooldownManager().set(this, 20);
-        return super.use(world, user, hand);
+        // Return success so the hand swings; the afterUsing hook persists the throwaway villager
+        // back into this book once a trade actually completes.
+        return TypedActionResult.success(stack);
     }
 
     @Override
     public boolean hasGlint(ItemStack stack) {
         return stack.hasNbt();
-    }
-
-    @Override
-    public ItemStack getRecipeRemainder(ItemStack stack) {
-        return stack.copy();
     }
 
     public void createAndAddVillager(ItemStack stack, ServerWorld serverWorld){
@@ -230,11 +242,11 @@ public class VillagerBook extends Item {
         stackNbt.put("Entity", entityNbt);
 
         if(villagerEntity.getVillagerData().getProfession() == VillagerProfession.NONE){
-            stack.setCustomName(Text.of("Book Of Villager"));
+            stack.setCustomName(Text.translatable("item.mystical_index.villager_book"));
         }
         else{
             var professionName = villagerEntity.getVillagerData().getProfession().toString().substring(0,1).toUpperCase() + villagerEntity.getVillagerData().getProfession().toString().substring(1).toLowerCase();
-            stack.setCustomName(Text.of("Book Of " + professionName));
+            stack.setCustomName(Text.translatable("item.mystical_index.villager_book.named", professionName));
         }
 
     }
