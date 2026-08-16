@@ -2,31 +2,31 @@ package net.messer.mystical_index.recipe;
 
 import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.item.ModItems;
+import net.messer.util.MysticalUtil;
 import net.minecraft.entity.EntityType;
-import net.minecraft.inventory.RecipeInputInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.SpawnEggItem;
 import net.minecraft.recipe.RecipeSerializer;
 import net.minecraft.recipe.SpecialCraftingRecipe;
 import net.minecraft.recipe.book.CraftingRecipeCategory;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.util.Identifier;
+import net.minecraft.recipe.input.CraftingRecipeInput;
+import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.world.World;
 
 public class EntityPaperRecipes extends SpecialCraftingRecipe {
 
-    public EntityPaperRecipes(Identifier id, CraftingRecipeCategory category) {
-        super(id, category);
+    public EntityPaperRecipes(CraftingRecipeCategory category) {
+        super(category);
     }
 
     @Override
-    public boolean matches(RecipeInputInventory recipeInputInventory, World world) {
+    public boolean matches(CraftingRecipeInput recipeInputInventory, World world) {
         if (!this.fits(recipeInputInventory.getWidth(), recipeInputInventory.getHeight())) {
             return false;
         } else {
-            for(int i = 0; i < recipeInputInventory.size(); ++i) {
-                ItemStack itemStack = recipeInputInventory.getStack(i);
+            for(int i = 0; i < recipeInputInventory.getSize(); ++i) {
+                ItemStack itemStack = recipeInputInventory.getStackInSlot(i);
                 // Centre slot takes the egg, every other slot takes entity paper.
                 if (i == 4) {
                     if (itemStack.getItem() != Items.EGG)
@@ -41,22 +41,21 @@ public class EntityPaperRecipes extends SpecialCraftingRecipe {
     }
 
     @Override
-    public ItemStack craft(RecipeInputInventory inventory, DynamicRegistryManager registryManager) {
-        //var firstItem = inventory.getInputStacks().get(0);
-        var firstItem = inventory.getStack(0);
-        if(firstItem.getNbt() == null)
+    public ItemStack craft(CraftingRecipeInput inventory, RegistryWrapper.WrapperLookup registryLookup) {
+        var firstItem = inventory.getStackInSlot(0);
+        var nbt = MysticalUtil.getCustomData(firstItem);
+        if(nbt == null)
             return ItemStack.EMPTY;
 
-        var nbt = firstItem.getNbt();
         if(!nbt.contains("entity"))
             return ItemStack.EMPTY;
 
         boolean allNbtMatch = true;
-        for(var item : inventory.getInputStacks()){
+        for(var item : inventory.getStacks()){
             if(item.getItem() == Items.EGG)
                 continue;
 
-            if(!nbt.equals(item.getNbt()))
+            if(!nbt.equals(MysticalUtil.getCustomData(item)))
                 allNbtMatch = false;
         }
 

@@ -6,16 +6,19 @@ import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.block.entity.LibraryBlockEntity;
 import net.messer.mystical_index.item.custom.base_books.BaseGeneratingBook;
 import net.messer.mystical_index.item.inventory.SingleItemStackingInventory;
+import net.messer.util.MysticalUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.CropBlock;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.gui.screen.Screen;
 import net.messer.mystical_index.item.inventory.BookContentsTooltipData;
-import net.minecraft.client.item.TooltipContext;
-import net.minecraft.client.item.TooltipData;
+import net.minecraft.item.tooltip.TooltipType;
+import net.minecraft.item.tooltip.TooltipData;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.item.Items;
@@ -47,7 +50,9 @@ public class FarmingBook extends BaseGeneratingBook {
 
         var itemStack = context.getStack();
         var world = context.getWorld();
-        var compound = itemStack.getOrCreateNbt();
+        // Attaches the compound even when empty, same as the old getOrCreateNbt(): an untouched
+        // book picking one up here is what hasGlint() and the tick guard both read.
+        var compound = MysticalUtil.getOrCreateCustomData(itemStack);
 
         if(compound.contains("cropBlock")) // check if book has a cropBlock assigned to it
             return super.useOnBlock(context);
@@ -64,25 +69,25 @@ public class FarmingBook extends BaseGeneratingBook {
     }
 
     public void addCrop(ItemStack stack, CropBlock cropBlock){
-        NbtCompound compound = stack.getOrCreateNbt();
         var cropBlockId = Registries.BLOCK.getId(cropBlock).toString();
-        compound.putString("cropBlock", cropBlockId);
-        stack.setCustomName(Text.of("Book Of Farming: " + StringUtil.capitalize(cropBlock.asItem().toString())));
+        MysticalUtil.editCustomData(stack, compound -> compound.putString("cropBlock", cropBlockId));
+        stack.set(DataComponentTypes.CUSTOM_NAME, Text.of("Book Of Farming: " + StringUtil.capitalize(cropBlock.asItem().toString())));
     }
 
     public CropBlock getCrop(ItemStack stack){
-        if(!stack.hasNbt())
+        if(!MysticalUtil.hasCustomData(stack))
             return null;
 
-        NbtCompound compound = stack.getOrCreateNbt();
+        NbtCompound compound = MysticalUtil.getOrCreateCustomData(stack);
         var cropBlockId = compound.getString("cropBlock");
-        var block = Registries.BLOCK.get(new Identifier(cropBlockId));
+        var block = Registries.BLOCK.get(Identifier.of(cropBlockId));
         if (!(block instanceof CropBlock))
         {
             compound.remove("cropBlock");
+            MysticalUtil.setCustomData(stack, compound);
             return null;
         }
-        return (CropBlock) Registries.BLOCK.get(new Identifier(cropBlockId));
+        return (CropBlock) Registries.BLOCK.get(Identifier.of(cropBlockId));
     }
 
     @Override
@@ -97,7 +102,7 @@ public class FarmingBook extends BaseGeneratingBook {
     }
 
     public void tryGenerateResources(ItemStack stack, World world){
-        var compound = stack.getNbt();
+        var compound = MysticalUtil.getCustomData(stack);
         if(compound == null)
             return;
 
@@ -141,7 +146,7 @@ public class FarmingBook extends BaseGeneratingBook {
         if (world.isClient)
             return;
 
-        if(!stack.hasNbt())
+        if(!MysticalUtil.hasCustomData(stack))
             return;
 
         if(!(be instanceof LibraryBlockEntity))
@@ -158,7 +163,7 @@ public class FarmingBook extends BaseGeneratingBook {
         if(!(entity instanceof PlayerEntity))
             return;
 
-        if (!stack.hasNbt())
+        if (!MysticalUtil.hasCustomData(stack))
             return;
 
         tryGenerateResources(stack, world);
@@ -166,7 +171,7 @@ public class FarmingBook extends BaseGeneratingBook {
 
     @Override
     public boolean hasGlint(ItemStack stack) {
-        return stack.hasNbt();
+        return MysticalUtil.hasCustomData(stack);
     }
 
     @Override
@@ -180,13 +185,13 @@ public class FarmingBook extends BaseGeneratingBook {
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
+    public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType type) {
         if(Screen.hasShiftDown()){
             tooltip.add(Text.translatable("tooltip.mystical_index.farming_book_shift0"));
             tooltip.add(Text.translatable("tooltip.mystical_index.farming_book_shift1"));
         } else {
             tooltip.add(Text.translatable("tooltip.mystical_index.farming_book"));
         }
-        super.appendTooltip(stack, world, tooltip, context);
+        super.appendTooltip(stack, context, tooltip, type);
     }
 }

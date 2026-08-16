@@ -5,7 +5,7 @@
     "MFM",
     "ACA"
   ],
-  "key":{
+  "key": {
     "A": {
       "item": "minecraft:golden_apple"
     },
@@ -20,6 +20,6 @@
     }
   },
   "result": {
-    "item": "mystical_index:saturation_book"
+    "id": "mystical_index:saturation_book"
   }
 }

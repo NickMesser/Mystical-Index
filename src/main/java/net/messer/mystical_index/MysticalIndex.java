@@ -2,7 +2,7 @@ package net.messer.mystical_index;
 
 import eu.midnightdust.lib.config.MidnightConfig;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.messer.config.ModConfig;
 import net.messer.mystical_index.block.ModBlocks;
@@ -14,6 +14,7 @@ import net.messer.mystical_index.network.LecternNetworking;
 import net.messer.mystical_index.recipe.ModRecipe;
 import net.messer.mystical_index.recipe.PistonRecipeInitializer;
 import net.messer.mystical_index.screen.ModScreenHandlers;
+import net.messer.util.MysticalUtil;
 import net.minecraft.client.color.item.ItemColorProvider;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -35,6 +36,10 @@ public class MysticalIndex implements ModInitializer {
 	public void onInitialize() {
 		MidnightConfig.init(MOD_ID, ModConfig.class);
 
+		// Book inventories serialize nested item stacks, which needs a registry lookup that the
+		// call sites (tooltips, glint checks) have no way to reach on their own.
+		ServerLifecycleEvents.SERVER_STARTING.register(server -> MysticalUtil.setRegistryLookup(server.getRegistryManager()));
+
 		ResourceManagerHelper.get(ResourceType.SERVER_DATA).registerReloadListener(PistonRecipeInitializer.getInstance());
 
 		ModItems.registerModItems();
@@ -46,6 +51,7 @@ public class MysticalIndex implements ModInitializer {
 		ModRecipe.registerRecipes();
 
 		ModScreenHandlers.registerScreenHandlers();
+		LecternNetworking.registerPayloads();
 		LecternNetworking.registerServerReceivers();
 
 		PaperColorProvider.register();

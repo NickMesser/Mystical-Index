@@ -5,6 +5,7 @@ import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.custom.HostileBook;
 import net.messer.mystical_index.item.custom.base_books.BaseGeneratingBook;
 import net.messer.mystical_index.recipe.PistonRecipeInitializer;
+import net.messer.util.MysticalUtil;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.PistonBlockEntity;
 import net.minecraft.entity.ItemEntity;
@@ -47,12 +48,12 @@ public class PistonEntityHook {
 
             for(var stack: itemStacks){
                 if(stack.getItem() instanceof BaseGeneratingBook){
-                    if(!stack.hasNbt())
+                    if(!MysticalUtil.hasCustomData(stack))
                     {
                         String entityId = "";
                         for (var stack2: itemStacks){
                             if(stack2.getItem() == ModItems.ENTITY_PAPER){
-                                var compound = stack2.getNbt();
+                                var compound = MysticalUtil.getCustomData(stack2);
                                 if(compound == null)
                                     continue;
                                 entityId = compound.getString("entity");
@@ -73,7 +74,7 @@ public class PistonEntityHook {
 
                     // A generating book that still has no NBT (or one the branch above did not
                     // claim) reaches here with a null compound.
-                    var compound = stack.getNbt();
+                    var compound = MysticalUtil.getCustomData(stack);
                     if(compound != null && compound.contains("storedEntityId")){
                         var storedEntityId = compound.getString("storedEntityId");
                         // Check if other input items have matching nbt
@@ -83,19 +84,21 @@ public class PistonEntityHook {
                             if(item.getItem() != ModItems.ENTITY_PAPER)
                                 continue;
 
-                            if(!item.hasNbt()){
+                            var paperNbt = MysticalUtil.getCustomData(item);
+                            if(paperNbt == null){
                                 allNbtMatch = false;
                                 continue;
                             }
 
-                            if(!item.getNbt().getString("entity").equals(storedEntityId))
+                            if(!paperNbt.getString("entity").equals(storedEntityId))
                                 allNbtMatch = false;
 
                             matchingItems++;
                         }
                         if(allNbtMatch & compound.contains("numberOfKills")){
                             var numberOfKills = compound.getInt("numberOfKills");
-                            compound.putInt("numberOfKills", numberOfKills + matchingItems);
+                            var added = matchingItems;
+                            MysticalUtil.editCustomData(stack, nbt -> nbt.putInt("numberOfKills", numberOfKills + added));
                             for(var item : itemStacks){
                                 if(item.getItem() != ModItems.ENTITY_PAPER)
                                     continue;
@@ -133,8 +136,8 @@ public class PistonEntityHook {
             for(var craftedItem: craftedItems.keySet()){
                 var itemEntry = craftedItems.get(craftedItem);
                 var itemStack = new ItemStack(craftedItem, itemEntry.count);
-                itemStack.setNbt(itemEntry.nbt.orElse(null));
-                itemStack.onCraft(world, FakePlayer.get((ServerWorld) world), itemStack.getCount());
+                itemEntry.nbt.ifPresent(nbt -> MysticalUtil.setCustomData(itemStack, nbt.copy()));
+                itemStack.onCraftByPlayer(world, FakePlayer.get((ServerWorld) world), itemStack.getCount());
                 var itemEntity = new ItemEntity(world, itemPos.getX(), itemPos.getY(), itemPos.getZ(), itemStack);
                 world.spawnEntity(itemEntity);
                 world.playSound(null, itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(), SoundEvents.BLOCK_SLIME_BLOCK_PLACE, SoundCategory.BLOCKS, 2f, 2f);

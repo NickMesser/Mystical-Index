@@ -2,7 +2,9 @@ package net.messer.mystical_index.item.custom;
 
 import net.messer.mixin.VillagerEntityInvoker;
 import net.messer.mystical_index.item.ModItems;
-import net.minecraft.client.item.TooltipContext;
+import net.messer.util.MysticalUtil;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnReason;
@@ -42,10 +44,10 @@ public class VillagerBook extends Item {
 
         PlayerEntity player = context.getPlayer();
         ItemStack stack = context.getStack();
-        NbtCompound nbt = stack.getNbt();
+        NbtCompound nbt = MysticalUtil.getCustomData(stack);
         World world = context.getWorld();
 
-        if(player != null && player.isSneaking() && stack.hasNbt()){
+        if(player != null && player.isSneaking() && nbt != null){
             var server = context.getWorld().getServer();
             var jobSiteWorld = server.getWorld(context.getWorld().getRegistryKey());
             var poiType = jobSiteWorld.getPointOfInterestStorage().getType(context.getBlockPos()).orElse(null);
@@ -77,6 +79,7 @@ public class VillagerBook extends Item {
                     return super.useOnBlock(context);
 
                 nbt.remove("Entity");
+                MysticalUtil.setCustomData(stack, nbt);
 
                 ItemStack emptyVillagerStack = new ItemStack(ModItems.EMPTY_VILLAGER_BOOK);
                 player.setStackInHand(context.getHand(), ItemUsage.exchangeStack(stack, player, emptyVillagerStack));
@@ -107,7 +110,7 @@ public class VillagerBook extends Item {
                 villagerEntity.reinitializeBrain((ServerWorld) world);
                 addVillagerToBook(stack, villagerEntity);
                 String professionName = profession.toString().substring(0,1).toUpperCase() + profession.toString().substring(1).toLowerCase();
-                stack.setCustomName(Text.of("Book Of " + professionName));
+                stack.set(DataComponentTypes.CUSTOM_NAME, Text.of("Book Of " + professionName));
             }
         }
 
@@ -116,15 +119,19 @@ public class VillagerBook extends Item {
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        if(!stack.hasNbt())
+    public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType type) {
+        if(!MysticalUtil.hasCustomData(stack))
         {
-            super.appendTooltip(stack, world, tooltip, context);
+            super.appendTooltip(stack, context, tooltip, type);
             return;
         }
 
-        NbtCompound nbt = stack.getNbt();
+        NbtCompound nbt = MysticalUtil.getCustomData(stack);
         if(nbt == null)
+            return;
+
+        var world = MysticalUtil.tooltipWorld();
+        if(world == null)
             return;
 
         VillagerEntity villagerEntity = (VillagerEntity) EntityType.loadEntityWithPassengers(nbt.getCompound("Entity"), world, (entityx) -> {
@@ -151,7 +158,7 @@ public class VillagerBook extends Item {
 
         for (TradeOffer trade : trades) {
             ItemStack firstBuyItemStack = trade.getOriginalFirstBuyItem();
-            ItemStack secondBuyItemStack = trade.getSecondBuyItem();
+            ItemStack secondBuyItemStack = trade.getDisplayedSecondBuyItem();
             ItemStack sellItemStack = trade.getSellItem();
 
             if(secondBuyItemStack.isEmpty())
@@ -160,7 +167,7 @@ public class VillagerBook extends Item {
                 tooltip.add(Text.of(firstBuyItemStack.getCount() + " " + firstBuyItemStack.getName().getString() + " and " + secondBuyItemStack.getCount() + " " + secondBuyItemStack.getName().getString() + " for " + sellItemStack.getCount() + " " + sellItemStack.getName().getString()));
         }
 
-        super.appendTooltip(stack, world, tooltip, context);
+        super.appendTooltip(stack, context, tooltip, type);
     }
 
     @Override
@@ -169,7 +176,7 @@ public class VillagerBook extends Item {
             return super.use(world, user, hand);
 
         ItemStack stack = user.getStackInHand(hand);
-        NbtCompound nbt = stack.getNbt();
+        NbtCompound nbt = MysticalUtil.getCustomData(stack);
         if(nbt == null)
             return super.use(world, user, hand);
 
@@ -203,7 +210,7 @@ public class VillagerBook extends Item {
 
     @Override
     public boolean hasGlint(ItemStack stack) {
-        return stack.hasNbt();
+        return MysticalUtil.hasCustomData(stack);
     }
 
     @Override
@@ -214,27 +221,26 @@ public class VillagerBook extends Item {
     public void createAndAddVillager(ItemStack stack, ServerWorld serverWorld){
         VillagerType villagerType = VillagerType.PLAINS;
         VillagerEntity villagerEntity = new VillagerEntity(EntityType.VILLAGER, serverWorld, villagerType);
-        villagerEntity.initialize(serverWorld, serverWorld.getLocalDifficulty(villagerEntity.getBlockPos()), SpawnReason.SPAWN_EGG, null, null);
+        villagerEntity.initialize(serverWorld, serverWorld.getLocalDifficulty(villagerEntity.getBlockPos()), SpawnReason.SPAWN_EGG, null);
         villagerEntity.getVillagerData().withProfession(VillagerProfession.NONE);
         addVillagerToBook(stack, villagerEntity);
     }
 
     public void addVillagerToBook(ItemStack stack, VillagerEntity villagerEntity){
-        NbtCompound stackNbt = stack.getNbt();
-        if(stackNbt == null)
-            stackNbt = stack.getOrCreateNbt();
+        NbtCompound stackNbt = MysticalUtil.getOrCreateCustomData(stack);
 
         NbtCompound entityNbt = new NbtCompound();
         villagerEntity.saveSelfNbt(entityNbt);
         stackNbt.remove("Entity");
         stackNbt.put("Entity", entityNbt);
+        MysticalUtil.setCustomData(stack, stackNbt);
 
         if(villagerEntity.getVillagerData().getProfession() == VillagerProfession.NONE){
-            stack.setCustomName(Text.of("Book Of Villager"));
+            stack.set(DataComponentTypes.CUSTOM_NAME, Text.of("Book Of Villager"));
         }
         else{
             var professionName = villagerEntity.getVillagerData().getProfession().toString().substring(0,1).toUpperCase() + villagerEntity.getVillagerData().getProfession().toString().substring(1).toLowerCase();
-            stack.setCustomName(Text.of("Book Of " + professionName));
+            stack.set(DataComponentTypes.CUSTOM_NAME, Text.of("Book Of " + professionName));
         }
 
     }

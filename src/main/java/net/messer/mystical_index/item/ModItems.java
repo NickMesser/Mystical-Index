@@ -1,6 +1,5 @@
 package net.messer.mystical_index.item;
 
-import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.block.ModBlocks;
@@ -16,52 +15,52 @@ import net.minecraft.util.Identifier;
 public class ModItems {
 
     public static final Item FLUID_BOOK = registerItem("fluid_book",
-            new FluidBook(new FabricItemSettings().maxCount(1)));
+            new FluidBook(new Item.Settings().maxCount(1)));
 
     public static final Item FARMING_BOOK = registerItem("farming_book",
-            new FarmingBook(new FabricItemSettings().maxCount(1)));
+            new FarmingBook(new Item.Settings().maxCount(1)));
 
     public static final Item STORAGE_BOOK = registerItem("storage_book",
-            new StorageBook(new FabricItemSettings().maxCount(1)));
+            new StorageBook(new Item.Settings().maxCount(1)));
 
     public static final Item HOLDING_BOOK_TIER1 = registerItem("holding_book_1",
-            new TieredStorageBook(new FabricItemSettings().maxCount(1), 1));
+            new TieredStorageBook(new Item.Settings().maxCount(1), 1));
 
     public static final Item HOLDING_BOOK_TIER2 = registerItem("holding_book_2",
-            new TieredStorageBook(new FabricItemSettings().maxCount(1), 2));
+            new TieredStorageBook(new Item.Settings().maxCount(1), 2));
 
     public static final Item HOLDING_BOOK_TIER3 = registerItem("holding_book_3",
-            new TieredStorageBook(new FabricItemSettings().maxCount(1), 3));
+            new TieredStorageBook(new Item.Settings().maxCount(1), 3));
 
     public static final Item HOLDING_BOOK_TIER4 = registerItem("holding_book_4",
-            new TieredStorageBook(new FabricItemSettings().maxCount(1), 4));
+            new TieredStorageBook(new Item.Settings().maxCount(1), 4));
 
     public static final Item HUSBANDRY_BOOK = registerItem("husbandry_book",
-            new HusbandryBook(new FabricItemSettings().maxCount(1)));
+            new HusbandryBook(new Item.Settings().maxCount(1)));
 
     public static final Item HOSTILE_BOOK = registerItem("hostile_book",
-            new HostileBook(new FabricItemSettings().maxCount(1)));
+            new HostileBook(new Item.Settings().maxCount(1)));
 
     public static final Item SATURATION_BOOK = registerItem("saturation_book",
-            new SaturationBook(new FabricItemSettings().maxCount(1)));
+            new SaturationBook(new Item.Settings().maxCount(1)));
 
     public static final Item MAGNETISM_BOOK = registerItem("magnetism_book",
-            new MagnetismBook(new FabricItemSettings().maxCount(1)));
+            new MagnetismBook(new Item.Settings().maxCount(1)));
 
     public static final Item VILLAGER_BOOK = registerItem("villager_book",
-            new VillagerBook(new FabricItemSettings().maxCount(1)));
+            new VillagerBook(new Item.Settings().maxCount(1)));
 
     public static final Item BABY_VILLAGER_BOOK = registerItem("baby_villager_book",
-            new BabyVillagerBook(new FabricItemSettings().maxCount(1)));
+            new BabyVillagerBook(new Item.Settings().maxCount(1)));
 
     public static final Item EMPTY_VILLAGER_BOOK = registerItem("empty_villager_book",
-            new EmptyVillagerBook(new FabricItemSettings().maxCount(1)));
+            new EmptyVillagerBook(new Item.Settings().maxCount(1)));
 
     public static final Item ENTITY_PAPER = registerItem("entity_paper",
-            new EntityPaper(new FabricItemSettings().maxCount(64)));
+            new EntityPaper(new Item.Settings().maxCount(64)));
 
     private static Item registerItem(String name, Item item){
-        return Registry.register(Registries.ITEM, new Identifier(MysticalIndex.MOD_ID, name), item);
+        return Registry.register(Registries.ITEM, Identifier.of(MysticalIndex.MOD_ID, name), item);
     }
 
     public static void registerModItems(){

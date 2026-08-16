@@ -10,7 +10,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 public class LibraryInventoryScreen extends HandledScreen<LibraryInventoryScreenHandler> {
-    private static final Identifier TEXTURE = new Identifier("mystical_index:textures/gui/library_screen.png");
+    private static final Identifier TEXTURE = Identifier.of("mystical_index:textures/gui/library_screen.png");
 
     public LibraryInventoryScreen(LibraryInventoryScreenHandler handler, PlayerInventory inventory, Text title) {
         super(handler, inventory, title);
@@ -30,7 +30,6 @@ public class LibraryInventoryScreen extends HandledScreen<LibraryInventoryScreen
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        renderBackground(context);
         super.render(context, mouseX, mouseY, delta);
         drawMouseoverTooltip(context,mouseX,mouseY);
     }

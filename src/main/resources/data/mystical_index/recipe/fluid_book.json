@@ -5,7 +5,7 @@
     "BFB",
     "BBB"
   ],
-  "key":{
+  "key": {
     "B": {
       "item": "minecraft:bucket"
     },
@@ -14,6 +14,6 @@
     }
   },
   "result": {
-    "item": "mystical_index:fluid_book"
+    "id": "mystical_index:fluid_book"
   }
 }

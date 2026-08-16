@@ -17,8 +17,11 @@ import java.util.Locale;
 import java.util.Optional;
 
 public class MysticalLecternScreen extends HandledScreen<MysticalLecternScreenHandler> {
-    private static final Identifier TEXTURE = new Identifier("mystical_index:textures/gui/lectern_gui.png");
-    private static final Identifier SCROLLER_TEXTURE = new Identifier("textures/gui/container/creative_inventory/tabs.png");
+    private static final Identifier TEXTURE = Identifier.of("mystical_index:textures/gui/lectern_gui.png");
+    // 1.20.2+ split the creative tabs sheet into individual GUI sprites, so the thumb is drawn
+    // from the sprite atlas instead of by uv offset into a texture that no longer exists.
+    private static final Identifier SCROLLER = Identifier.of("container/creative_inventory/scroller");
+    private static final Identifier SCROLLER_DISABLED = Identifier.of("container/creative_inventory/scroller_disabled");
 
     private static final int COLUMNS = 9;
     private static final int ROWS = 3;
@@ -95,12 +98,12 @@ public class MysticalLecternScreen extends HandledScreen<MysticalLecternScreenHa
 
         int max = maxScrollRow();
         int thumbOffset = max == 0 ? 0 : (int) (SCROLLBAR_TRAVEL * (scrollRow / (float) max));
-        context.drawTexture(SCROLLER_TEXTURE, SCROLLBAR_X + 1, SCROLLBAR_Y + 1 + thumbOffset, max > 0 ? 232 : 244, 0, 12, 15);
+        context.drawGuiTexture(max > 0 ? SCROLLER : SCROLLER_DISABLED,
+                SCROLLBAR_X + 1, SCROLLBAR_Y + 1 + thumbOffset, 12, 15);
     }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        renderBackground(context);
         super.render(context, mouseX, mouseY, delta);
         drawMouseoverTooltip(context, mouseX, mouseY);
 
@@ -155,14 +158,14 @@ public class MysticalLecternScreen extends HandledScreen<MysticalLecternScreenHa
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double amount) {
         int max = maxScrollRow();
         if (isOverNetwork(mouseX, mouseY) && max > 0) {
             scrollRow = MathHelper.clamp(scrollRow - (int) Math.signum(amount), 0, max);
             return true;
         }
 
-        return super.mouseScrolled(mouseX, mouseY, amount);
+        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, amount);
     }
 
     private int maxScrollRow() {

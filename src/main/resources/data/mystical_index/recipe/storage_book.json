@@ -1,22 +1,22 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "LBL",
-    "BCB",
-    "LBL"
+    "LLL",
+    "PEP",
+    "LLL"
   ],
   "key": {
     "L": {
       "item": "minecraft:leather"
     },
-    "B": {
-      "item": "minecraft:book"
+    "E": {
+      "item": "minecraft:ender_eye"
     },
-    "C": {
-      "item": "minecraft:chest"
+    "P": {
+      "item": "minecraft:paper"
     }
   },
   "result": {
-    "item": "mystical_index:holding_book_1"
+    "id": "mystical_index:storage_book"
   }
 }

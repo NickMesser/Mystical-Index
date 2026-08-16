@@ -3,10 +3,11 @@ package net.messer.mystical_index.item.custom;
 import net.messer.config.ModConfig;
 import net.messer.mystical_index.item.custom.base_books.BaseStorageBook;
 import net.messer.mystical_index.item.inventory.SingleItemStackingInventory;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.client.gui.screen.Screen;
 import net.messer.mystical_index.item.inventory.BookContentsTooltipData;
-import net.minecraft.client.item.TooltipContext;
-import net.minecraft.client.item.TooltipData;
+import net.minecraft.item.tooltip.TooltipType;
+import net.minecraft.item.tooltip.TooltipData;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.*;
 import net.minecraft.registry.Registries;
@@ -50,7 +51,7 @@ public class StorageBook extends BaseStorageBook {
                 }
 
                 currentBookInventory.setCurrentlyStoredItem(item);
-                heldBookStack.setCustomName(Text.literal("Book of " + item.getName().getString()));
+                heldBookStack.set(DataComponentTypes.CUSTOM_NAME, Text.literal("Book of " + item.getName().getString()));
             }
             else{
                 player.sendMessage(Text.literal("Unable to update stored item. Please empty all contents first"), true);
@@ -98,14 +99,14 @@ public class StorageBook extends BaseStorageBook {
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
+    public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType type) {
         if(Screen.hasShiftDown()){
             tooltip.add(Text.translatable("tooltip.mystical_index.storage_book_shift0"));
             tooltip.add(Text.translatable("tooltip.mystical_index.storage_book_shift1"));
         } else {
             tooltip.add(Text.translatable("tooltip.mystical_index.storage_book"));
         }
-        super.appendTooltip(stack, world, tooltip, context);
+        super.appendTooltip(stack, context, tooltip, type);
     }
 
     @Override

@@ -81,7 +81,7 @@ public class SimpleBookInventory {
 
         @Override
         public void clear() {
-            this.stacks.clear();
+            this.heldStacks.clear();
         }
     };
 

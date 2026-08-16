@@ -2,21 +2,21 @@ package net.messer.mystical_index.recipe;
 
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.custom.TieredStorageBook;
-import net.minecraft.inventory.RecipeInputInventory;
+import net.messer.util.MysticalUtil;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.recipe.RecipeSerializer;
 import net.minecraft.recipe.SpecialCraftingRecipe;
 import net.minecraft.recipe.book.CraftingRecipeCategory;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.util.Identifier;
+import net.minecraft.recipe.input.CraftingRecipeInput;
+import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.world.World;
 
 public class HoldingBookUpgradeRecipe extends SpecialCraftingRecipe {
 
-    public HoldingBookUpgradeRecipe(Identifier id, CraftingRecipeCategory category) {
-        super(id, category);
+    public HoldingBookUpgradeRecipe(CraftingRecipeCategory category) {
+        super(category);
     }
 
     private static Item getUpgradeMaterial(int targetTier){
@@ -46,10 +46,10 @@ public class HoldingBookUpgradeRecipe extends SpecialCraftingRecipe {
     }
 
     // Slot index rather than the stack, so the material scan can skip the book by position.
-    private static int findBookSlot(RecipeInputInventory inventory){
+    private static int findBookSlot(CraftingRecipeInput inventory){
         int bookSlot = -1;
-        for(int i = 0; i < inventory.size(); i++) {
-            var stack = inventory.getStack(i);
+        for(int i = 0; i < inventory.getSize(); i++) {
+            var stack = inventory.getStackInSlot(i);
             if(stack.getItem() instanceof TieredStorageBook book && book.getTier() < 4){
                 if(bookSlot != -1)
                     return -1;
@@ -61,7 +61,7 @@ public class HoldingBookUpgradeRecipe extends SpecialCraftingRecipe {
     }
 
     @Override
-    public boolean matches(RecipeInputInventory inventory, World world) {
+    public boolean matches(CraftingRecipeInput inventory, World world) {
         if (!this.fits(inventory.getWidth(), inventory.getHeight()))
             return false;
 
@@ -69,7 +69,7 @@ public class HoldingBookUpgradeRecipe extends SpecialCraftingRecipe {
         if(bookSlot < 0)
             return false;
 
-        var targetTier = ((TieredStorageBook) inventory.getStack(bookSlot).getItem()).getTier() + 1;
+        var targetTier = ((TieredStorageBook) inventory.getStackInSlot(bookSlot).getItem()).getTier() + 1;
         var material = getUpgradeMaterial(targetTier);
         var required = getUpgradeCount(targetTier);
         if(material == null || required == 0)
@@ -78,11 +78,11 @@ public class HoldingBookUpgradeRecipe extends SpecialCraftingRecipe {
         // Crafting consumes one item per occupied slot, so the cost only matches the requirement
         // when the material is counted by slot instead of by stack size.
         int materialSlots = 0;
-        for(int i = 0; i < inventory.size(); i++) {
+        for(int i = 0; i < inventory.getSize(); i++) {
             if(i == bookSlot)
                 continue;
 
-            var stack = inventory.getStack(i);
+            var stack = inventory.getStackInSlot(i);
             if(stack.isEmpty())
                 continue;
 
@@ -96,20 +96,18 @@ public class HoldingBookUpgradeRecipe extends SpecialCraftingRecipe {
     }
 
     @Override
-    public ItemStack craft(RecipeInputInventory inventory, DynamicRegistryManager registryManager) {
+    public ItemStack craft(CraftingRecipeInput inventory, RegistryWrapper.WrapperLookup registryLookup) {
         var bookSlot = findBookSlot(inventory);
         if(bookSlot < 0)
             return ItemStack.EMPTY;
 
-        var book = inventory.getStack(bookSlot);
+        var book = inventory.getStackInSlot(bookSlot);
         var resultItem = getUpgradeResult(((TieredStorageBook) book.getItem()).getTier() + 1);
         if(resultItem == null)
             return ItemStack.EMPTY;
 
-        var result = new ItemStack(resultItem);
         // Carries contents, the bound item and the custom name onto the bigger book.
-        if(book.hasNbt())
-            result.setNbt(book.getNbt().copy());
+        var result = book.copyComponentsToNewStack(resultItem, 1);
 
         return result;
     }

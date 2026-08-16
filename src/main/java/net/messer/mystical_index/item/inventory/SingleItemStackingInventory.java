@@ -1,5 +1,6 @@
 package net.messer.mystical_index.item.inventory;
 import net.messer.config.ModConfig;
+import net.messer.util.MysticalUtil;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventories;
 import net.minecraft.item.Item;
@@ -26,7 +27,7 @@ public class SingleItemStackingInventory implements BookInventory {
         this.storedItems = DefaultedList.ofSize(size,ItemStack.EMPTY);
         this.currentlyStoredItem = Items.AIR;
         this.maxStacks = ModConfig.StorageBookMaxStacks;
-        if(stack.hasNbt()){
+        if(MysticalUtil.hasCustomData(stack)){
             readNbt();
         }
     }
@@ -83,7 +84,7 @@ public class SingleItemStackingInventory implements BookInventory {
         ItemStack stackToAdd = stack.copy();
 
         for (ItemStack item: storedItems) {
-            if (ItemStack.canCombine(item, stack)) {
+            if (ItemStack.areItemsAndComponentsEqual(item, stack)) {
                 int combinedCount = item.getCount() + stack.getCount();
                 if (combinedCount > this.getMaxCountPerStack() && item.getCount() < this.getMaxCountPerStack()) {
                     var remainder = this.getMaxCountPerStack() - item.getCount();
@@ -118,21 +119,22 @@ public class SingleItemStackingInventory implements BookInventory {
     }
 
     public void writeNbt(){
-        NbtCompound nbtData = stack.getNbt();
-        if(nbtData == null)
-            nbtData = stack.getOrCreateNbt();
+        // The compound fetched from a component is a copy, so the whole thing has to be handed
+        // back to the stack once the writes are in.
+        NbtCompound nbtData = MysticalUtil.copyCustomData(stack);
 
         nbtData.putString("storedItem", Registries.ITEM.getId(this.currentlyStoredItem).toString());
-        Inventories.writeNbt(nbtData, storedItems);
+        Inventories.writeNbt(nbtData, storedItems, MysticalUtil.registryLookup());
+        MysticalUtil.setCustomData(stack, nbtData);
     }
 
     public void readNbt(){
-        NbtCompound compound = stack.getNbt();
+        NbtCompound compound = MysticalUtil.getCustomData(stack);
         if (compound == null) {
             return;
         }
 
-        Inventories.readNbt(compound, storedItems);
+        Inventories.readNbt(compound, storedItems, MysticalUtil.registryLookup());
         var itemName = compound.getString("storedItem");
         currentlyStoredItem = Registries.ITEM.get(Identifier.tryParse(itemName));
     }

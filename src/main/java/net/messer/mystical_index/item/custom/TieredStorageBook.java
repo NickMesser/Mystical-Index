@@ -5,8 +5,8 @@ import net.messer.mystical_index.item.custom.base_books.BaseStorageBook;
 import net.messer.mystical_index.item.inventory.MultiTypeBookInventory;
 import net.messer.mystical_index.item.inventory.BookContentsTooltipData;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.item.TooltipContext;
-import net.minecraft.client.item.TooltipData;
+import net.minecraft.item.tooltip.TooltipType;
+import net.minecraft.item.tooltip.TooltipData;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.*;
 import net.minecraft.sound.SoundCategory;
@@ -139,7 +139,7 @@ public class TieredStorageBook extends BaseStorageBook {
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
+    public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType type) {
         tooltip.add(Text.literal("§7Tier " + getTierNumeral()));
 
         var inventory = getInventory(stack);
@@ -161,6 +161,6 @@ public class TieredStorageBook extends BaseStorageBook {
             tooltip.add(Text.translatable("tooltip.mystical_index.holding_book"));
         }
 
-        super.appendTooltip(stack, world, tooltip, context);
+        super.appendTooltip(stack, context, tooltip, type);
     }
 }

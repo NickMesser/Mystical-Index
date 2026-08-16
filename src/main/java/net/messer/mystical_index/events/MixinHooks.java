@@ -13,6 +13,8 @@ import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.nbt.NbtCompound;
+import net.messer.util.MysticalUtil;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -30,7 +32,7 @@ public class MixinHooks {
             return false;
         }
 
-        if(itemPickedUp.isFood()){
+        if(itemPickedUp.contains(DataComponentTypes.FOOD)){
             for (int i = 0; i < playerInventory.size(); i++) {
                 var potentialBook = playerInventory.getStack(i);
                 if (potentialBook.getItem() == ModItems.SATURATION_BOOK) {
@@ -86,18 +88,17 @@ public class MixinHooks {
             return;
 
         var stack = player.getMainHandStack();
-        if(!stack.hasNbt())
+        if(!MysticalUtil.hasCustomData(stack))
             return;
 
         if(!(stack.getItem() instanceof VillagerBook))
             return;
 
-        var compound = stack.getNbt();
-        compound.remove("Entity");
-
         NbtCompound entityNbt = new NbtCompound();
         entity.saveSelfNbt(entityNbt);
-        compound.remove("Entity");
-        compound.put("Entity", entityNbt);
+        MysticalUtil.editCustomData(stack, compound -> {
+            compound.remove("Entity");
+            compound.put("Entity", entityNbt);
+        });
     }
 }

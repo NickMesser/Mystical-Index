@@ -1,12 +1,14 @@
 package net.messer.mystical_index.block.custom;
 
+import com.mojang.serialization.MapCodec;
 import net.messer.mystical_index.screen.MysticalLecternScreenHandler;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.HorizontalFacingBlock;
 import net.minecraft.block.ShapeContext;
-import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.NamedScreenHandlerFactory;
@@ -28,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class MysticalLecternBlock extends HorizontalFacingBlock {
+    public static final MapCodec<MysticalLecternBlock> CODEC = createCodec(MysticalLecternBlock::new);
+
     private static final VoxelShape SHAPE = VoxelShapes.union(
             Block.createCuboidShape(0, 0, 0, 16, 2, 16),
             Block.createCuboidShape(4, 2, 4, 12, 14, 12),
@@ -39,7 +43,12 @@ public class MysticalLecternBlock extends HorizontalFacingBlock {
     }
 
     @Override
-    public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
+    protected MapCodec<? extends MysticalLecternBlock> getCodec() {
+        return CODEC;
+    }
+
+    @Override
+    protected VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
         return SHAPE;
     }
 
@@ -55,7 +64,7 @@ public class MysticalLecternBlock extends HorizontalFacingBlock {
     }
 
     @Override
-    public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
+    protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
         if (world.isClient)
             return ActionResult.SUCCESS;
 
@@ -65,14 +74,14 @@ public class MysticalLecternBlock extends HorizontalFacingBlock {
 
     @Nullable
     @Override
-    public NamedScreenHandlerFactory createScreenHandlerFactory(BlockState state, World world, BlockPos pos) {
+    protected NamedScreenHandlerFactory createScreenHandlerFactory(BlockState state, World world, BlockPos pos) {
         return new SimpleNamedScreenHandlerFactory(
                 (syncId, inventory, player) -> new MysticalLecternScreenHandler(syncId, inventory, ScreenHandlerContext.create(world, pos)),
                 Text.translatable("container.mystical_index.mystical_lectern"));
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, @Nullable BlockView world, List<Text> tooltip, TooltipContext options) {
+    public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType options) {
         tooltip.add(Text.translatable("tooltip.mystical_index.mystical_lectern"));
     }
 }

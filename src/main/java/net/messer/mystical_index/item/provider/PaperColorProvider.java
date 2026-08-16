@@ -2,6 +2,7 @@ package net.messer.mystical_index.item.provider;
 
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.messer.mystical_index.item.ModItems;
+import net.messer.util.MysticalUtil;
 import net.minecraft.client.color.item.ItemColorProvider;
 import net.minecraft.entity.EntityType;
 import net.minecraft.item.ItemStack;
@@ -16,7 +17,7 @@ public class PaperColorProvider {
     }
 
     private static int getColor(ItemStack stack, int tintIndex) {
-        var compound = stack.getNbt();
+        var compound = MysticalUtil.getCustomData(stack);
         if(compound == null) return 0xFFFFFF;
 
         var entityId = compound.getString("entity");

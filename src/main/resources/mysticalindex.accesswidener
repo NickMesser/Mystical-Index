@@ -1,2 +1,2 @@
 accessWidener	v1	named
-accessible field net/minecraft/recipe/ShapedRecipe output Lnet/minecraft/item/ItemStack;
+accessible field net/minecraft/recipe/ShapedRecipe result Lnet/minecraft/item/ItemStack;

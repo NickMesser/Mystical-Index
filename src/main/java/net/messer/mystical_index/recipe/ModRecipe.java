@@ -2,7 +2,6 @@ package net.messer.mystical_index.recipe;
 
 
 import net.messer.mystical_index.MysticalIndex;
-import net.minecraft.recipe.CraftingDecoratedPotRecipe;
 import net.minecraft.recipe.RecipeSerializer;
 import net.minecraft.recipe.ShapedRecipe;
 import net.minecraft.recipe.SpecialRecipeSerializer;
@@ -19,11 +18,11 @@ public class ModRecipe {
     public static void registerRecipes() {
         MysticalIndex.LOGGER.info("Registering recipes");
         PAPER_SHAPED = Registry.register(Registries.RECIPE_SERIALIZER,
-                new Identifier(MysticalIndex.MOD_ID, "paper_shaped"),
+                Identifier.of(MysticalIndex.MOD_ID, "paper_shaped"),
                 new SpecialRecipeSerializer<>(EntityPaperRecipes::new));
 
         HOLDING_BOOK_UPGRADE = Registry.register(Registries.RECIPE_SERIALIZER,
-                new Identifier(MysticalIndex.MOD_ID, "holding_book_upgrade"),
+                Identifier.of(MysticalIndex.MOD_ID, "holding_book_upgrade"),
                 new SpecialRecipeSerializer<>(HoldingBookUpgradeRecipe::new));
     }
 }

@@ -5,7 +5,7 @@
     "GMP",
     "QBA"
   ],
-  "key":{
+  "key": {
     "W": {
       "item": "minecraft:wither_skeleton_skull"
     },
@@ -35,6 +35,6 @@
     }
   },
   "result": {
-    "item": "mystical_index:hostile_book"
+    "id": "mystical_index:hostile_book"
   }
 }

@@ -8,6 +8,7 @@ import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
+import net.messer.util.MysticalUtil;
 import net.minecraft.registry.Registries;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
@@ -35,7 +36,7 @@ public class PistonRecipeInitializer implements SimpleSynchronousResourceReloadL
 
     @Override
     public Identifier getFabricId() {
-        return new Identifier("mystical_index", "piston_recipes");
+        return Identifier.of("mystical_index", "piston_recipes");
     }
 
     @Override
@@ -60,7 +61,7 @@ public class PistonRecipeInitializer implements SimpleSynchronousResourceReloadL
             String itemName = JsonHelper.getString(inputObj, "item");
             int amount = JsonHelper.getInt(inputObj, "amount");
             String nbtData = inputObj.has("nbt") ? inputObj.get("nbt").getAsString() : null;
-            Item item = Registries.ITEM.get(new Identifier(itemName));
+            Item item = Registries.ITEM.get(Identifier.of(itemName));
             recipe.addInput(item, amount, nbtData);
         }
         JsonArray outputs = JsonHelper.getArray(json, "output");
@@ -69,7 +70,7 @@ public class PistonRecipeInitializer implements SimpleSynchronousResourceReloadL
             String itemName = JsonHelper.getString(outputObj, "item");
             int amount = JsonHelper.getInt(outputObj, "amount");
             String nbtData = outputObj.has("nbt") ? outputObj.get("nbt").getAsString() : null;
-            Item item = Registries.ITEM.get(new Identifier(itemName));
+            Item item = Registries.ITEM.get(Identifier.of(itemName));
             recipe.addOutput(item, amount, nbtData);
         }
         pistonRecipes.add(recipe);
@@ -85,7 +86,7 @@ public class PistonRecipeInitializer implements SimpleSynchronousResourceReloadL
 
             // check for nbt inputs and compare against input stacks
             boolean inputsContainNBT = recipe.getInputs().values().stream().anyMatch(itemEntry -> itemEntry.nbt.isPresent());
-            boolean inputStacksContainNBT = inputStacks.stream().anyMatch(stack -> stack.getNbt() != null);
+            boolean inputStacksContainNBT = inputStacks.stream().anyMatch(MysticalUtil::hasCustomData);
 
             if(inputsContainNBT != inputStacksContainNBT)
                 continue;
@@ -99,8 +100,10 @@ public class PistonRecipeInitializer implements SimpleSynchronousResourceReloadL
                         continue;
                     var nbtKeys = nbt.getKeys();
                     for(var key: nbtKeys){
-                        if(!inputStacks.stream().anyMatch(stack -> stack.getOrCreateNbt().contains(key) &&
-                                stack.getOrCreateNbt().get(key).equals(nbt.get(key)))){
+                        if(!inputStacks.stream().anyMatch(stack -> {
+                            var stackNbt = MysticalUtil.copyCustomData(stack);
+                            return stackNbt.contains(key) && stackNbt.get(key).equals(nbt.get(key));
+                        })){
 
                             nbtMatches = false;
                             break;

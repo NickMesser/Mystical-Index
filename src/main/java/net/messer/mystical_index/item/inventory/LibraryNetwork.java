@@ -57,7 +57,7 @@ public class LibraryNetwork {
         Map<ItemVariant, Long> totals = new HashMap<>();
 
         for (var library : libraries) {
-            for (var bookStack : library.storedBooks.stacks) {
+            for (var bookStack : library.storedBooks.heldStacks) {
                 if (!(bookStack.getItem() instanceof BaseStorageBook storageBook))
                     continue;
 
@@ -76,7 +76,7 @@ public class LibraryNetwork {
         totals.forEach((variant, count) -> entries.add(new Entry(variant, count)));
         entries.sort(Comparator
                 .comparing((Entry entry) -> Registries.ITEM.getId(entry.variant().getItem()).toString())
-                .thenComparingInt(entry -> entry.variant().hasNbt() ? entry.variant().getNbt().hashCode() : 0));
+                .thenComparingInt(entry -> entry.variant().getComponents().hashCode()));
         return entries;
     }
 
@@ -84,7 +84,7 @@ public class LibraryNetwork {
         long total = 0;
 
         for (var library : libraries) {
-            for (var bookStack : library.storedBooks.stacks) {
+            for (var bookStack : library.storedBooks.heldStacks) {
                 if (!(bookStack.getItem() instanceof BaseStorageBook storageBook))
                     continue;
 
@@ -108,7 +108,7 @@ public class LibraryNetwork {
                 break;
 
             boolean changed = false;
-            for (var bookStack : library.storedBooks.stacks) {
+            for (var bookStack : library.storedBooks.heldStacks) {
                 if (extracted >= amount)
                     break;
                 if (!(bookStack.getItem() instanceof BaseStorageBook storageBook))
@@ -141,7 +141,7 @@ public class LibraryNetwork {
     private static boolean insertExisting(LibraryBlockEntity library, ItemStack stack) {
         boolean changed = false;
 
-        for (var bookStack : library.storedBooks.stacks) {
+        for (var bookStack : library.storedBooks.heldStacks) {
             if (stack.isEmpty())
                 break;
             if (!(bookStack.getItem() instanceof BaseStorageBook storageBook))
@@ -163,7 +163,7 @@ public class LibraryNetwork {
     private static boolean insertNewTypes(LibraryBlockEntity library, ItemStack stack) {
         boolean changed = false;
 
-        for (var bookStack : library.storedBooks.stacks) {
+        for (var bookStack : library.storedBooks.heldStacks) {
             if (stack.isEmpty())
                 break;
             if (!(bookStack.getItem() instanceof BaseStorageBook storageBook))

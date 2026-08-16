@@ -1,7 +1,9 @@
 package net.messer.mystical_index.item.custom;
 
 import net.messer.mystical_index.item.ModItems;
-import net.minecraft.client.item.TooltipContext;
+import net.messer.util.MysticalUtil;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnReason;
@@ -28,12 +30,12 @@ public class BabyVillagerBook extends Item {
     }
 
     @Override
-    public void onCraft(ItemStack stack, World world, PlayerEntity player) {
+    public void onCraftByPlayer(ItemStack stack, World world, PlayerEntity player) {
         if(world.isClient())
             return;
 
         createAndAddBabyVillagerToBook(stack, (ServerWorld) world);
-        super.onCraft(stack, world, player);
+        super.onCraftByPlayer(stack, world, player);
     }
 
     @Override
@@ -45,10 +47,10 @@ public class BabyVillagerBook extends Item {
 
     @Override
     public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
-        if(world.isClient() || !stack.hasNbt())
+        if(world.isClient() || !MysticalUtil.hasCustomData(stack))
             return;
 
-        NbtCompound nbt = stack.getNbt();
+        NbtCompound nbt = MysticalUtil.getCustomData(stack);
 
         // Growth is driven entirely by the stored timestamp. Loading the villager here just to
         // bump a breeding age that was never written back allocated an entity every tick.
@@ -70,18 +72,19 @@ public class BabyVillagerBook extends Item {
 
     @Override
     public boolean hasGlint(ItemStack stack) {
-        return stack.hasNbt();
+        return MysticalUtil.hasCustomData(stack);
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        NbtCompound nbt = stack.getNbt();
+    public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType type) {
+        NbtCompound nbt = MysticalUtil.getCustomData(stack);
 
         if(nbt == null) {
             tooltip.add(Text.of("§aCraft to create a baby villager!"));
             return;
         }
 
+        var world = MysticalUtil.tooltipWorld();
         if (world == null)
             return;
 
@@ -91,18 +94,18 @@ public class BabyVillagerBook extends Item {
         var secondsUntilAdult = timeUntilAdult / 20;
         var minutesUntilAdult = secondsUntilAdult / 60;
         tooltip.add(Text.of("§6Time until adult:§6 " + minutesUntilAdult + " minutes" + " " + secondsUntilAdult % 60 + " seconds"));
-        super.appendTooltip(stack, world, tooltip, context);
+        super.appendTooltip(stack, context, tooltip, type);
     }
     public VillagerEntity createChild(ServerWorld serverWorld) {
         VillagerType villagerType = VillagerType.PLAINS;
         VillagerEntity villagerEntity = new VillagerEntity(EntityType.VILLAGER, serverWorld, villagerType);
-        villagerEntity.initialize(serverWorld, serverWorld.getLocalDifficulty(villagerEntity.getBlockPos()), SpawnReason.BREEDING, null, null);
+        villagerEntity.initialize(serverWorld, serverWorld.getLocalDifficulty(villagerEntity.getBlockPos()), SpawnReason.BREEDING, null);
         return villagerEntity;
     }
 
 
     public void createAndAddBabyVillagerToBook(ItemStack stack, ServerWorld world) {
-        NbtCompound nbt = stack.getOrCreateNbt();
+        NbtCompound nbt = MysticalUtil.getOrCreateCustomData(stack);
         var child = createChild(world);
         var currentTime = world.getTime();
         var timeUntilAdult = currentTime + 24000;
@@ -111,18 +114,20 @@ public class BabyVillagerBook extends Item {
         child.saveSelfNbt(entityNbt);
         nbt.put("Entity", entityNbt);
         nbt.putLong("timeUntilAdult", timeUntilAdult);
+        MysticalUtil.setCustomData(stack, nbt);
         child.remove(Entity.RemovalReason.DISCARDED);
-        stack.setCustomName(Text.of("Baby Villager Book"));
+        stack.set(DataComponentTypes.CUSTOM_NAME, Text.of("Baby Villager Book"));
     }
 
     public void addBabyVillagerToBook(ItemStack stack, VillagerEntity villagerEntity) {
         var world = villagerEntity.getEntityWorld();
         var timeUntilAdult = world.getTime() + -villagerEntity.getBreedingAge();
-        NbtCompound nbt = stack.getOrCreateNbt();
+        NbtCompound nbt = MysticalUtil.getOrCreateCustomData(stack);
         NbtCompound entityNbt = new NbtCompound();
         villagerEntity.saveSelfNbt(entityNbt);
         nbt.put("Entity", entityNbt);
         nbt.putLong("timeUntilAdult", timeUntilAdult);
-        stack.setCustomName(Text.of("Baby Villager Book"));
+        MysticalUtil.setCustomData(stack, nbt);
+        stack.set(DataComponentTypes.CUSTOM_NAME, Text.of("Baby Villager Book"));
     }
 }

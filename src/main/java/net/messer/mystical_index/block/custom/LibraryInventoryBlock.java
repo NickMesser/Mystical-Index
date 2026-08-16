@@ -8,9 +8,10 @@ import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.client.item.TooltipContext;
+import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventory;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.NamedScreenHandlerFactory;
@@ -28,10 +29,16 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class LibraryInventoryBlock extends BlockWithEntity implements BlockEntityProvider {
+    public static final MapCodec<LibraryInventoryBlock> CODEC = createCodec(LibraryInventoryBlock::new);
     public static final DirectionProperty FACING = Properties.HORIZONTAL_FACING;
 
     public LibraryInventoryBlock(Settings settings) {
         super(settings);
+    }
+
+    @Override
+    protected MapCodec<? extends LibraryInventoryBlock> getCodec() {
+        return CODEC;
     }
 
     @Nullable
@@ -55,7 +62,7 @@ public class LibraryInventoryBlock extends BlockWithEntity implements BlockEntit
         builder.add(FACING);
     }
     @Override
-    public void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
+    protected void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
         if (!state.isOf(newState.getBlock())) {
             BlockEntity blockEntity = world.getBlockEntity(pos);
             // LibraryBlockEntity does not implement Inventory itself — it holds one. Testing the
@@ -76,12 +83,12 @@ public class LibraryInventoryBlock extends BlockWithEntity implements BlockEntit
     }
 
     @Override
-    public BlockRenderType getRenderType(BlockState state) {
+    protected BlockRenderType getRenderType(BlockState state) {
         return BlockRenderType.MODEL;
     }
 
     @Override
-    public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
+    protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
         if (world.isClient) {
             return ActionResult.SUCCESS;
         } else {
@@ -94,12 +101,12 @@ public class LibraryInventoryBlock extends BlockWithEntity implements BlockEntit
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, @Nullable BlockView world, List<Text> tooltip, TooltipContext options) {
+    public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType options) {
         tooltip.add(Text.translatable("tooltip.mystical_index.library"));
     }
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-        return checkType(type, ModBlockEntities.LIBRARY_BLOCK_ENTITY, LibraryBlockEntity::tick);
+        return validateTicker(type, ModBlockEntities.LIBRARY_BLOCK_ENTITY, LibraryBlockEntity::tick);
     }
 }

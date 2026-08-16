@@ -88,11 +88,13 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
             return;
 
         var crafted = ItemStack.EMPTY;
-        var match = world.getRecipeManager().getFirstMatch(RecipeType.CRAFTING, input, world);
+        var recipeInput = input.createRecipeInput();
+        var match = world.getRecipeManager().getFirstMatch(RecipeType.CRAFTING, recipeInput, world);
         if (match.isPresent()) {
-            var recipe = match.get();
-            if (result.shouldCraftRecipe(world, serverPlayer, recipe)) {
-                var output = recipe.craft(input, world.getRegistryManager());
+            // getFirstMatch hands back the registry entry now; the recipe itself is one hop in.
+            var entry = match.get();
+            if (result.shouldCraftRecipe(world, serverPlayer, entry)) {
+                var output = entry.value().craft(recipeInput, world.getRegistryManager());
                 if (output.isItemEnabled(world.getEnabledFeatures()))
                     crafted = output;
             }
@@ -142,7 +144,7 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
         }
 
         if (index == 0) {
-            current.getItem().onCraft(current, player.getWorld(), player);
+            current.getItem().onCraftByPlayer(current, player.getWorld(), player);
             if (!insertItem(current, 10, 46, true))
                 return ItemStack.EMPTY;
 

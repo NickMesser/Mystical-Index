@@ -1,5 +1,7 @@
 package net.messer.mystical_index.item.custom;
 
+import net.messer.util.MysticalUtil;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -17,18 +19,16 @@ public class EntityPaper extends Item {
     }
 
     @Override
-    public void onCraft(ItemStack stack, World world, PlayerEntity player) {
-        var nbt = stack.getNbt();
-        if (nbt == null)
-            nbt = stack.getOrCreateNbt();
+    public void onCraftByPlayer(ItemStack stack, World world, PlayerEntity player) {
+        var nbt = MysticalUtil.getOrCreateCustomData(stack);
 
         // Paper crafted without a bound entity has no usable id here.
         var entityId = nbt.getString("entity");
         var entityType = EntityType.get(entityId).orElse(null);
         if (entityType != null)
-            stack.setCustomName(Text.of( entityType.getName().getString() + " Paper"));
+            stack.set(DataComponentTypes.CUSTOM_NAME, Text.of( entityType.getName().getString() + " Paper"));
 
-        super.onCraft(stack, world, player);
+        super.onCraftByPlayer(stack, world, player);
     }
 
     @Override
@@ -36,13 +36,9 @@ public class EntityPaper extends Item {
         if(user.getWorld().isClient)
             return super.useOnEntity(stack, user, entity, hand);
 
-        var compound = stack.getNbt();
-        if (compound == null)
-            compound = stack.getOrCreateNbt();
-
         var entityId = Registries.ENTITY_TYPE.getId(entity.getType()).toString();
-        stack.setCustomName(entity.getType().getName());
-        compound.putString("entity", entityId);
+        stack.set(DataComponentTypes.CUSTOM_NAME, entity.getType().getName());
+        MysticalUtil.editCustomData(stack, compound -> compound.putString("entity", entityId));
         return super.useOnEntity(stack, user, entity, hand);
     }
 }

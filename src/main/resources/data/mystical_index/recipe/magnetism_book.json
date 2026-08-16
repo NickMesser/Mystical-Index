@@ -5,7 +5,7 @@
     "L  ",
     "CCR"
   ],
-  "key":{
+  "key": {
     "C": {
       "item": "minecraft:copper_ingot"
     },
@@ -20,6 +20,6 @@
     }
   },
   "result": {
-    "item": "mystical_index:magnetism_book"
+    "id": "mystical_index:magnetism_book"
   }
 }

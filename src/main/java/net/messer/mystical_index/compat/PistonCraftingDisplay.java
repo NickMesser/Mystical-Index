@@ -7,6 +7,8 @@ import me.shedaniel.rei.api.common.util.EntryIngredients;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.recipe.PistonRecipe;
 import net.messer.mystical_index.recipe.PistonRecipeInitializer;
+import net.messer.util.MysticalUtil;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.EntityType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
@@ -71,11 +73,11 @@ public class PistonCraftingDisplay extends BasicDisplay {
         if (nbt == null)
             return stack;
 
-        stack.setNbt(nbt.copy());
-        // Same naming EntityPaper.onCraft applies, without needing a World here.
+        MysticalUtil.setCustomData(stack, nbt.copy());
+        // Same naming EntityPaper.onCraftByPlayer applies, without needing a World here.
         var entityType = EntityType.get(nbt.getString("entity")).orElse(null);
         if (entityType != null)
-            stack.setCustomName(Text.of(entityType.getName().getString() + " Paper"));
+            stack.set(DataComponentTypes.CUSTOM_NAME, Text.of(entityType.getName().getString() + " Paper"));
 
         return stack;
     }
@@ -84,7 +86,7 @@ public class PistonCraftingDisplay extends BasicDisplay {
     // by hand: paper matching the book's mob is consumed and each one adds a kill.
     private static PistonCraftingDisplay bookCharging() {
         var charged = new ItemStack(ModItems.HOSTILE_BOOK);
-        charged.setCustomName(Text.literal("Book of Hostile (+1 kill per Paper)"));
+        charged.set(DataComponentTypes.CUSTOM_NAME, Text.literal("Book of Hostile (+1 kill per Paper)"));
 
         return new PistonCraftingDisplay(
                 List.of(EntryIngredients.of(new ItemStack(ModItems.HOSTILE_BOOK)),

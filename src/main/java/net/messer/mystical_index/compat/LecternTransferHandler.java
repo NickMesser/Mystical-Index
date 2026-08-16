@@ -6,7 +6,6 @@ import me.shedaniel.rei.api.common.display.SimpleGridMenuDisplay;
 import me.shedaniel.rei.api.common.entry.type.VanillaEntryTypes;
 import me.shedaniel.rei.plugin.common.BuiltinPlugin;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.messer.mystical_index.network.LecternNetworking;
 import net.messer.mystical_index.screen.MysticalLecternScreenHandler;
@@ -50,15 +49,7 @@ public class LecternTransferHandler implements TransferHandler {
         if (containerScreen != null)
             context.getMinecraft().setScreen(containerScreen);
 
-        var buf = PacketByteBufs.create();
-        buf.writeVarInt(lectern.syncId);
-        for (var candidates : slotCandidates) {
-            buf.writeVarInt(candidates.size());
-            for (var variant : candidates)
-                variant.toPacket(buf);
-        }
-
-        ClientPlayNetworking.send(LecternNetworking.FILL_RECIPE, buf);
+        ClientPlayNetworking.send(new LecternNetworking.FillRecipePayload(lectern.syncId, slotCandidates));
         return Result.createSuccessful();
     }
 

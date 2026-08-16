@@ -7,7 +7,7 @@ import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.messer.mystical_index.item.inventory.SingleFluidStackingInventory;
 import net.minecraft.advancement.criterion.Criteria;
 import net.minecraft.block.*;
-import net.minecraft.client.item.TooltipContext;
+import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.FlowableFluid;
 import net.minecraft.fluid.Fluids;
@@ -78,7 +78,7 @@ public class FluidBook extends Item {
                             test.abort();
                         }
 
-                        ItemStack itemStack2 = fluidDrainable.tryDrainFluid(world, blockPos, blockState);
+                        ItemStack itemStack2 = fluidDrainable.tryDrainFluid(user, world, blockPos, blockState);
                         if (!itemStack2.isEmpty()) {
                             fluidDrainable.getBucketFillSound().ifPresent((sound) -> {
                                 user.playSound(sound, 1.0F, 1.0F);
@@ -127,7 +127,7 @@ public class FluidBook extends Item {
             BlockState blockState = world.getBlockState(pos);
             Block block = blockState.getBlock();
             boolean bl = blockState.canBucketPlace(fluidStorage.variant.getFluid());
-            boolean bl2 = blockState.isAir() || bl || block instanceof FluidFillable && ((FluidFillable)block).canFillWithFluid(world, pos, blockState, fluidStorage.variant.getFluid());
+            boolean bl2 = blockState.isAir() || bl || block instanceof FluidFillable && ((FluidFillable)block).canFillWithFluid(player, world, pos, blockState, fluidStorage.variant.getFluid());
             if (!bl2) {
                 return hitResult != null && this.placeFluid(player, world, hitResult.getBlockPos().offset(hitResult.getSide()), (BlockHitResult)null, fluidBook);
             } else if (world.getDimension().ultrawarm() && fluidStorage.variant.getFluid().isIn(FluidTags.WATER)) {
@@ -174,7 +174,7 @@ public class FluidBook extends Item {
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
+    public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType type) {
         if(stack.hasGlint()){
             if(stack.hasGlint()){
                 SingleFluidStackingInventory inventory = new SingleFluidStackingInventory(stack);
@@ -186,6 +186,6 @@ public class FluidBook extends Item {
         }
 
         tooltip.add(Text.translatable("tooltip.mystical_index.fluid_book"));
-        super.appendTooltip(stack, world, tooltip, context);
+        super.appendTooltip(stack, context, tooltip, type);
     }
 }

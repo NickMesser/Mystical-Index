@@ -5,7 +5,7 @@
     "HFH",
     " D "
   ],
-  "key":{
+  "key": {
     "H": {
       "item": "minecraft:diamond_hoe"
     },
@@ -17,6 +17,6 @@
     }
   },
   "result": {
-    "item": "mystical_index:farming_book"
+    "id": "mystical_index:farming_book"
   }
 }

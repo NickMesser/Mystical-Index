@@ -1,7 +1,8 @@
 package net.messer.mystical_index.item.custom;
 
 import net.messer.mystical_index.item.ModItems;
-import net.minecraft.client.item.TooltipContext;
+import net.messer.util.MysticalUtil;
+import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.passive.VillagerEntity;
@@ -24,7 +25,7 @@ public class EmptyVillagerBook extends Item {
 
     @Override
     public ActionResult useOnEntity(ItemStack stack, PlayerEntity user, LivingEntity entity, Hand hand) {
-        if(entity instanceof VillagerEntity villagerEntity && !stack.hasNbt()){
+        if(entity instanceof VillagerEntity villagerEntity && !MysticalUtil.hasCustomData(stack)){
             if(villagerEntity.isBaby()){
                 ItemStack newStack = new ItemStack(ModItems.BABY_VILLAGER_BOOK);
                 var bookItem = (BabyVillagerBook) newStack.getItem();
@@ -45,9 +46,9 @@ public class EmptyVillagerBook extends Item {
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
+    public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType type) {
         tooltip.add(Text.of("§eRIGHT CLICK§r a villager"));
         tooltip.add(Text.of("to store them in this book"));
-        super.appendTooltip(stack, world, tooltip, context);
+        super.appendTooltip(stack, context, tooltip, type);
     }
 }

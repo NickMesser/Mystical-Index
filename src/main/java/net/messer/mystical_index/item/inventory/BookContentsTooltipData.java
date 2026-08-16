@@ -1,7 +1,7 @@
 package net.messer.mystical_index.item.inventory;
 
-import net.minecraft.client.item.TooltipData;
 import net.minecraft.inventory.Inventory;
+import net.minecraft.item.tooltip.TooltipData;
 import net.minecraft.item.ItemStack;
 
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ public record BookContentsTooltipData(List<TypeSummary> summaries, int used, int
             boolean merged = false;
             for (int i = 0; i < summaries.size(); i++) {
                 var existing = summaries.get(i);
-                if (ItemStack.canCombine(existing.representative(), stack)) {
+                if (ItemStack.areItemsAndComponentsEqual(existing.representative(), stack)) {
                     summaries.set(i, new TypeSummary(existing.representative(), existing.total() + stack.getCount()));
                     merged = true;
                     break;

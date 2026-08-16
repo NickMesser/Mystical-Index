@@ -2,21 +2,23 @@ package net.messer.mystical_index.item.custom;
 
 import net.fabricmc.fabric.api.entity.FakePlayer;
 import net.messer.config.ModConfig;
+import net.messer.util.MysticalUtil;
+import net.minecraft.component.DataComponentTypes;
 import net.messer.mystical_index.block.entity.LibraryBlockEntity;
 import net.messer.mystical_index.item.custom.base_books.BaseGeneratingBook;
 import net.messer.mystical_index.item.inventory.SingleItemStackingInventory;
-import net.messer.util.MysticalUtil;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.gui.screen.Screen;
 import net.messer.mystical_index.item.inventory.BookContentsTooltipData;
-import net.minecraft.client.item.TooltipContext;
-import net.minecraft.client.item.TooltipData;
+import net.minecraft.item.tooltip.TooltipType;
+import net.minecraft.item.tooltip.TooltipData;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.passive.SheepEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.loot.LootTable;
@@ -74,10 +76,7 @@ public class HusbandryBook extends BaseGeneratingBook {
             return super.useOnEntity(stack, user, entity, hand);
         }
 
-        var compound = stack.getNbt();
-
-        if(compound == null)
-            compound = stack.getOrCreateNbt();
+        var compound = MysticalUtil.getOrCreateCustomData(stack);
 
         var numberOfKills = compound.getInt(NUMBER_OF_KILLS_KEY);
         if(numberOfKills > 0){
@@ -87,11 +86,13 @@ public class HusbandryBook extends BaseGeneratingBook {
 
         var lootTableId = entity.getType().getLootTableId();
 
-        stack.setCustomName(Text.literal("Book of " + entity.getName().getString()));
+        stack.set(DataComponentTypes.CUSTOM_NAME, Text.literal("Book of " + entity.getName().getString()));
         compound.putString(STORED_ENTITY_NAME_KEY, entity.getName().getString());
-        compound.putString(STORED_ENTITY_LOOT_TABLE_KEY, lootTableId.toString());
+        // RegistryKey.toString() is a debug string; only the value is the id the book stores.
+        compound.putString(STORED_ENTITY_LOOT_TABLE_KEY, lootTableId.getValue().toString());
         compound.putInt(NUMBER_OF_KILLS_KEY, 0);
         compound.putString(STORED_ENTITY_ID_KEY, entityName);
+        MysticalUtil.setCustomData(stack, compound);
 
         // lastUsedTime is compared against world.getTime() % 24000, so it must be a timestamp.
         updateUseTime(stack, user.getWorld().getTime() % 24000);
@@ -100,10 +101,10 @@ public class HusbandryBook extends BaseGeneratingBook {
 
     @Override
     public boolean hasGlint(ItemStack stack) {
-        if(!stack.hasNbt())
+        if(!MysticalUtil.hasCustomData(stack))
             return false;
 
-        var compound = stack.getNbt();
+        var compound = MysticalUtil.getCustomData(stack);
 
         assert compound != null;
         var numberOfKills = compound.getInt(NUMBER_OF_KILLS_KEY);
@@ -112,10 +113,10 @@ public class HusbandryBook extends BaseGeneratingBook {
     }
 
     public void onKill(ItemStack stack, LivingEntity entity){
-        if(!stack.hasNbt())
+        if(!MysticalUtil.hasCustomData(stack))
             return;
 
-        var compound = stack.getNbt();
+        var compound = MysticalUtil.getCustomData(stack);
         assert compound != null;
         var storedEntityId = compound.getString(STORED_ENTITY_ID_KEY);
         var killedEntityId = Registries.ENTITY_TYPE.getId(entity.getType()).toString();
@@ -136,7 +137,8 @@ public class HusbandryBook extends BaseGeneratingBook {
         if(numberOfKills >= ModConfig.HusbandryBookMaxKills)
             return;
 
-        compound.putInt(NUMBER_OF_KILLS_KEY, numberOfKills + 1);
+        var updated = numberOfKills + 1;
+        MysticalUtil.editCustomData(stack, nbt -> nbt.putInt(NUMBER_OF_KILLS_KEY, updated));
     }
 
     @Override
@@ -144,7 +146,7 @@ public class HusbandryBook extends BaseGeneratingBook {
         if (world.isClient)
             return;
 
-        if(!stack.hasNbt())
+        if(!MysticalUtil.hasCustomData(stack))
             return;
 
         if(!(be instanceof LibraryBlockEntity))
@@ -164,17 +166,17 @@ public class HusbandryBook extends BaseGeneratingBook {
         if(player.isCreative())
             return;
 
-        if(!stack.hasNbt())
+        if(!MysticalUtil.hasCustomData(stack))
             return;
 
         tryGenerateResources(stack, world);
     }
 
     public void tryGenerateResources(ItemStack stack, World world){
-        NbtCompound compound = stack.getNbt();
+        NbtCompound compound = MysticalUtil.getCustomData(stack);
 
         assert compound != null;
-        var storedEntityLootTable = new Identifier(compound.getString(STORED_ENTITY_LOOT_TABLE_KEY));
+        var storedEntityLootTable = Identifier.of(compound.getString(STORED_ENTITY_LOOT_TABLE_KEY));
         var numberOfKills = compound.getInt(NUMBER_OF_KILLS_KEY);
         var storedEntityId = compound.getString(STORED_ENTITY_ID_KEY);
 
@@ -224,9 +226,10 @@ public class HusbandryBook extends BaseGeneratingBook {
         return Optional.of(BookContentsTooltipData.fromInventory(storageInventory));
     }
     @Override
-    public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        if(stack.getNbt() != null && world != null){
-            var compound = stack.getNbt();
+    public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType type) {
+        var world = MysticalUtil.tooltipWorld();
+        var compound = MysticalUtil.getCustomData(stack);
+        if(compound != null && world != null){
 
             var storedEntityName = compound.getString(STORED_ENTITY_NAME_KEY);
             var numberOfKills = compound.getInt(NUMBER_OF_KILLS_KEY);
@@ -257,6 +260,6 @@ public class HusbandryBook extends BaseGeneratingBook {
             tooltip.add(Text.translatable("tooltip.mystical_index.husbandry_book"));
         }
 
-        super.appendTooltip(stack, world, tooltip, context);
+        super.appendTooltip(stack, context, tooltip, type);
     }
 }

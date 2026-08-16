@@ -1,5 +1,6 @@
 package net.messer.mystical_index.item.inventory;
 
+import net.messer.util.MysticalUtil;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.Inventories;
 import net.minecraft.item.ItemStack;
@@ -33,11 +34,13 @@ public class MultiTypeBookInventory implements BookInventory {
         this.stacksPerType = Math.max(1, Math.min(stacksPerType, MAX_SLOTS));
         this.types = Math.max(1, Math.min(types, MAX_SLOTS));
 
-        var compound = bookStack.hasNbt() ? bookStack.getNbt() : null;
+        var compound = MysticalUtil.getCustomData(bookStack);
 
         if (compound != null && compound.contains(LEGACY_ITEM_KEY)) {
             this.storedItems = migrate(compound, this.types, this.stacksPerType);
-            writeNbt();
+            // migrate() strips the legacy key from this copy, so the very same copy has to be the
+            // one that goes back onto the stack or the book would migrate again on every read.
+            writeNbt(compound);
             return;
         }
 
@@ -68,7 +71,7 @@ public class MultiTypeBookInventory implements BookInventory {
             if (slot < 0 || slot >= target.size())
                 continue;
 
-            target.set(slot, ItemStack.fromNbt(entry));
+            target.set(slot, ItemStack.fromNbt(MysticalUtil.registryLookup(), entry).orElse(ItemStack.EMPTY));
         }
     }
 
@@ -114,7 +117,7 @@ public class MultiTypeBookInventory implements BookInventory {
 
             List<ItemStack> group = null;
             for (var candidate : groups) {
-                if (ItemStack.canCombine(candidate.get(0), stack)) {
+                if (ItemStack.areItemsAndComponentsEqual(candidate.get(0), stack)) {
                     group = candidate;
                     break;
                 }
@@ -154,6 +157,10 @@ public class MultiTypeBookInventory implements BookInventory {
 
     // Same "Items" shape vanilla uses, but the slot index is an int so books can exceed 256 slots.
     public void writeNbt() {
+        writeNbt(MysticalUtil.copyCustomData(bookStack));
+    }
+
+    private void writeNbt(NbtCompound compound) {
         var list = new NbtList();
         for (int slot = 0; slot < storedItems.size(); slot++) {
             var stack = storedItems.get(slot);
@@ -162,11 +169,13 @@ public class MultiTypeBookInventory implements BookInventory {
 
             var entry = new NbtCompound();
             entry.putInt(SLOT_KEY, slot);
-            stack.writeNbt(entry);
-            list.add(entry);
+            // encode() merges into a copy of the prefix and returns it; the prefix itself is left
+            // untouched, so the returned compound is the only one carrying the item data.
+            list.add(stack.encode(MysticalUtil.registryLookup(), entry));
         }
 
-        bookStack.getOrCreateNbt().put(ITEMS_KEY, list);
+        compound.put(ITEMS_KEY, list);
+        MysticalUtil.setCustomData(bookStack, compound);
     }
 
     public int bucketCount() {
@@ -204,7 +213,7 @@ public class MultiTypeBookInventory implements BookInventory {
                 continue;
             }
 
-            if (!ItemStack.canCombine(existing, stack) || existing.getCount() >= max)
+            if (!ItemStack.areItemsAndComponentsEqual(existing, stack) || existing.getCount() >= max)
                 continue;
 
             int room = Math.min(max - existing.getCount(), stack.getCount());
@@ -222,7 +231,7 @@ public class MultiTypeBookInventory implements BookInventory {
         int limit = getTypeCapacity();
 
         for (int bucket = 0; bucket < limit && !stack.isEmpty(); bucket++) {
-            if (ItemStack.canCombine(bucketVariant(bucket), stack))
+            if (ItemStack.areItemsAndComponentsEqual(bucketVariant(bucket), stack))
                 fillBucket(bucket, stack);
         }
 

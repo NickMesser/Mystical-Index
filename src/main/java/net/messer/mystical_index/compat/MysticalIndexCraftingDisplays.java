@@ -4,6 +4,8 @@ import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.util.EntryIngredients;
 import me.shedaniel.rei.plugin.common.displays.crafting.DefaultCustomDisplay;
 import net.messer.mystical_index.item.ModItems;
+import net.messer.util.MysticalUtil;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.EntityType;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -66,7 +68,9 @@ public class MysticalIndexCraftingDisplays {
         var displays = new ArrayList<DefaultCustomDisplay>();
 
         for (var spawnEgg : SpawnEggItem.getAll()) {
-            var entityType = spawnEgg.getEntityType(null);
+            // getEntityType reads the stack's entity_data component now, so it dereferences what
+            // it is handed. A plain stack carries no override and falls back to the egg's own type.
+            var entityType = spawnEgg.getEntityType(new ItemStack(spawnEgg));
             if (entityType == null)
                 continue;
 
@@ -86,9 +90,10 @@ public class MysticalIndexCraftingDisplays {
 
     private static ItemStack entityPaper(EntityType<?> entityType) {
         var stack = new ItemStack(ModItems.ENTITY_PAPER);
-        stack.getOrCreateNbt().putString("entity", Registries.ENTITY_TYPE.getId(entityType).toString());
-        // Same name EntityPaper.onCraft applies.
-        stack.setCustomName(Text.of(entityType.getName().getString() + " Paper"));
+        MysticalUtil.editCustomData(stack,
+                nbt -> nbt.putString("entity", Registries.ENTITY_TYPE.getId(entityType).toString()));
+        // Same name EntityPaper.onCraftByPlayer applies.
+        stack.set(DataComponentTypes.CUSTOM_NAME, Text.of(entityType.getName().getString() + " Paper"));
         return stack;
     }
 }

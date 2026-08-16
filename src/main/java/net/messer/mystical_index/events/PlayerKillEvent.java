@@ -6,6 +6,7 @@ import net.messer.config.ModConfig;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.custom.HostileBook;
 import net.messer.mystical_index.item.custom.HusbandryBook;
+import net.messer.util.MysticalUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.player.PlayerEntity;
@@ -55,9 +56,9 @@ public class PlayerKillEvent {
 
         // Create entity paper and drop it
         var entityPaper = new ItemStack(ModItems.ENTITY_PAPER);
-        var nbt = entityPaper.getOrCreateNbt();
-        nbt.putString("entity", Registries.ENTITY_TYPE.getId(entityId.getType()).toString());
-        entityPaper.onCraft(world, FakePlayer.get((ServerWorld) world), 1);
+        MysticalUtil.editCustomData(entityPaper,
+                nbt -> nbt.putString("entity", Registries.ENTITY_TYPE.getId(entityId.getType()).toString()));
+        entityPaper.onCraftByPlayer(world, FakePlayer.get((ServerWorld) world), 1);
         entityId.dropStack(entityPaper);
     }
 }

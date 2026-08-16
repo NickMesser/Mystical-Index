@@ -1,8 +1,8 @@
 package net.messer.mystical_index.item.custom.base_books;
 
 
+import net.messer.util.MysticalUtil;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
 
 
 public class BaseGeneratingBook extends BaseStorageBook{
@@ -11,10 +11,8 @@ public class BaseGeneratingBook extends BaseStorageBook{
     }
 
     public void updateUseTime(ItemStack stack, long time){
-        // getOrCreateNbt() attaches the compound to the stack; a bare `new NbtCompound()` would
-        // be discarded and the write silently lost.
-        NbtCompound compound = stack.getOrCreateNbt();
-
-        compound.putLong("lastUsedTime", time);
+        // The component copy has to go back onto the stack; mutating the fetched compound alone
+        // would be discarded and the write silently lost.
+        MysticalUtil.editCustomData(stack, compound -> compound.putLong("lastUsedTime", time));
     }
 }

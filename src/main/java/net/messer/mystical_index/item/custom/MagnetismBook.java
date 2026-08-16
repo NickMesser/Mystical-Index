@@ -1,10 +1,11 @@
 package net.messer.mystical_index.item.custom;
 
 import net.messer.config.ModConfig;
+import net.messer.util.MysticalUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.item.TooltipContext;
+import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -85,7 +86,7 @@ public class MagnetismBook extends Item {
 
     @Override
     public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
-        if(world.isClient || !stack.hasNbt())
+        if(world.isClient || !MysticalUtil.hasCustomData(stack))
             return;
 
         this.readNbt(stack);
@@ -111,13 +112,15 @@ public class MagnetismBook extends Item {
 
     public void readNbt(ItemStack stack){
         itemFilters.clear();
-        if (!stack.getOrCreateNbt().contains("Filtered Items")){
-            stack.getNbt().put("Filtered Items", new NbtList());
+        var compound = MysticalUtil.getOrCreateCustomData(stack);
+        if (!compound.contains("Filtered Items")){
+            compound.put("Filtered Items", new NbtList());
+            MysticalUtil.setCustomData(stack, compound);
         }
-        NbtList filteredItems = stack.getNbt().getList("Filtered Items", 10  );
+        NbtList filteredItems = compound.getList("Filtered Items", 10  );
         for (int i = 0; i < filteredItems.size(); i++){
-            NbtCompound compound = filteredItems.getCompound(i);
-            String itemName = compound.getString("ItemName");
+            NbtCompound entry = filteredItems.getCompound(i);
+            String itemName = entry.getString("ItemName");
             Item item = Registries.ITEM.get(Identifier.tryParse(itemName));
             itemFilters.add(item);
         }
@@ -135,12 +138,12 @@ public class MagnetismBook extends Item {
             nbtList.add(nbtCompound);
         }
 
-        stack.getNbt().put("Filtered Items", nbtList);
+        MysticalUtil.editCustomData(stack, compound -> compound.put("Filtered Items", nbtList));
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        if(stack.hasNbt()){
+    public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType type) {
+        if(MysticalUtil.hasCustomData(stack)){
             this.readNbt(stack);
             if(!itemFilters.isEmpty()){
                 StringBuilder stringBuilder = new StringBuilder();
@@ -164,6 +167,6 @@ public class MagnetismBook extends Item {
         } else {
             tooltip.add(Text.translatable("tooltip.mystical_index.storage_book"));
         }
-        super.appendTooltip(stack, world, tooltip, context);
+        super.appendTooltip(stack, context, tooltip, type);
     }
 }

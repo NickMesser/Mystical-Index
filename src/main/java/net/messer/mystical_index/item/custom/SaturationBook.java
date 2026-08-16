@@ -4,10 +4,11 @@ import net.messer.config.ModConfig;
 import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.inventory.SingleItemStackingInventory;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.client.gui.screen.Screen;
 import net.messer.mystical_index.item.inventory.BookContentsTooltipData;
-import net.minecraft.client.item.TooltipContext;
-import net.minecraft.client.item.TooltipData;
+import net.minecraft.item.tooltip.TooltipType;
+import net.minecraft.item.tooltip.TooltipData;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -47,7 +48,7 @@ public class SaturationBook extends Item {
                 for(Entity entity : world.getNonSpectatingEntities(ItemEntity.class, box)){
                     ItemEntity item = (ItemEntity) entity;
                     var hitStack = item.getStack();
-                    if(hitStack.isFood()){
+                    if(hitStack.contains(DataComponentTypes.FOOD)){
                         inventory.setCurrentlyStoredItem(hitStack.getItem());
                         return TypedActionResult.pass(stack);
                     }
@@ -70,8 +71,9 @@ public class SaturationBook extends Item {
 
             var inventory = new SingleItemStackingInventory(stack,ModConfig.SaturationBookMaxStacks);
             var foodStack = inventory.getFirstItemStack();
-            if(!foodStack.isEmpty() && foodStack.isFood()){
-                player.eatFood(world, foodStack);
+            var foodComponent = foodStack.get(DataComponentTypes.FOOD);
+            if(!foodStack.isEmpty() && foodComponent != null){
+                player.eatFood(world, foodStack, foodComponent);
                 inventory.markDirty();
                 player.getItemCooldownManager().set(this, ModConfig.SaturationBookTimeBetweenFeedings * 20);
             }
@@ -97,7 +99,7 @@ public class SaturationBook extends Item {
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
+    public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType type) {
         if(Screen.hasShiftDown()){
             tooltip.add(Text.translatable("tooltip.mystical_index.saturation_book_shift0"));
             tooltip.add(Text.translatable("tooltip.mystical_index.saturation_book_shift1"));
@@ -105,6 +107,6 @@ public class SaturationBook extends Item {
             tooltip.add(Text.translatable("tooltip.mystical_index.saturation_book"));
         }
 
-        super.appendTooltip(stack, world, tooltip, context);
+        super.appendTooltip(stack, context, tooltip, type);
     }
 }
