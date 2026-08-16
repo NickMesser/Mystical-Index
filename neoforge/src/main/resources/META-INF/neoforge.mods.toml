@@ -1,0 +1,38 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "GNU"
+issueTrackerURL = "https://github.com/NickMesser/Mystical-Index/issues"
+
+[[mods]]
+modId = "mystical_index"
+version = "${version}"
+displayName = "Mystical Index"
+description = '''
+Magical Storage or something like that.
+'''
+authors = "Nick Messer"
+logoFile = "assets/mystical_index/icon.png"
+
+[[dependencies.mystical_index]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.mystical_index]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.1,1.21.2)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.mystical_index]]
+modId = "architectury"
+type = "required"
+versionRange = "[13.0.11,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[mixins]]
+config = "mystical_index.mixins.json"

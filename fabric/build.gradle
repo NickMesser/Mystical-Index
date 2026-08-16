@@ -1,0 +1,80 @@
+plugins {
+	id 'com.gradleup.shadow'
+}
+
+architectury {
+	platformSetupLoomIde()
+	fabric()
+}
+
+loom {
+	runs {
+		client {
+			// Relative to this subproject, so the dev world stays in the repo-root run-1.21.1 it
+			// has always lived in.
+			runDir "../run-1.21.1"
+		}
+		server {
+			runDir "../run-1.21.1-server"
+		}
+	}
+}
+
+configurations {
+	common {
+		canBeResolved = true
+		canBeConsumed = false
+	}
+	compileClasspath.extendsFrom common
+	runtimeClasspath.extendsFrom common
+	developmentFabric.extendsFrom common
+
+	// Files in this configuration are bundled into the mod jar by the Shadow plugin.
+	shadowBundle {
+		canBeResolved = true
+		canBeConsumed = false
+	}
+}
+
+dependencies {
+	modImplementation "net.fabricmc:fabric-loader:$rootProject.loader_version"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:$rootProject.fabric_version"
+
+	modImplementation "dev.architectury:architectury-fabric:$rootProject.architectury_api_version"
+
+	modImplementation "maven.modrinth:midnightlib:$rootProject.midnightlib_fabric_version"
+
+	// REI Stuff
+	modCompileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:$rootProject.rei_version"
+	// Full REI on the compile classpath too: the default plugin classes (BuiltinPlugin,
+	// DefaultCraftingDisplay) are needed to register displays into the vanilla crafting
+	// category without a runtime ClassCastException. Still compileOnly - no hard dependency.
+	modCompileOnly "me.shedaniel:RoughlyEnoughItems-fabric:$rootProject.rei_version"
+	modRuntimeOnly "me.shedaniel:RoughlyEnoughItems-fabric:$rootProject.rei_version"
+
+	common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
+	shadowBundle project(path: ':common', configuration: 'transformProductionFabric')
+}
+
+processResources {
+	inputs.property 'version', project.version
+
+	filesMatching('fabric.mod.json') {
+		expand version: inputs.properties.version
+	}
+}
+
+shadowJar {
+	configurations = [project.configurations.shadowBundle]
+	archiveClassifier = 'dev-shadow'
+}
+
+remapJar {
+	inputFile.set shadowJar.archiveFile
+}
+
+jar {
+	from(rootProject.file("LICENSE")) {
+		rename { "${it}_${project.base.archivesName.get()}" }
+	}
+}

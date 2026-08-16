@@ -1,0 +1,56 @@
+package net.messer.config;
+
+
+import eu.midnightdust.lib.config.MidnightConfig;
+
+import java.util.*;
+
+public class ModConfig extends MidnightConfig {
+    @Comment public static Comment BookStorageTitle;
+    @Entry public static int StorageBookMaxStacks = 10;
+    @Entry public static List<String> StorageBookBlockBlacklist = List.of("minecraft:shulker_box");
+
+    @Comment public static Comment BookOfHoldingTitle;
+    @Entry public static int HoldingBookTier1Types = 10;
+    @Entry public static int HoldingBookTier1StacksPerType = 1;
+    @Entry public static int HoldingBookTier2Types = 20;
+    @Entry public static int HoldingBookTier2StacksPerType = 2;
+    @Entry public static int HoldingBookTier3Types = 30;
+    @Entry public static int HoldingBookTier3StacksPerType = 4;
+    @Entry public static int HoldingBookTier4Types = 40;
+    @Entry public static int HoldingBookTier4StacksPerType = 8;
+
+    @Comment public static Comment LecternTitle;
+    @Entry public static int LecternRange = 16;
+
+    @Comment public static Comment BookOfMagnetismTitle;
+    @Entry public static int MagnetismRange = 5;
+
+    @Comment public static Comment BookOfSaturationTitle;
+    @Entry public static int SaturationBookMaxStacks = 1;
+    @Entry public static int SaturationBookTimeBetweenFeedings = 10;
+
+    @Comment public static Comment BookOfFluidTitle;
+    @Entry public static int FluidBookMaxBuckets = 10;
+
+    @Comment public static Comment BookOfHusbandryTitle;
+    @Entry public static int HusbandryBookCooldown = 120;
+    @Entry public static int HusbandryBookMaxKills = 100;
+    @Entry public static List<String> HusbandryBookBlackList = new ArrayList<>();
+    @Comment public static Comment BookOfHostilityTitle;
+    @Entry public static int HostileBookCooldown = 120;
+    @Entry public static int HostileBookMaxKills = 100;
+    @Entry public static List<String> HostileBookBlackList = List.of("minecraft:ender_dragon", "minecraft:wither");
+
+    @Comment public static Comment BookOfFarmingTitle;
+    @Entry public static int BookOfFarmingDefaultCooldown = 120;
+    @Entry public static int BookOfFarmingMaxStacks = 5;
+    @Entry public static Map<String, Integer> BookOfFarmingCooldowns = new HashMap<>(){
+        {
+            put("minecraft:carrot", 120);
+        }
+    };
+
+    @Comment public static Comment EntityPaperTitle;
+    @Entry public static List<String> EntityPaperBlackList = List.of("minecraft:ender_dragon", "minecraft:wither");
+}

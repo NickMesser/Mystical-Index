@@ -35,3 +35,8 @@ run/
 
 run-1.21.1/
 run-1.21.1-server/
+
+# neoforge
+
+run-1.21.1-neoforge/
+run-1.21.1-neoforge-server/

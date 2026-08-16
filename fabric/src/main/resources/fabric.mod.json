@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "id": "mystical_index",
+  "version": "${version}",
+
+  "name": "Mystical Index",
+  "description": "Magical Storage or something like that.",
+  "authors": [
+    "Nick Messer"
+  ],
+  "contact": {
+    "homepage": "https://github.com/NickMesser",
+    "sources": "https://github.com/NickMesser/Mystical-Index"
+  },
+
+  "license": "GNU",
+  "icon": "assets/mystical_index/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "net.messer.mystical_index.fabric.MysticalIndexFabric"
+    ],
+    "client": [
+      "net.messer.mystical_index.fabric.MysticalIndexFabricClient"
+    ],
+    "rei_client": [
+      "net.messer.mystical_index.compat.MysticalIndexREIClientPlugin"
+    ]
+  },
+  "mixins": [
+    "mystical_index.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "fabric": "*",
+    "architectury": ">=13.0.11",
+    "minecraft": "~1.21.1",
+    "java": ">=21"
+  }
+}

@@ -1,0 +1,20 @@
+architectury {
+	common rootProject.enabled_platforms.split(',')
+}
+
+dependencies {
+	// Fabric Loader is on the compile classpath only for the @Environment annotations, which the
+	// Architectury plugin rewrites to each platform's equivalent. No other Loader class is used.
+	modImplementation "net.fabricmc:fabric-loader:$rootProject.loader_version"
+
+	modImplementation "dev.architectury:architectury:$rootProject.architectury_api_version"
+
+	// MidnightLib's config API is loader agnostic; the fabric artifact is only here to compile
+	// against, each loader module pulls its own at runtime.
+	modCompileOnly "maven.modrinth:midnightlib:$rootProject.midnightlib_fabric_version"
+
+	// REI's display/category/transfer API is shared between loaders, so the plugin classes compile
+	// here and each loader module only supplies the discovery shim.
+	modCompileOnly "me.shedaniel:RoughlyEnoughItems-api:$rootProject.rei_version"
+	modCompileOnly "me.shedaniel:RoughlyEnoughItems-default-plugin:$rootProject.rei_version"
+}

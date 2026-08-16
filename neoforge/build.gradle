@@ -1,0 +1,82 @@
+plugins {
+	id 'com.gradleup.shadow'
+}
+
+architectury {
+	platformSetupLoomIde()
+	neoForge()
+}
+
+loom {
+	runs {
+		client {
+			runDir "../run-1.21.1-neoforge"
+		}
+		server {
+			runDir "../run-1.21.1-neoforge-server"
+		}
+	}
+}
+
+configurations {
+	common {
+		canBeResolved = true
+		canBeConsumed = false
+	}
+	compileClasspath.extendsFrom common
+	runtimeClasspath.extendsFrom common
+	developmentNeoForge.extendsFrom common
+
+	// Files in this configuration are bundled into the mod jar by the Shadow plugin.
+	shadowBundle {
+		canBeResolved = true
+		canBeConsumed = false
+	}
+}
+
+repositories {
+	maven {
+		name = 'NeoForged'
+		url = 'https://maven.neoforged.net/releases'
+	}
+}
+
+dependencies {
+	neoForge "net.neoforged:neoforge:$rootProject.neoforge_version"
+
+	modImplementation "dev.architectury:architectury-neoforge:$rootProject.architectury_api_version"
+
+	modImplementation "maven.modrinth:midnightlib:$rootProject.midnightlib_neoforge_version"
+
+	// REI Stuff - same split as the fabric module: api to compile the plugin against, the full jar
+	// for the default plugin classes, and the full jar again at runtime so the dev client has it.
+	modCompileOnly "me.shedaniel:RoughlyEnoughItems-api-neoforge:$rootProject.rei_version"
+	modCompileOnly "me.shedaniel:RoughlyEnoughItems-neoforge:$rootProject.rei_version"
+	modRuntimeOnly "me.shedaniel:RoughlyEnoughItems-neoforge:$rootProject.rei_version"
+
+	common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
+	shadowBundle project(path: ':common', configuration: 'transformProductionNeoForge')
+}
+
+processResources {
+	inputs.property 'version', project.version
+
+	filesMatching('META-INF/neoforge.mods.toml') {
+		expand version: inputs.properties.version
+	}
+}
+
+shadowJar {
+	configurations = [project.configurations.shadowBundle]
+	archiveClassifier = 'dev-shadow'
+}
+
+remapJar {
+	inputFile.set shadowJar.archiveFile
+}
+
+jar {
+	from(rootProject.file("LICENSE")) {
+		rename { "${it}_${project.base.archivesName.get()}" }
+	}
+}
