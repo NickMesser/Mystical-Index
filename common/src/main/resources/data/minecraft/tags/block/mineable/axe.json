@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "mystical_index:mystical_lectern"
+    "mystical_index:mystical_lectern",
+    "mystical_index:scriptorium"
   ]
 }

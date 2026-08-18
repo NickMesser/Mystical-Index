@@ -1,0 +1,9 @@
+{
+  "parent": "block/orientable",
+  "textures": {
+    "front": "mystical_index:block/scriptorium_front",
+    "side": "mystical_index:block/scriptorium_side",
+    "top": "mystical_index:block/scriptorium_top",
+    "particles": "mystical_index:block/scriptorium_front"
+  }
+}

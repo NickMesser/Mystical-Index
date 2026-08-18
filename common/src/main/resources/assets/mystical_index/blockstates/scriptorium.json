@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "mystical_index:block/scriptorium"
+    },
+    "facing=south": {
+      "model": "mystical_index:block/scriptorium",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "mystical_index:block/scriptorium",
+      "y": 270
+    },
+    "facing=east": {
+      "model": "mystical_index:block/scriptorium",
+      "y": 90
+    }
+  }
+}
