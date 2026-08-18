@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " N ",
+    "NBN",
+    " N "
+  ],
+  "key": {
+    "N": "minecraft:netherite_ingot",
+    "B": "minecraft:book"
+  },
+  "result": {
+    "id": "mystical_index:book_sling"
+  }
+}
