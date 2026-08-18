@@ -5,29 +5,33 @@ import net.messer.mystical_index.item.inventory.LibraryNetwork;
 import net.messer.mystical_index.item.inventory.SimpleBookInventory;
 import net.messer.mystical_index.screen.LibraryInventoryScreenHandler;
 import net.messer.util.MysticalUtil;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.Inventories;
-import net.minecraft.inventory.SimpleInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.screen.NamedScreenHandlerFactory;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.ScreenHandlerContext;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerLevelAccess;
+import net.minecraft.network.chat.Component;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
 
-public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandlerFactory {
+import net.minecraft.world.level.storage.ValueInput;
+
+import net.minecraft.world.level.storage.ValueOutput;
+
+public class LibraryBlockEntity extends BlockEntity implements MenuProvider {
 
     /**
      * The per-loader item-handler view of this library. Fabric hangs a {@code Storage<ItemVariant>}
@@ -46,17 +50,17 @@ public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandle
     @Nullable
     private StorageView storageView;
 
-    public SimpleInventory storedBooks = new SimpleInventory(5) {
+    public SimpleContainer storedBooks = new SimpleContainer(5) {
         @Override
-        public void markDirty() {
+        public void setChanged() {
             bookInventories.clear();
-            for (var itemStack : storedBooks.getHeldStacks()) {
+            for (var itemStack : storedBooks.getItems()) {
                 if(itemStack.getItem() instanceof BaseStorageBook storageBook){
                     if(storageBook.getInventory(itemStack).isEmpty())
                         continue;
                 }
                 bookInventories.add(new SimpleBookInventory(itemStack));
-                LibraryBlockEntity.this.markDirty();
+                LibraryBlockEntity.this.setChanged();
             }
 
             if (storageView != null)
@@ -83,64 +87,50 @@ public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandle
         return LibraryNetwork.insertIntoLibrary(this, stack);
     }
 
-    /**
-     * How much of {@code stack} an {@link #insert} would take, without touching anything.
-     *
-     * <p>NeoForge's item handler asks this on every {@code simulate = true} call, and a simulated
-     * insert must be side effect free. Rather than duplicating the two-pass fill rules (which would
-     * be free to drift out of step with the real ones), the real insert runs against copies of the
-     * book stacks: same code, same answer, nothing observable changed.
-     */
-    public long simulateInsert(ItemStack stack) {
-        var copies = new ArrayList<ItemStack>(storedBooks.getHeldStacks().size());
-        for (var book : storedBooks.getHeldStacks())
-            copies.add(book.copy());
-
-        return LibraryNetwork.insertIntoBooks(copies, stack.copy());
-    }
 
     /**
-     * Captures every stored book's custom data so a rejected insert can put it back.
+     * Captures every stored book so a rejected insert can put it back exactly as it was.
      *
      * <p>Writes land straight in the books' components, so a transfer API that lets a mod stage an
-     * insert and then discard it (Fabric's transactions do exactly that when simulating) would
+     * insert and then discard it (both loaders' transactions do exactly that when simulating) would
      * otherwise leave the items written while the source still had them - a dupe worth tens of
      * items a second through a pipe.
+     *
+     * <p>Whole stacks are copied rather than just custom_data. The write path derives other
+     * components from the contents - the enchantment glint override, and the entity paper's dyed
+     * colour - so a snapshot narrower than the full component set can restore the items and still
+     * leave a book visibly "used" after an aborted insert.
      */
-    public NbtCompound[] snapshotBooks() {
-        var stacks = storedBooks.getHeldStacks();
-        var snapshot = new NbtCompound[stacks.size()];
-        for (int i = 0; i < stacks.size(); i++) {
-            var nbt = MysticalUtil.getCustomData(stacks.get(i));
-            snapshot[i] = nbt == null ? null : nbt.copy();
-        }
+    public ItemStack[] snapshotBooks() {
+        var stacks = storedBooks.getItems();
+        var snapshot = new ItemStack[stacks.size()];
+        for (int i = 0; i < stacks.size(); i++)
+            snapshot[i] = stacks.get(i).copy();
         return snapshot;
     }
 
-    public void restoreBooks(NbtCompound[] snapshot) {
-        var stacks = storedBooks.getHeldStacks();
-        for (int i = 0; i < snapshot.length && i < stacks.size(); i++) {
-            var stack = stacks.get(i);
-            // A book that carried no component before the write must end up with none again,
-            // or "has been used" reads would flip on an aborted insert.
-            if (snapshot[i] == null)
-                stack.remove(DataComponentTypes.CUSTOM_DATA);
-            else
-                MysticalUtil.setCustomData(stack, snapshot[i].copy());
-        }
+    public void restoreBooks(ItemStack[] snapshot) {
+        var stacks = storedBooks.getItems();
+        for (int i = 0; i < snapshot.length && i < stacks.size(); i++)
+            stacks.set(i, snapshot[i].copy());
+
+        // The mirrors in bookInventories hold the stack objects that were just replaced, so they
+        // have to be rebuilt or the next query reads the rolled-back-over copies.
+        storedBooks.setChanged();
     }
 
     @Override
-    public void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
-        super.readNbt(nbt, registryLookup);
-        storedBooks.clear();
-        Inventories.readNbt(nbt, storedBooks.getHeldStacks(), registryLookup);
-        storedBooks.markDirty();
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        storedBooks.clearContent();
+        ContainerHelper.loadAllItems(input, storedBooks.getItems());
+        storedBooks.setChanged();
     }
 
     @Override
-    protected void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
-        Inventories.writeNbt(nbt, storedBooks.getHeldStacks(), registryLookup);
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        ContainerHelper.saveAllItems(output, storedBooks.getItems());
     }
 
     public LibraryBlockEntity(BlockPos pos, BlockState state) {
@@ -148,25 +138,19 @@ public class LibraryBlockEntity extends BlockEntity implements NamedScreenHandle
     }
 
     @Override
-    public Text getDisplayName() {
-        return Text.literal("Library");
+    public Component getDisplayName() {
+        return Component.literal("Library");
     }
 
     @Nullable
     @Override
-    public ScreenHandler createMenu(int syncId, PlayerInventory inv, PlayerEntity player) {
+    public AbstractContainerMenu createMenu(int syncId, Inventory inv, Player player) {
         return new LibraryInventoryScreenHandler(syncId, inv, storedBooks,
-                ScreenHandlerContext.create(getWorld(), getPos()));
+                ContainerLevelAccess.create(getLevel(), getBlockPos()));
     }
 
-    public static void tick(World world, BlockPos pos, BlockState state, LibraryBlockEntity be) {
-        var storedBooks = be.storedBooks;
-        for (var book : storedBooks.getHeldStacks()) {
-            if (book.getItem() instanceof BaseStorageBook storageBook) {
-                storageBook.customBookTick(book, world, be);
-            }
-        }
-        storedBooks.markDirty();
-        return;
-    }
+    // No tick. A Library is storage only: books do not work while stored in one - the Scriptorium
+    // is where they run. Removing the ticker also removed the blanket per-tick setChanged that was
+    // silently keeping the transfer mirrors fresh, so every network mutation now marks the library
+    // itself (see LibraryNetwork.markLibraryChanged).
 }
