@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " L ",
+    "LXL",
+    " B "
+  ],
+  "key": {
+    "L": "minecraft:lapis_lazuli",
+    "X": "minecraft:experience_bottle",
+    "B": "minecraft:book"
+  },
+  "result": {
+    "id": "mystical_index:experience_book"
+  }
+}
