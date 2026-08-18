@@ -8,23 +8,26 @@ import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.item.inventory.BookItemVariant;
 import net.messer.mystical_index.item.inventory.LibraryNetwork;
 import net.messer.mystical_index.screen.MysticalLecternScreenHandler;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class LecternNetworking {
 
-    public static final CustomPayload.Id<ContentsPayload> CONTENTS =
-            new CustomPayload.Id<>(Identifier.of(MysticalIndex.MOD_ID, "lectern_contents"));
-    public static final CustomPayload.Id<ActionPayload> ACTION =
-            new CustomPayload.Id<>(Identifier.of(MysticalIndex.MOD_ID, "lectern_action"));
-    public static final CustomPayload.Id<FillRecipePayload> FILL_RECIPE =
-            new CustomPayload.Id<>(Identifier.of(MysticalIndex.MOD_ID, "lectern_fill_recipe"));
+    public static final CustomPacketPayload.Type<ContentsPayload> CONTENTS =
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(MysticalIndex.MOD_ID, "lectern_contents"));
+    public static final CustomPacketPayload.Type<ActionPayload> ACTION =
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(MysticalIndex.MOD_ID, "lectern_action"));
+    public static final CustomPacketPayload.Type<LinksPayload> LINKS =
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(MysticalIndex.MOD_ID, "lectern_links"));
+    public static final CustomPacketPayload.Type<FillRecipePayload> FILL_RECIPE =
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(MysticalIndex.MOD_ID, "lectern_fill_recipe"));
 
     public static final int ACTION_EXTRACT = 0;
     public static final int ACTION_INSERT = 1;
@@ -34,26 +37,36 @@ public class LecternNetworking {
 
     // No real library network holds this many distinct variants; a bigger claim is a hostile peer
     // trying to make the reader allocate or spin before anything has been validated.
+    // A lectern's discovery box is bounded by LecternRange, so the linked set is small by
+    // construction; anything larger is a hostile peer rather than a big base.
+    public static final int MAX_LINKED_LIBRARIES = 4096;
+
     public static final int MAX_CONTENTS_ENTRIES = 65536;
     private static final int MAX_CONTENTS_PRESIZE = 4096;
 
     // The codecs are written by hand rather than composed out of tuples: the action packet's shape
     // depends on its action byte, and the recipe packet caps candidates on read while still
     // draining everything that was written. Both wire formats are unchanged.
-    public record ContentsPayload(int syncId, List<LibraryNetwork.Entry> entries) implements CustomPayload {
-        public static final PacketCodec<RegistryByteBuf, ContentsPayload> CODEC =
-                CustomPayload.codecOf(ContentsPayload::write, ContentsPayload::read);
+    public record ContentsPayload(int syncId, List<LibraryNetwork.Entry> entries,
+                                  LibraryNetwork.Capacity capacity) implements CustomPacketPayload {
+        public static final StreamCodec<RegistryFriendlyByteBuf, ContentsPayload> CODEC =
+                CustomPacketPayload.codec(ContentsPayload::write, ContentsPayload::read);
 
-        private void write(RegistryByteBuf buf) {
+        private void write(RegistryFriendlyByteBuf buf) {
             buf.writeVarInt(syncId);
             buf.writeVarInt(entries.size());
             for (var entry : entries) {
                 BookItemVariant.PACKET_CODEC.encode(buf, entry.variant());
                 buf.writeVarLong(entry.count());
             }
+            // Session-local format, so the capacity simply rides along on the end.
+            buf.writeVarInt(capacity.used());
+            buf.writeVarInt(capacity.total());
+            buf.writeVarInt(capacity.books());
+            buf.writeVarInt(capacity.libraries());
         }
 
-        private static ContentsPayload read(RegistryByteBuf buf) {
+        private static ContentsPayload read(RegistryFriendlyByteBuf buf) {
             int syncId = buf.readVarInt();
             int size = buf.readVarInt();
             // A hostile server can claim a huge size to make the client allocate and spin before
@@ -68,21 +81,63 @@ public class LecternNetworking {
                 entries.add(new LibraryNetwork.Entry(variant, buf.readVarLong()));
             }
 
-            return new ContentsPayload(syncId, entries);
+            var capacity = new LibraryNetwork.Capacity(
+                    buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt());
+            return new ContentsPayload(syncId, entries, capacity);
         }
 
         @Override
-        public Id<ContentsPayload> getId() {
+        public Type<ContentsPayload> type() {
             return CONTENTS;
         }
     }
 
-    public record ActionPayload(int syncId, int action, BookItemVariant variant, int button, boolean toInventory)
-            implements CustomPayload {
-        public static final PacketCodec<RegistryByteBuf, ActionPayload> CODEC =
-                CustomPayload.codecOf(ActionPayload::write, ActionPayload::read);
+    /**
+     * Where the lectern's network actually reaches: the libraries the SERVER linked, plus the
+     * radius it used. The client renders exactly this and never re-discovers - a client-side scan
+     * would drift from the server's answer the moment chunk loading differed.
+     */
+    public record LinksPayload(int syncId, BlockPos lectern, int radius, List<BlockPos> libraries)
+            implements CustomPacketPayload {
+        public static final StreamCodec<RegistryFriendlyByteBuf, LinksPayload> CODEC =
+                CustomPacketPayload.codec(LinksPayload::write, LinksPayload::read);
 
-        private void write(RegistryByteBuf buf) {
+        private void write(RegistryFriendlyByteBuf buf) {
+            buf.writeVarInt(syncId);
+            buf.writeBlockPos(lectern);
+            buf.writeVarInt(radius);
+            buf.writeVarInt(libraries.size());
+            for (var pos : libraries)
+                buf.writeBlockPos(pos);
+        }
+
+        private static LinksPayload read(RegistryFriendlyByteBuf buf) {
+            int syncId = buf.readVarInt();
+            BlockPos lectern = buf.readBlockPos();
+            int radius = buf.readVarInt();
+            int size = buf.readVarInt();
+            if (size < 0 || size > MAX_LINKED_LIBRARIES)
+                throw new DecoderException("Lectern link count out of range: " + size);
+
+            List<BlockPos> libraries = new ArrayList<>(Math.min(size, 256));
+            for (int i = 0; i < size; i++)
+                libraries.add(buf.readBlockPos());
+
+            return new LinksPayload(syncId, lectern, radius, libraries);
+        }
+
+        @Override
+        public Type<LinksPayload> type() {
+            return LINKS;
+        }
+    }
+
+    public record ActionPayload(int syncId, int action, BookItemVariant variant, int button, boolean toInventory)
+            implements CustomPacketPayload {
+        public static final StreamCodec<RegistryFriendlyByteBuf, ActionPayload> CODEC =
+                CustomPacketPayload.codec(ActionPayload::write, ActionPayload::read);
+
+        private void write(RegistryFriendlyByteBuf buf) {
             buf.writeVarInt(syncId);
             buf.writeByte(action);
 
@@ -95,7 +150,7 @@ public class LecternNetworking {
                 buf.writeBoolean(toInventory);
         }
 
-        private static ActionPayload read(RegistryByteBuf buf) {
+        private static ActionPayload read(RegistryFriendlyByteBuf buf) {
             int syncId = buf.readVarInt();
             int action = buf.readByte();
             // Reject any unknown opcode outright. Otherwise it falls through and is executed as an
@@ -117,16 +172,16 @@ public class LecternNetworking {
         }
 
         @Override
-        public Id<ActionPayload> getId() {
+        public Type<ActionPayload> type() {
             return ACTION;
         }
     }
 
-    public record FillRecipePayload(int syncId, List<List<BookItemVariant>> slotCandidates) implements CustomPayload {
-        public static final PacketCodec<RegistryByteBuf, FillRecipePayload> CODEC =
-                CustomPayload.codecOf(FillRecipePayload::write, FillRecipePayload::read);
+    public record FillRecipePayload(int syncId, List<List<BookItemVariant>> slotCandidates) implements CustomPacketPayload {
+        public static final StreamCodec<RegistryFriendlyByteBuf, FillRecipePayload> CODEC =
+                CustomPacketPayload.codec(FillRecipePayload::write, FillRecipePayload::read);
 
-        private void write(RegistryByteBuf buf) {
+        private void write(RegistryFriendlyByteBuf buf) {
             buf.writeVarInt(syncId);
             for (var candidates : slotCandidates) {
                 buf.writeVarInt(candidates.size());
@@ -135,7 +190,7 @@ public class LecternNetworking {
             }
         }
 
-        private static FillRecipePayload read(RegistryByteBuf buf) {
+        private static FillRecipePayload read(RegistryFriendlyByteBuf buf) {
             int syncId = buf.readVarInt();
 
             List<List<BookItemVariant>> slotCandidates = new ArrayList<>(RECIPE_GRID_SIZE);
@@ -162,7 +217,7 @@ public class LecternNetworking {
         }
 
         @Override
-        public Id<FillRecipePayload> getId() {
+        public Type<FillRecipePayload> type() {
             return FILL_RECIPE;
         }
     }
@@ -182,8 +237,8 @@ public class LecternNetworking {
         // scheduled task.
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, ACTION, ActionPayload.CODEC, (payload, context) -> {
             var player = context.getPlayer();
-            if (!(player.currentScreenHandler instanceof MysticalLecternScreenHandler lectern)
-                    || lectern.syncId != payload.syncId() || !lectern.canUse(player))
+            if (!(player.containerMenu instanceof MysticalLecternScreenHandler lectern)
+                    || lectern.containerId != payload.syncId() || !lectern.stillValid(player))
                 return;
 
             switch (payload.action()) {
@@ -194,18 +249,25 @@ public class LecternNetworking {
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, FILL_RECIPE, FillRecipePayload.CODEC, (payload, context) -> {
             var player = context.getPlayer();
-            if (!(player.currentScreenHandler instanceof MysticalLecternScreenHandler lectern)
-                    || lectern.syncId != payload.syncId() || !lectern.canUse(player))
+            if (!(player.containerMenu instanceof MysticalLecternScreenHandler lectern)
+                    || lectern.containerId != payload.syncId() || !lectern.stillValid(player))
                 return;
 
             lectern.handleFillRecipe(payload.slotCandidates());
         });
 
-        if (Platform.getEnvironment() == Env.SERVER)
+        if (Platform.getEnvironment() == Env.SERVER) {
             NetworkManager.registerS2CPayloadType(CONTENTS, ContentsPayload.CODEC);
+            NetworkManager.registerS2CPayloadType(LINKS, LinksPayload.CODEC);
+        }
     }
 
-    public static void sendContents(ServerPlayerEntity player, int syncId, List<LibraryNetwork.Entry> entries) {
-        NetworkManager.sendToPlayer(player, new ContentsPayload(syncId, entries));
+    public static void sendContents(ServerPlayer player, int syncId, List<LibraryNetwork.Entry> entries,
+                                    LibraryNetwork.Capacity capacity) {
+        NetworkManager.sendToPlayer(player, new ContentsPayload(syncId, entries, capacity));
+    }
+
+    public static void sendLinks(ServerPlayer player, int syncId, BlockPos lectern, int radius, List<BlockPos> libraries) {
+        NetworkManager.sendToPlayer(player, new LinksPayload(syncId, lectern, radius, libraries));
     }
 }

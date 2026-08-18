@@ -4,6 +4,7 @@ import dev.architectury.networking.NetworkManager;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.messer.mystical_index.item.inventory.BookItemVariant;
+import net.messer.mystical_index.client.LecternRangeVisualizer;
 import net.messer.mystical_index.screen.MysticalLecternScreenHandler;
 
 @Environment(EnvType.CLIENT)
@@ -18,10 +19,21 @@ public class LecternClientNetworking {
                     if (player == null)
                         return;
 
-                    if (player.currentScreenHandler instanceof MysticalLecternScreenHandler lectern
-                            && lectern.syncId == payload.syncId()) {
+                    if (player.containerMenu instanceof MysticalLecternScreenHandler lectern
+                            && lectern.containerId == payload.syncId()) {
                         lectern.setClientEntries(payload.entries());
+                        lectern.clientCapacity = payload.capacity();
                     }
+                });
+
+        NetworkManager.registerReceiver(NetworkManager.Side.S2C, LecternNetworking.LINKS,
+                LecternNetworking.LinksPayload.CODEC, (payload, context) -> {
+                    var links = new LecternRangeVisualizer.Links(
+                            payload.lectern(), payload.radius(), payload.libraries());
+                    lastLinks = links;
+                    // Refresh in place if this lectern is already being shown, so a library
+                    // appearing or unloading redraws without the player toggling twice.
+                    LecternRangeVisualizer.update(links);
                 });
     }
 
@@ -34,4 +46,7 @@ public class LecternClientNetworking {
         NetworkManager.sendToServer(new LecternNetworking.ActionPayload(
                 syncId, LecternNetworking.ACTION_INSERT, BookItemVariant.blank(), button, false));
     }
+
+    /** Latest server answer for the lectern currently open, for the toggle button to act on. */
+    public static LecternRangeVisualizer.Links lastLinks;
 }

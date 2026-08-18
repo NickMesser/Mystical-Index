@@ -7,35 +7,38 @@ import net.messer.mystical_index.block.entity.LibraryBlockEntity;
 import net.messer.mystical_index.item.inventory.LibraryNetwork;
 import net.messer.mystical_index.network.LecternNetworking;
 import net.messer.util.ServerPacketSender;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.inventory.CraftingInventory;
-import net.minecraft.inventory.CraftingResultInventory;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.inventory.RecipeInputInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.packet.s2c.play.ScreenHandlerSlotUpdateS2CPacket;
-import net.minecraft.recipe.RecipeType;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.ScreenHandlerContext;
-import net.minecraft.screen.slot.CraftingResultSlot;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.TransientCraftingContainer;
+import net.minecraft.world.inventory.ResultContainer;
+import net.minecraft.world.Container;
+import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerLevelAccess;
+import net.minecraft.world.inventory.ResultSlot;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 
 import java.util.List;
 
-public class MysticalLecternScreenHandler extends ScreenHandler {
-    private final ScreenHandlerContext context;
-    private final PlayerEntity player;
-    private final CraftingInventory input = new CraftingInventory(this, 3, 3);
-    private final CraftingResultInventory result = new CraftingResultInventory();
-    private final ServerPlayerEntity serverPlayer;
+import net.minecraft.server.level.ServerLevel;
+
+public class MysticalLecternScreenHandler extends AbstractContainerMenu {
+    private final ContainerLevelAccess context;
+    private final Player player;
+    private final TransientCraftingContainer input = new TransientCraftingContainer(this, 3, 3);
+    private final ResultContainer result = new ResultContainer();
+    private final ServerPlayer serverPlayer;
 
     private boolean networkDirty;
     private int tickCounter;
     private List<LibraryNetwork.Entry> lastSent = List.of();
+    private List<net.minecraft.core.BlockPos> lastLinks = null;
     private List<LibraryNetwork.Entry> clientEntries = List.of();
 
     // A shift-click drives the vanilla QUICK_MOVE loop, which re-enters quickMove (and the result
@@ -50,15 +53,15 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
     private int clickCrafts;
     private boolean resultSyncPending;
 
-    public MysticalLecternScreenHandler(int syncId, PlayerInventory playerInventory) {
-        this(syncId, playerInventory, ScreenHandlerContext.EMPTY);
+    public MysticalLecternScreenHandler(int syncId, Inventory playerInventory) {
+        this(syncId, playerInventory, ContainerLevelAccess.NULL);
     }
 
-    public MysticalLecternScreenHandler(int syncId, PlayerInventory playerInventory, ScreenHandlerContext context) {
+    public MysticalLecternScreenHandler(int syncId, Inventory playerInventory, ContainerLevelAccess context) {
         super(ModScreenHandlers.MYSTICAL_LECTERN_SCREEN_HANDLER.get(), syncId);
         this.context = context;
         this.player = playerInventory.player;
-        this.serverPlayer = playerInventory.player instanceof ServerPlayerEntity spe ? spe : null;
+        this.serverPlayer = playerInventory.player instanceof ServerPlayer spe ? spe : null;
         this.networkDirty = this.serverPlayer != null;
 
         this.addSlot(new NetworkResultSlot(this.player, input, result, 0, 124, 90));
@@ -84,6 +87,38 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
         return clientEntries;
     }
 
+    public LibraryNetwork.Capacity clientCapacity = LibraryNetwork.Capacity.EMPTY;
+
+    /**
+     * Ships the linked library set when it differs from what this screen last saw. Rides the same
+     * dirty/resend cycle as the contents, so a library appearing or unloading updates a visible
+     * overlay without its own timer. lastLinks starts null so the first pass always sends, which
+     * is what covers "on screen open".
+     */
+    private void sendLinksIfChanged() {
+        if (serverPlayer == null)
+            return;
+
+        var links = context
+                .evaluate((world, pos) -> {
+                    var found = new java.util.ArrayList<net.minecraft.core.BlockPos>();
+                    for (var library : LibraryNetwork.findLibraries(world, pos, ModConfig.LecternRange))
+                        found.add(library.getBlockPos());
+                    return new java.util.AbstractMap.SimpleEntry<>(pos, found);
+                })
+                .orElse(null);
+
+        if (links == null)
+            return;
+
+        if (links.getValue().equals(lastLinks))
+            return;
+
+        lastLinks = links.getValue();
+        LecternNetworking.sendLinks(serverPlayer, containerId, links.getKey(),
+                ModConfig.LecternRange, links.getValue());
+    }
+
     public void setClientEntries(List<LibraryNetwork.Entry> entries) {
         this.clientEntries = entries;
     }
@@ -92,7 +127,7 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
         if (clickLibraries != null)
             return clickLibraries;
 
-        var found = context.get((world, pos) -> LibraryNetwork.findLibraries(world, pos, ModConfig.LecternRange)).orElse(List.of());
+        var found = context.evaluate((world, pos) -> LibraryNetwork.findLibraries(world, pos, ModConfig.LecternRange)).orElse(List.of());
         // Memoise the scan for the rest of the click: one click can hit this many times (each
         // craft's refill, plus shift-inserts), and re-scanning chunks every time is the freeze.
         if (clickActive)
@@ -101,29 +136,29 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
     }
 
     @Override
-    public void onContentChanged(Inventory inventory) {
-        context.run((world, pos) -> updateResult(world));
+    public void slotsChanged(Container inventory) {
+        context.execute((world, pos) -> updateResult(world));
     }
 
-    private void updateResult(World world) {
-        if (world.isClient || serverPlayer == null)
+    private void updateResult(Level world) {
+        if (world.isClientSide() || serverPlayer == null)
             return;
 
         var crafted = ItemStack.EMPTY;
-        var recipeInput = input.createRecipeInput();
-        var match = world.getRecipeManager().getFirstMatch(RecipeType.CRAFTING, recipeInput, world);
+        var recipeInput = input.asCraftInput();
+        var match = ((ServerLevel) world).recipeAccess().getRecipeFor(RecipeType.CRAFTING, recipeInput, world);
         if (match.isPresent()) {
             // getFirstMatch hands back the registry entry now; the recipe itself is one hop in.
             var entry = match.get();
-            if (result.shouldCraftRecipe(world, serverPlayer, entry)) {
-                var output = entry.value().craft(recipeInput, world.getRegistryManager());
-                if (output.isItemEnabled(world.getEnabledFeatures()))
+            if (result.setRecipeUsed(serverPlayer, entry)) {
+                var output = entry.value().assemble(recipeInput);
+                if (output.isItemEnabled(world.enabledFeatures()))
                     crafted = output;
             }
         }
 
-        result.setStack(0, crafted);
-        setPreviousTrackedSlot(0, crafted);
+        result.setItem(0, crafted);
+        setRemoteSlot(0, crafted);
 
         // During a click the auto-refill mutates the grid up to nine times per craft, and each
         // mutation lands here. Hold the result packet and flush a single update when the click
@@ -134,16 +169,16 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
             return;
         }
 
-        ServerPacketSender.send(serverPlayer, new ScreenHandlerSlotUpdateS2CPacket(syncId, nextRevision(), 0, crafted));
+        ServerPacketSender.send(serverPlayer, new ClientboundContainerSetSlotPacket(containerId, incrementStateId(), 0, crafted));
     }
 
     @Override
-    public boolean canUse(PlayerEntity player) {
-        return canUse(context, player, ModBlocks.MYSTICAL_LECTERN.get());
+    public boolean stillValid(Player player) {
+        return stillValid(context, player, ModBlocks.MYSTICAL_LECTERN.get());
     }
 
     @Override
-    public void onClosed(PlayerEntity player) {
+    public void removed(Player player) {
         // The auto-refill keeps the 3x3 grid full and every extract lands the taken stack on the
         // cursor, so both are full of network items at close. Push them back into storage first and
         // only offer/drop what the network refuses; the plain dropInventory + super.onClosed path
@@ -152,30 +187,30 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
             var libraries = libraries();
 
             // Handle the cursor before super.onClosed, which would otherwise offer/drop it itself.
-            var cursor = getCursorStack();
+            var cursor = getCarried();
             if (!cursor.isEmpty()) {
                 LibraryNetwork.insert(libraries, cursor);
                 if (!cursor.isEmpty())
-                    player.getInventory().offerOrDrop(cursor);
-                setCursorStack(ItemStack.EMPTY);
+                    player.getInventory().placeItemBackInInventory(cursor);
+                setCarried(ItemStack.EMPTY);
             }
 
-            for (int slot = 0; slot < input.size(); slot++) {
-                var stack = input.removeStack(slot);
+            for (int slot = 0; slot < input.getContainerSize(); slot++) {
+                var stack = input.removeItemNoUpdate(slot);
                 if (stack.isEmpty())
                     continue;
 
                 LibraryNetwork.insert(libraries, stack);
                 if (!stack.isEmpty())
-                    player.getInventory().offerOrDrop(stack);
+                    player.getInventory().placeItemBackInInventory(stack);
             }
         }
 
-        super.onClosed(player);
+        super.removed(player);
     }
 
     @Override
-    public void onSlotClick(int slotIndex, int button, SlotActionType actionType, PlayerEntity player) {
+    public void clicked(int slotIndex, int button, ContainerInput actionType, Player player) {
         // Establish the per-click scope so the library scan and grid snapshot are resolved once for
         // the whole click (including every iteration of the vanilla QUICK_MOVE loop) and the result
         // packet is coalesced. The guard keeps the outermost call the sole owner of the scope.
@@ -183,7 +218,7 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
         if (owner)
             beginClick();
         try {
-            super.onSlotClick(slotIndex, button, actionType, player);
+            super.clicked(slotIndex, button, actionType, player);
         } finally {
             if (owner)
                 endClick();
@@ -209,31 +244,31 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
             resultSyncPending = false;
             if (serverPlayer != null)
                 ServerPacketSender.send(serverPlayer,
-                        new ScreenHandlerSlotUpdateS2CPacket(syncId, nextRevision(), 0, result.getStack(0)));
+                        new ClientboundContainerSetSlotPacket(containerId, incrementStateId(), 0, result.getItem(0)));
         }
     }
 
     @Override
-    public ItemStack quickMove(PlayerEntity player, int index) {
+    public ItemStack quickMoveStack(Player player, int index) {
         var slot = this.slots.get(index);
-        if (slot == null || !slot.hasStack())
+        if (slot == null || !slot.hasItem())
             return ItemStack.EMPTY;
 
-        var current = slot.getStack();
+        var current = slot.getItem();
         var copied = current.copy();
 
         if (index >= 10) {
             // Shift-clicking out of the player inventory pushes into the library network instead of
             // another slot. Always reporting EMPTY stops onSlotClick's repeat loop, so items no book
             // is bound to just stay where they are instead of hanging the click.
-            if (player.getWorld().isClient)
+            if (player.level().isClientSide())
                 return ItemStack.EMPTY;
 
             if (LibraryNetwork.insert(libraries(), current) > 0) {
                 if (current.isEmpty())
-                    slot.setStack(ItemStack.EMPTY);
+                    slot.set(ItemStack.EMPTY);
                 else
-                    slot.markDirty();
+                    slot.setChanged();
 
                 networkDirty = true;
             }
@@ -241,38 +276,38 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
         }
 
         if (index == 0) {
-            current.getItem().onCraftByPlayer(current, player.getWorld(), player);
-            if (!insertItem(current, 10, 46, true))
+            current.getItem().onCraftedBy(current, player);
+            if (!moveItemStackTo(current, 10, 46, true))
                 return ItemStack.EMPTY;
 
-            slot.onQuickTransfer(current, copied);
+            slot.onQuickCraft(current, copied);
         } else {
             // Grid slot: fill the player inventory first, then push whatever will not fit into the
             // library network, so a full inventory no longer blocks the shift-click. The shared tail
             // below still stops the QUICK_MOVE loop once a pass moves nothing (count unchanged).
-            insertItem(current, 10, 46, false);
-            if (!current.isEmpty() && !player.getWorld().isClient && LibraryNetwork.insert(libraries(), current) > 0)
+            moveItemStackTo(current, 10, 46, false);
+            if (!current.isEmpty() && !player.level().isClientSide() && LibraryNetwork.insert(libraries(), current) > 0)
                 networkDirty = true;
         }
 
         if (current.isEmpty())
-            slot.setStack(ItemStack.EMPTY);
+            slot.set(ItemStack.EMPTY);
         else
-            slot.markDirty();
+            slot.setChanged();
 
         if (current.getCount() == copied.getCount())
             return ItemStack.EMPTY;
 
-        slot.onTakeItem(player, current);
+        slot.setByPlayer(current);
         if (index == 0)
-            player.dropItem(current, false);
+            player.spawnAtLocation((ServerLevel) player.level(), current);
 
         return copied;
     }
 
     @Override
-    public void sendContentUpdates() {
-        super.sendContentUpdates();
+    public void broadcastChanges() {
+        super.broadcastChanges();
 
         if (serverPlayer == null)
             return;
@@ -284,12 +319,20 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
             return;
 
         List<LibraryNetwork.Entry> snapshot = context
-                .get((world, pos) -> LibraryNetwork.aggregate(LibraryNetwork.findLibraries(world, pos, ModConfig.LecternRange)))
+                .evaluate((world, pos) -> LibraryNetwork.aggregate(LibraryNetwork.findLibraries(world, pos, ModConfig.LecternRange)))
                 .orElse(List.of());
 
         if (networkDirty || !snapshot.equals(lastSent)) {
-            LecternNetworking.sendContents(serverPlayer, syncId, snapshot);
+            // Computed on the same evaluate() as the aggregate so both describe one consistent
+            // view of the network rather than two scans a tick apart.
+            var capacity = context
+                    .evaluate((world, pos) -> LibraryNetwork.capacity(
+                            LibraryNetwork.findLibraries(world, pos, ModConfig.LecternRange)))
+                    .orElse(LibraryNetwork.Capacity.EMPTY);
+
+            LecternNetworking.sendContents(serverPlayer, containerId, snapshot, capacity);
             lastSent = snapshot;
+            sendLinksIfChanged();
         }
 
         networkDirty = false;
@@ -304,7 +347,7 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
         if (available <= 0)
             return;
 
-        int maxCount = variant.getItem().getMaxCount();
+        int maxCount = variant.getItem().getDefaultMaxStackSize();
 
         if (toInventory) {
             long extracted = LibraryNetwork.extract(libraries, variant, Math.min(maxCount, available));
@@ -312,19 +355,19 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
                 return;
 
             var stack = variant.toStack((int) extracted);
-            player.getInventory().insertStack(stack);
+            player.getInventory().add(stack);
             if (!stack.isEmpty()) {
                 // It came straight out of bound books, so it always fits back in.
                 LibraryNetwork.insert(libraries, stack);
                 if (!stack.isEmpty())
-                    player.dropItem(stack, false);
+                    player.spawnAtLocation((ServerLevel) player.level(), stack);
             }
 
             networkDirty = true;
             return;
         }
 
-        var cursor = getCursorStack();
+        var cursor = getCarried();
         if (cursor.isEmpty()) {
             int amount = (int) Math.min(maxCount, available);
             if (button == 1)
@@ -332,14 +375,14 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
 
             long extracted = LibraryNetwork.extract(libraries, variant, amount);
             if (extracted > 0)
-                setCursorStack(variant.toStack((int) extracted));
+                setCarried(variant.toStack((int) extracted));
         } else if (variant.matches(cursor) && cursor.getCount() < maxCount) {
             int amount = button == 1 ? 1 : maxCount - cursor.getCount();
 
             long extracted = LibraryNetwork.extract(libraries, variant, amount);
             if (extracted > 0) {
-                cursor.increment((int) extracted);
-                setCursorStack(cursor);
+                cursor.grow((int) extracted);
+                setCarried(cursor);
             }
         }
 
@@ -347,7 +390,7 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
     }
 
     public void handleInsert(int button) {
-        var cursor = getCursorStack();
+        var cursor = getCarried();
         if (cursor.isEmpty())
             return;
 
@@ -357,15 +400,15 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
             var single = cursor.copy();
             single.setCount(1);
             if (LibraryNetwork.insert(libraries, single) > 0) {
-                cursor.decrement(1);
-                setCursorStack(cursor.isEmpty() ? ItemStack.EMPTY : cursor);
+                cursor.shrink(1);
+                setCarried(cursor.isEmpty() ? ItemStack.EMPTY : cursor);
                 networkDirty = true;
             }
             return;
         }
 
         if (LibraryNetwork.insert(libraries, cursor) > 0) {
-            setCursorStack(cursor.isEmpty() ? ItemStack.EMPTY : cursor);
+            setCarried(cursor.isEmpty() ? ItemStack.EMPTY : cursor);
             networkDirty = true;
         }
     }
@@ -375,25 +418,25 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
     public void handleFillRecipe(List<List<BookItemVariant>> slotCandidates) {
         // Hand the current grid back first, like the vanilla recipe book does. Nothing a transfer
         // displaces is ever voided.
-        for (int slot = 0; slot < input.size(); slot++) {
-            var stack = input.getStack(slot);
+        for (int slot = 0; slot < input.getContainerSize(); slot++) {
+            var stack = input.getItem(slot);
             if (stack.isEmpty())
                 continue;
 
-            input.setStack(slot, ItemStack.EMPTY);
-            player.getInventory().offerOrDrop(stack);
+            input.setItem(slot, ItemStack.EMPTY);
+            player.getInventory().placeItemBackInInventory(stack);
         }
 
         var libraries = libraries();
 
-        for (int slot = 0; slot < input.size() && slot < slotCandidates.size(); slot++) {
+        for (int slot = 0; slot < input.getContainerSize() && slot < slotCandidates.size(); slot++) {
             for (var variant : slotCandidates.get(slot)) {
                 if (variant.isBlank())
                     continue;
 
                 // The player's own items go first; the network only covers what is missing.
                 if (takeFromPlayer(variant) || LibraryNetwork.extract(libraries, variant, 1) > 0) {
-                    input.setStack(slot, variant.toStack(1));
+                    input.setItem(slot, variant.toStack(1));
                     break;
                 }
             }
@@ -403,14 +446,14 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
     }
 
     private boolean takeFromPlayer(BookItemVariant variant) {
-        var main = player.getInventory().main;
+        var main = player.getInventory().getNonEquipmentItems();
 
         for (int i = 0; i < main.size(); i++) {
             var stack = main.get(i);
             if (stack.isEmpty() || !variant.matches(stack))
                 continue;
 
-            stack.decrement(1);
+            stack.shrink(1);
             if (stack.isEmpty())
                 main.set(i, ItemStack.EMPTY);
 
@@ -420,13 +463,13 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
         return false;
     }
 
-    private class NetworkResultSlot extends CraftingResultSlot {
-        NetworkResultSlot(PlayerEntity player, RecipeInputInventory input, Inventory result, int index, int x, int y) {
+    private class NetworkResultSlot extends ResultSlot {
+        NetworkResultSlot(Player player, CraftingContainer input, Container result, int index, int x, int y) {
             super(player, input, result, index, x, y);
         }
 
         @Override
-        public void onTakeItem(PlayerEntity player, ItemStack stack) {
+        public void onTake(Player player, ItemStack stack) {
             var grid = MysticalLecternScreenHandler.this.input;
 
             // The refill always restores the same recipe layout, so the pre-consumption grid is the
@@ -436,14 +479,25 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
             if (snapshot == null) {
                 snapshot = new ItemStack[9];
                 for (int i = 0; i < 9; i++)
-                    snapshot[i] = grid.getStack(i).copy();
+                    snapshot[i] = grid.getItem(i).copy();
                 if (clickActive)
                     clickGridSnapshot = snapshot;
             }
 
-            super.onTakeItem(player, stack);
+            // Vanilla's ResultSlot.onTake is what consumes the grid: it walks the crafting input
+            // and calls craftSlots.removeItem(i, 1) per ingredient, then places any recipe
+            // remainders (buckets and the like). This override previously called setByPlayer
+            // instead, which updates the slot but consumes NOTHING - so the ingredients were never
+            // taken, and the refill loop below (which only tops up slots it finds ALREADY empty)
+            // had nothing to do. Delegating restores the exact vanilla consume on both loaders.
+            //
+            // Byte-for-byte diff of ResultSlot.onTake across the Fabric and NeoForge runtime jars:
+            // identical except for two CommonHooks.setCraftingPlayer calls NeoForge wraps around
+            // getRemainingItems. The consume mechanics - craftSlots.removeItem(i, 1) - are the same
+            // instruction on both, so owning the call site is what makes the semantics loader-proof.
+            super.onTake(player, stack);
 
-            if (player.getWorld().isClient)
+            if (player.level().isClientSide())
                 return;
 
             // Bound the network-fed refills per click. Once the budget is spent the grid is left to
@@ -457,12 +511,12 @@ public class MysticalLecternScreenHandler extends ScreenHandler {
 
             var libraries = libraries();
             for (int i = 0; i < 9; i++) {
-                if (snapshot[i].isEmpty() || !grid.getStack(i).isEmpty())
+                if (snapshot[i].isEmpty() || !grid.getItem(i).isEmpty())
                     continue;
 
                 var variant = BookItemVariant.of(snapshot[i]);
                 if (LibraryNetwork.extract(libraries, variant, 1) > 0)
-                    grid.setStack(i, variant.toStack(1));
+                    grid.setItem(i, variant.toStack(1));
             }
 
             networkDirty = true;
