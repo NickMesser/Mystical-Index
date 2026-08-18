@@ -1,95 +1,119 @@
 package net.messer.mystical_index.item.custom;
 
+import net.messer.mystical_index.screen.SaturationScreenHandler;
+import net.messer.util.SelfUpdatingBook;
 import net.messer.config.ModConfig;
 import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.inventory.SingleItemStackingInventory;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.client.gui.screens.Screen;
 import net.messer.mystical_index.item.inventory.BookContentsTooltipData;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.item.tooltip.TooltipData;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
-import net.minecraft.util.Hand;
-import net.minecraft.util.TypedActionResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.Box;
-import net.minecraft.world.World;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
 
-public class SaturationBook extends Item {
-    public SaturationBook(Settings settings) {
+import net.minecraft.client.Minecraft;
+
+import net.minecraft.server.level.ServerLevel;
+
+import net.minecraft.world.entity.EquipmentSlot;
+
+import net.minecraft.world.item.component.TooltipDisplay;
+
+import java.util.function.Consumer;
+
+import net.messer.util.GlintingBook;
+
+public class SaturationBook extends Item implements GlintingBook, SelfUpdatingBook {
+    public SaturationBook(Item.Properties settings) {
         super(settings);
     }
 
     @Override
-    public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
-        if(world.isClient)
+    public InteractionResult use(Level world, Player player, InteractionHand hand) {
+        if(world.isClientSide())
             return super.use(world, player, hand);
 
-        ItemStack stack = player.getStackInHand(hand);
-        if(player.isSneaking()){
-            var hitResult = player.raycast(10, 0, false);
+        ItemStack stack = player.getItemInHand(hand);
+        if(player.isShiftKeyDown()){
+            var hitResult = player.pick(10, 0, false);
             if (hitResult.getType() == HitResult.Type.MISS)
-                return TypedActionResult.pass(stack);
+                return InteractionResult.PASS;
 
             var inventory = new SingleItemStackingInventory(stack, ModConfig.SaturationBookMaxStacks);
             if(inventory.isEmpty()){
-                var box = Box.from(hitResult.getPos()).expand(.5);
+                var box = AABB.unitCubeFromLowerCorner(hitResult.getLocation()).inflate(.5);
 
-                for(Entity entity : world.getNonSpectatingEntities(ItemEntity.class, box)){
+                for(Entity entity : world.getEntitiesOfClass(ItemEntity.class, box)){
                     ItemEntity item = (ItemEntity) entity;
-                    var hitStack = item.getStack();
-                    if(hitStack.contains(DataComponentTypes.FOOD)){
+                    var hitStack = item.getItem();
+                    if(hitStack.has(DataComponents.FOOD)){
                         inventory.setCurrentlyStoredItem(hitStack.getItem());
-                        return TypedActionResult.pass(stack);
+                        return InteractionResult.PASS;
                     }
                 }
             }
             else{
-                player.sendMessage(Text.translatable("message.mystical_index.empty_first"), true);
+                player.sendOverlayMessage(Component.translatable("message.mystical_index.empty_first"));
             }
+
+            return super.use(world, player, hand);
         }
 
-        return super.use(world, player, hand);
+        // Plain right-click opens the food slot. The sneak gesture above is untouched: it still
+        // binds a food type off a dropped item, which is the no-UI way to load the book.
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            serverPlayer.openMenu(new net.minecraft.world.SimpleMenuProvider(
+                    (syncId, inventory, viewer) -> new SaturationScreenHandler(syncId, inventory),
+                    Component.translatable("container.mystical_index.saturation")));
+        }
+
+        return InteractionResult.CONSUME;
     }
 
     @Override
-    public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
-        if(entity instanceof PlayerEntity player && player.canConsume(false) &&
-                !player.getItemCooldownManager().isCoolingDown(this) &&
+    public void inventoryTick(ItemStack stack, ServerLevel world, Entity entity, EquipmentSlot slot) {
+        if(entity instanceof Player player && player.canEat(false) &&
+                !player.getCooldowns().isOnCooldown(stack) &&
                 !player.isCreative() &&
-                !world.isClient){
+                !world.isClientSide()){
 
             var inventory = new SingleItemStackingInventory(stack,ModConfig.SaturationBookMaxStacks);
             var foodStack = inventory.getFirstItemStack();
-            var foodComponent = foodStack.get(DataComponentTypes.FOOD);
+            var foodComponent = foodStack.get(DataComponents.FOOD);
             if(!foodStack.isEmpty() && foodComponent != null){
-                player.eatFood(world, foodStack, foodComponent);
-                inventory.markDirty();
-                player.getItemCooldownManager().set(this, ModConfig.SaturationBookTimeBetweenFeedings * 20);
+                player.getFoodData().eat(foodComponent);
+                foodStack.shrink(1);
+                inventory.setChanged();
+                player.getCooldowns().addCooldown(stack, ModConfig.SaturationBookTimeBetweenFeedings * 20);
             }
         }
 
-        super.inventoryTick(stack, world, entity, slot, selected);
+        super.inventoryTick(stack, world, entity, slot);
     }
-
     @Override
-    public boolean hasGlint(ItemStack stack) {
+    public boolean shouldGlint(ItemStack stack) {
         var storageInventory = new SingleItemStackingInventory(stack, ModConfig.SaturationBookMaxStacks);
         return !storageInventory.isEmpty();
     }
 
     @Override
-    public Optional<TooltipData> getTooltipData(ItemStack stack) {
+    public Optional<TooltipComponent> getTooltipImage(ItemStack stack) {
         var storageInventory = new SingleItemStackingInventory(stack, ModConfig.SaturationBookMaxStacks);
         if(storageInventory.isEmpty())
             return Optional.empty();
@@ -99,14 +123,14 @@ public class SaturationBook extends Item {
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType type) {
-        if(Screen.hasShiftDown()){
-            tooltip.add(Text.translatable("tooltip.mystical_index.saturation_book_shift0"));
-            tooltip.add(Text.translatable("tooltip.mystical_index.saturation_book_shift1"));
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
+        if(Minecraft.getInstance().hasShiftDown()){
+            tooltip.accept(Component.translatable("tooltip.mystical_index.saturation_book_shift0"));
+            tooltip.accept(Component.translatable("tooltip.mystical_index.saturation_book_shift1"));
         } else {
-            tooltip.add(Text.translatable("tooltip.mystical_index.saturation_book"));
+            tooltip.accept(Component.translatable("tooltip.mystical_index.saturation_book"));
         }
 
-        super.appendTooltip(stack, context, tooltip, type);
+        super.appendHoverText(stack, context, display, tooltip, type);
     }
 }
