@@ -1,108 +1,162 @@
 package net.messer.mystical_index.item.custom;
 
+import net.messer.mystical_index.item.inventory.MagnetFilterData;
+import net.messer.mystical_index.screen.MagnetismScreenHandler;
+import net.messer.util.SelfUpdatingBook;
+import net.minecraft.core.registries.Registries;
 import net.messer.config.ModConfig;
 import net.messer.util.MysticalUtil;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUsageContext;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.registry.Registries;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.TypedActionResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MagnetismBook extends Item {
+import net.minecraft.client.Minecraft;
+
+import net.minecraft.server.level.ServerLevel;
+
+import net.minecraft.world.entity.EquipmentSlot;
+
+import net.minecraft.world.item.component.TooltipDisplay;
+
+import java.util.function.Consumer;
+
+public class MagnetismBook extends Item implements SelfUpdatingBook {
     public List<Item> itemFilters = new ArrayList<>();
-    public MagnetismBook(Settings settings) {
+    public MagnetismBook(Item.Properties settings) {
         super(settings);
     }
 
     @Override
-    public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
-        if(world.isClient)
+    public InteractionResult use(Level world, Player user, InteractionHand hand) {
+        if(world.isClientSide())
             return super.use(world, user, hand);
 
-        ItemStack stack = user.getStackInHand(hand);
+        ItemStack stack = user.getItemInHand(hand);
         this.readNbt(stack);
 
-        if(user.isSneaking()){
-            HitResult hitResult = user.raycast(10, 0, false);
+        if(user.isShiftKeyDown()){
+            HitResult hitResult = user.pick(10, 0, false);
+            // Aimed at nothing: the sneak click is the quick on/off instead. The existing
+            // aim-at-an-item-to-filter-it gesture is kept rather than replaced - it is the only
+            // way to fill the filter without opening anything, and players already know it.
             if (hitResult.getType() == HitResult.Type.MISS)
-                return super.use(world, user, hand);
+                return toggleMagnet(stack, user, world, hand);
 
-            Box box = Box.from(hitResult.getPos()).expand(.5);
-            for(Entity e : world.getNonSpectatingEntities(ItemEntity.class, box)){
+            AABB box = AABB.ofSize(hitResult.getLocation(), (.5) * 2, (.5) * 2, (.5) * 2);
+            for(Entity e : world.getEntitiesOfClass(ItemEntity.class, box)){
                 ItemEntity item = (ItemEntity) e;
-                Item hitItem = item.getStack().getItem();
+                Item hitItem = item.getItem().getItem();
 
                 if(itemFilters.contains(hitItem))
                     return super.use(world, user, hand);
 
+                // The grid is the filter now. If it is full the gesture does nothing at all -
+                // including not growing the legacy list behind the player's back, which would
+                // otherwise keep affecting matching with no square to show for it.
+                if (!new MagnetFilterData(stack).addToFirstEmpty(hitItem)) {
+                    user.sendOverlayMessage(Component.translatable("message.mystical_index.magnetism_full"));
+                    return super.use(world, user, hand);
+                }
+
                 itemFilters.add(hitItem);
                 this.markDirty(stack);
-                user.sendMessage(Text.translatable("message.mystical_index.magnetism_added", hitItem.getName()), true);
+                user.sendOverlayMessage(Component.translatable("message.mystical_index.magnetism_added", hitItem.getName(hitItem.getDefaultInstance())));
                 return super.use(world, user, hand);
             }
+
+            // Aimed at a block or a mob rather than a dropped item - nothing to filter, so treat it
+            // the same as aiming at nothing.
+            return toggleMagnet(stack, user, world, hand);
         }
+
+        // Plain right-click opens the filter screen. Same both-sides hand resolution the menu uses.
+        if (user instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            serverPlayer.openMenu(new net.minecraft.world.SimpleMenuProvider(
+                    (syncId, inventory, player) -> new MagnetismScreenHandler(syncId, inventory),
+                    Component.translatable("container.mystical_index.magnetism")));
+        }
+        return InteractionResult.CONSUME;
+    }
+
+    /** Sneak shortcut: flip the magnet off, or back to whatever it was doing before. */
+    private InteractionResult toggleMagnet(ItemStack stack, Player user, Level world, InteractionHand hand) {
+        var mode = MagnetFilterData.toggleDisabled(stack);
+        user.sendOverlayMessage(Component.translatable(
+                mode == MagnetFilterData.Mode.NONE
+                        ? "message.mystical_index.magnetism_disabled"
+                        : "message.mystical_index.magnetism_enabled",
+                Component.translatable(mode.translationKey())));
         return super.use(world, user, hand);
     }
 
     @Override
-    public ActionResult useOnBlock(ItemUsageContext context) {
-        if(context.getWorld().isClient || context.getPlayer() == null || !context.getPlayer().isSneaking())
-            return super.useOnBlock(context);
+    public InteractionResult useOn(UseOnContext context) {
+        if(context.getLevel().isClientSide() || context.getPlayer() == null || !context.getPlayer().isShiftKeyDown())
+            return super.useOn(context);
 
-        Block hitBlock = context.getWorld().getBlockState(context.getBlockPos()).getBlock();
+        Block hitBlock = context.getLevel().getBlockState(context.getClickedPos()).getBlock();
         if(hitBlock != Blocks.COAL_BLOCK)
-            return super.useOnBlock(context);
+            return super.useOn(context);
 
-        PlayerEntity player = context.getPlayer();
-        ItemStack itemStack = context.getStack();
+        Player player = context.getPlayer();
+        ItemStack itemStack = context.getItemInHand();
         this.readNbt(itemStack);
         itemFilters.clear();
         this.markDirty(itemStack);
         if(player != null)
-            player.sendMessage(Text.translatable("message.mystical_index.magnetism_cleared"), true);
-        return super.useOnBlock(context);
+            player.sendOverlayMessage(Component.translatable("message.mystical_index.magnetism_cleared"));
+        return super.useOn(context);
     }
 
     @Override
-    public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
-        if(world.isClient || !MysticalUtil.hasCustomData(stack))
+    public void inventoryTick(ItemStack stack, ServerLevel world, Entity entity, EquipmentSlot slot) {
+        if(world.isClientSide())
             return;
 
-        this.readNbt(stack);
-        if(itemFilters.isEmpty())
+        // Gated on the MODE, not on "has custom data". The old gate came from the design where the
+        // book was inert until the gesture bound something, and it meant a book set to Magnet All
+        // through the UI alone could still be skipped entirely. NONE is the only mode that does
+        // nothing, so it is the only one that returns early.
+        if (MagnetFilterData.modeOf(stack) == MagnetFilterData.Mode.NONE)
             return;
 
-        Vec3d pos = entity.getPos();
-        Vec3d target = pos.add(.05, .05, .05);
-        Box box = Box.from(target).expand(ModConfig.MagnetismRange);
+        // One filter object per tick, not per candidate entity: the set behind it is built once
+        // on load and the mode is a single string read, so the per-entity question below is a hash
+        // lookup rather than an NBT walk.
+        var filter = new MagnetFilterData(stack);
 
-        for(ItemEntity e : world.getNonSpectatingEntities(ItemEntity.class, box)){
-            if(e.cannotPickup() || !itemFilters.contains(e.getStack().getItem()))
+        Vec3 pos = entity.position();
+        Vec3 target = pos.add(.05, .05, .05);
+        AABB box = AABB.ofSize(target, (ModConfig.MagnetismRange) * 2, (ModConfig.MagnetismRange) * 2, (ModConfig.MagnetismRange) * 2);
+
+        for(ItemEntity e : world.getEntitiesOfClass(ItemEntity.class, box)){
+            if(e.hasPickUpDelay() || !filter.allows(e.getItem().getItem()))
                 continue;
 
-            Vec3d itemVector = e.getPos();
-            e.move(null, pos.subtract(itemVector).multiply(0.25));
+            Vec3 itemVector = e.position();
+            e.push(pos.subtract(itemVector).scale(0.25));
         }
     }
 
@@ -114,27 +168,27 @@ public class MagnetismBook extends Item {
         itemFilters.clear();
         var compound = MysticalUtil.getOrCreateCustomData(stack);
         if (!compound.contains("Filtered Items")){
-            compound.put("Filtered Items", new NbtList());
+            compound.put("Filtered Items", new ListTag());
             MysticalUtil.setCustomData(stack, compound);
         }
-        NbtList filteredItems = compound.getList("Filtered Items", 10  );
+        ListTag filteredItems = compound.getListOrEmpty("Filtered Items");
         for (int i = 0; i < filteredItems.size(); i++){
-            NbtCompound entry = filteredItems.getCompound(i);
-            String itemName = entry.getString("ItemName");
-            Item item = Registries.ITEM.get(Identifier.tryParse(itemName));
+            CompoundTag entry = filteredItems.getCompoundOrEmpty(i);
+            String itemName = entry.getStringOr("ItemName", "");
+            Item item = BuiltInRegistries.ITEM.getValue(Identifier.tryParse(itemName));
             itemFilters.add(item);
         }
 
     }
 
     public void writeNbt(ItemStack stack){
-        NbtList nbtList = new NbtList();
+        ListTag nbtList = new ListTag();
 
         for (Item item : itemFilters) {
-            NbtCompound nbtCompound = new NbtCompound();
+            CompoundTag nbtCompound = new CompoundTag();
             // Item.toString() returns only the path, so modded items round-tripped back as
             // minecraft:<path> and resolved to air. Store the full identifier.
-            nbtCompound.putString("ItemName", Registries.ITEM.getId(item).toString());
+            nbtCompound.putString("ItemName", BuiltInRegistries.ITEM.getKey(item).toString());
             nbtList.add(nbtCompound);
         }
 
@@ -142,29 +196,34 @@ public class MagnetismBook extends Item {
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType type) {
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
+        var mode = MagnetFilterData.modeOf(stack);
+        tooltip.accept(Component.translatable("tooltip.mystical_index.magnetism_book.mode",
+                Component.translatable(mode.translationKey()),
+                new MagnetFilterData(stack).filledCount()));
+
         if(MysticalUtil.hasCustomData(stack)){
             this.readNbt(stack);
             if(!itemFilters.isEmpty()){
                 StringBuilder stringBuilder = new StringBuilder();
                 for (Item item: itemFilters) {
-                    stringBuilder.append(item.getName().getString()).append(", ");
+                    stringBuilder.append(item.getName(item.getDefaultInstance()).getString()).append(", ");
                 }
                 stringBuilder.setLength(stringBuilder.length() - 2);
 
-                tooltip.add(Text.translatable("tooltip.mystical_index.magnetism_book.filtering", stringBuilder.toString()));
-                tooltip.add(Text.literal(""));
+                tooltip.accept(Component.translatable("tooltip.mystical_index.magnetism_book.filtering", stringBuilder.toString()));
+                tooltip.accept(Component.literal(""));
             }
         }
 
-        if(Screen.hasShiftDown()){
-            tooltip.add(Text.translatable("tooltip.mystical_index.magnetism_book_shift0"));
-            tooltip.add(Text.translatable("tooltip.mystical_index.magnetism_book_shift1"));
-            tooltip.add(Text.translatable("tooltip.mystical_index.magnetism_book_shift2"));
-            tooltip.add(Text.translatable("tooltip.mystical_index.magnetism_book_shift3"));
+        if(Minecraft.getInstance().hasShiftDown()){
+            tooltip.accept(Component.translatable("tooltip.mystical_index.magnetism_book_shift0"));
+            tooltip.accept(Component.translatable("tooltip.mystical_index.magnetism_book_shift1"));
+            tooltip.accept(Component.translatable("tooltip.mystical_index.magnetism_book_shift2"));
+            tooltip.accept(Component.translatable("tooltip.mystical_index.magnetism_book_shift3"));
         } else {
-            tooltip.add(Text.translatable("tooltip.mystical_index.magnetism_book"));
+            tooltip.accept(Component.translatable("tooltip.mystical_index.magnetism_book"));
         }
-        super.appendTooltip(stack, context, tooltip, type);
+        super.appendHoverText(stack, context, display, tooltip, type);
     }
 }
