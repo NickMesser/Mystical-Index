@@ -6,15 +6,9 @@
     "LLL"
   ],
   "key": {
-    "L": {
-      "item": "minecraft:leather"
-    },
-    "E": {
-      "item": "minecraft:ender_eye"
-    },
-    "P": {
-      "item": "minecraft:paper"
-    }
+    "L": "minecraft:leather",
+    "E": "minecraft:ender_eye",
+    "P": "minecraft:paper"
   },
   "result": {
     "id": "mystical_index:storage_book"

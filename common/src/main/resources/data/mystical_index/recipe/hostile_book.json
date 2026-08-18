@@ -6,33 +6,15 @@
     "QBA"
   ],
   "key": {
-    "W": {
-      "item": "minecraft:wither_skeleton_skull"
-    },
-    "S": {
-      "item": "minecraft:spider_eye"
-    },
-    "R": {
-      "item": "minecraft:rotten_flesh"
-    },
-    "M": {
-      "item": "mystical_index:storage_book"
-    },
-    "G": {
-      "item": "minecraft:gunpowder"
-    },
-    "P": {
-      "item": "minecraft:shulker_shell"
-    },
-    "Q": {
-      "item": "minecraft:ender_pearl"
-    },
-    "B": {
-      "item": "minecraft:bone"
-    },
-    "A": {
-      "item": "minecraft:phantom_membrane"
-    }
+    "W": "minecraft:wither_skeleton_skull",
+    "S": "minecraft:spider_eye",
+    "R": "minecraft:rotten_flesh",
+    "M": "mystical_index:storage_book",
+    "G": "minecraft:gunpowder",
+    "P": "minecraft:shulker_shell",
+    "Q": "minecraft:ender_pearl",
+    "B": "minecraft:bone",
+    "A": "minecraft:phantom_membrane"
   },
   "result": {
     "id": "mystical_index:hostile_book"

@@ -1,12 +1,8 @@
 {
   "type": "minecraft:crafting_shapeless",
   "ingredients": [
-    {
-      "item": "minecraft:lectern"
-    },
-    {
-      "item": "mystical_index:library"
-    }
+    "minecraft:lectern",
+    "mystical_index:library"
   ],
   "result": {
     "id": "mystical_index:mystical_lectern"

@@ -6,18 +6,10 @@
     "CCR"
   ],
   "key": {
-    "C": {
-      "item": "minecraft:copper_ingot"
-    },
-    "R": {
-      "item": "minecraft:red_dye"
-    },
-    "B": {
-      "item": "minecraft:blue_dye"
-    },
-    "L": {
-      "item": "minecraft:book"
-    }
+    "C": "minecraft:copper_ingot",
+    "R": "minecraft:red_dye",
+    "B": "minecraft:blue_dye",
+    "L": "minecraft:book"
   },
   "result": {
     "id": "mystical_index:magnetism_book"

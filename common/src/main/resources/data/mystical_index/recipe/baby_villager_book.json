@@ -6,15 +6,9 @@
     "BBB"
   ],
   "key": {
-    "#": {
-      "item": "mystical_index:villager_book"
-    },
-    "E": {
-      "item": "mystical_index:empty_villager_book"
-    },
-    "B": {
-      "item": "minecraft:bread"
-    }
+    "#": "mystical_index:villager_book",
+    "E": "mystical_index:empty_villager_book",
+    "B": "minecraft:bread"
   },
   "result": {
     "id": "mystical_index:baby_villager_book"

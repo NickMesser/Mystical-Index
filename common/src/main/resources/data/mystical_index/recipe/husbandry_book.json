@@ -6,33 +6,15 @@
     "QBA"
   ],
   "key": {
-    "W": {
-      "item": "minecraft:porkchop"
-    },
-    "S": {
-      "item": "minecraft:beef"
-    },
-    "R": {
-      "item": "minecraft:mutton"
-    },
-    "M": {
-      "item": "mystical_index:storage_book"
-    },
-    "G": {
-      "item": "minecraft:chicken"
-    },
-    "P": {
-      "item": "minecraft:rabbit_foot"
-    },
-    "Q": {
-      "item": "minecraft:leather"
-    },
-    "B": {
-      "item": "minecraft:salmon"
-    },
-    "A": {
-      "item": "minecraft:cod"
-    }
+    "W": "minecraft:porkchop",
+    "S": "minecraft:beef",
+    "R": "minecraft:mutton",
+    "M": "mystical_index:storage_book",
+    "G": "minecraft:chicken",
+    "P": "minecraft:rabbit_foot",
+    "Q": "minecraft:leather",
+    "B": "minecraft:salmon",
+    "A": "minecraft:cod"
   },
   "result": {
     "id": "mystical_index:husbandry_book"

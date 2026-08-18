@@ -6,12 +6,8 @@
     "###"
   ],
   "key": {
-    "#": {
-      "item": "minecraft:emerald"
-    },
-    "B": {
-      "item": "minecraft:book"
-    }
+    "#": "minecraft:emerald",
+    "B": "minecraft:book"
   },
   "result": {
     "id": "mystical_index:empty_villager_book"

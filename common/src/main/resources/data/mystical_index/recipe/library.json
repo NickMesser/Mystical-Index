@@ -6,15 +6,9 @@
     "###"
   ],
   "key": {
-    "#": {
-      "item": "minecraft:spruce_planks"
-    },
-    "B": {
-      "item": "minecraft:book"
-    },
-    "E": {
-      "item": "minecraft:ender_eye"
-    }
+    "#": "minecraft:spruce_planks",
+    "B": "minecraft:book",
+    "E": "minecraft:ender_eye"
   },
   "result": {
     "id": "mystical_index:library"

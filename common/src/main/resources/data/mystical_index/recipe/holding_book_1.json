@@ -6,15 +6,9 @@
     "LBL"
   ],
   "key": {
-    "L": {
-      "item": "minecraft:leather"
-    },
-    "B": {
-      "item": "minecraft:book"
-    },
-    "C": {
-      "item": "minecraft:chest"
-    }
+    "L": "minecraft:leather",
+    "B": "minecraft:book",
+    "C": "minecraft:chest"
   },
   "result": {
     "id": "mystical_index:holding_book_1"
