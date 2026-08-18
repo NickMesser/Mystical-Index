@@ -9,22 +9,22 @@ import me.shedaniel.rei.api.client.registry.display.DisplayCategory;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
 import me.shedaniel.rei.api.common.util.EntryStacks;
 import net.messer.mystical_index.MysticalIndex;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.item.Items;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.item.Items;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class PistonCraftingCategory implements DisplayCategory<PistonCraftingDisplay> {
 
-    // CategoryIdentifier.of(String) parses the argument as a full identifier, so a bare mod id
-    // would land in the minecraft namespace. The namespace has to be passed separately.
+// CategoryIdentifier.of(String) parses the argument as a full identifier, so a bare mod id
+// would land in the minecraft namespace. The namespace has to be passed separately.
     public static final CategoryIdentifier<PistonCraftingDisplay> PISTON_CRAFTING =
             CategoryIdentifier.of(MysticalIndex.MOD_ID, "piston_crafting");
 
-    // REI's Panel border eats a few pixels on each side of the recipe base.
+// REI's Panel border eats a few pixels on each side of the recipe base.
     private static final int PANEL_PADDING = 6;
 
     @Override
@@ -33,8 +33,8 @@ public class PistonCraftingCategory implements DisplayCategory<PistonCraftingDis
     }
 
     @Override
-    public Text getTitle() {
-        return Text.literal("Piston Crafting");
+    public Component getTitle() {
+        return Component.literal("Piston Crafting");
     }
 
     @Override
@@ -62,10 +62,10 @@ public class PistonCraftingCategory implements DisplayCategory<PistonCraftingDis
                     .markInput());
         }
 
-        // Render every output, not just the first. A single output keeps the classic oversized
-        // result slot; multiple outputs stack in a column centred on the same anchor so none is
-        // hidden behind another. The large result background only reads well behind one slot, so it
-        // is drawn for the single-output case; stacked slots rely on their own slot backgrounds.
+// Render every output, not just the first. A single output keeps the classic oversized
+// result slot; multiple outputs stack in a column centred on the same anchor so none is
+// hidden behind another. The large result background only reads well behind one slot, so it
+// is drawn for the single-output case; stacked slots rely on their own slot backgrounds.
         var outputs = display.getOutputEntries();
         int resultX = startPoint.x + 95;
         int resultY = startPoint.y + 19;
@@ -82,8 +82,8 @@ public class PistonCraftingCategory implements DisplayCategory<PistonCraftingDis
 
         var note = display.getNote();
         if (note != null) {
-            // The panel is only 150 wide, so a note is measured against the usable inner width and
-            // wrapped onto stacked lines instead of spilling out over the screen behind it.
+// The panel is only 150 wide, so a note is measured against the usable inner width and
+// wrapped onto stacked lines instead of spilling out over the screen behind it.
             var lines = wrapNote(note, bounds.getWidth() - 2 * PANEL_PADDING);
             int lineY = startPoint.y + (lines.size() > 1 ? 52 : 58);
 
@@ -96,14 +96,14 @@ public class PistonCraftingCategory implements DisplayCategory<PistonCraftingDis
         return widgets;
     }
 
-    private static List<Text> wrapNote(Text note, int maxWidth) {
-        var client = MinecraftClient.getInstance();
-        if (client.textRenderer == null || client.textRenderer.getWidth(note) <= maxWidth)
+    private static List<Component> wrapNote(Component note, int maxWidth) {
+        var client = Minecraft.getInstance();
+        if (client.font == null || client.font.width(note) <= maxWidth)
             return List.of(note);
 
-        var lines = new ArrayList<Text>();
-        for (var line : client.textRenderer.getTextHandler().wrapLines(note, maxWidth, Style.EMPTY))
-            lines.add(Text.literal(line.getString()));
+        var lines = new ArrayList<Component>();
+        for (var line : client.font.getSplitter().splitLines(note, maxWidth, Style.EMPTY))
+            lines.add(Component.literal(line.getString()));
 
         return lines;
     }

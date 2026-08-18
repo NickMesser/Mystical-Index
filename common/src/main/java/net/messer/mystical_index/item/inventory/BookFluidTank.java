@@ -1,13 +1,14 @@
 package net.messer.mystical_index.item.inventory;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.FlowableFluid;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.registry.Registries;
-import net.minecraft.text.Text;
-import net.minecraft.util.Util;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.FlowingFluid;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+
 
 /**
  * A single-fluid tank holding one fluid and an amount in droplets.
@@ -45,7 +46,7 @@ public class BookFluidTank {
      * water taken from a source.
      */
     public static Fluid normalize(Fluid fluid) {
-        return fluid instanceof FlowableFluid flowable ? flowable.getStill() : fluid;
+        return fluid instanceof FlowingFluid flowable ? flowable.getSource() : fluid;
     }
 
     public long getCapacity() {
@@ -108,11 +109,11 @@ public class BookFluidTank {
      * to: the name of the fluid's block, falling back to a key built from the fluid id for fluids
      * that have no block of their own.
      */
-    public static Text getName(Fluid fluid) {
-        Block fluidBlock = fluid.getDefaultState().getBlockState().getBlock();
+    public static Component getName(Fluid fluid) {
+        Block fluidBlock = fluid.defaultFluidState().createLegacyBlock().getBlock();
 
         if (fluid != Fluids.EMPTY && fluidBlock == Blocks.AIR)
-            return Text.translatable(Util.createTranslationKey("block", Registries.FLUID.getId(fluid)));
+            return Component.translatable(BuiltInRegistries.FLUID.getKey(fluid).toLanguageKey("block"));
 
         return fluidBlock.getName();
     }

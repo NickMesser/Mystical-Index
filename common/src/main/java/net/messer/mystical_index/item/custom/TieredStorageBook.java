@@ -1,32 +1,42 @@
 package net.messer.mystical_index.item.custom;
 
+import net.messer.util.SelfUpdatingBook;
 import net.messer.config.ModConfig;
 import net.messer.mystical_index.item.custom.base_books.BaseStorageBook;
 import net.messer.mystical_index.item.inventory.MultiTypeBookInventory;
 import net.messer.mystical_index.item.inventory.BookContentsTooltipData;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.item.tooltip.TooltipData;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.*;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.Hand;
-import net.minecraft.util.TypedActionResult;
-import net.minecraft.world.World;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
 
-public class TieredStorageBook extends BaseStorageBook {
+import net.minecraft.client.Minecraft;
+
+import net.minecraft.world.item.component.TooltipDisplay;
+
+import java.util.function.Consumer;
+
+import net.messer.util.GlintingBook;
+
+public class TieredStorageBook extends BaseStorageBook implements GlintingBook, SelfUpdatingBook {
 
     private static final String[] TIER_NUMERALS = {"I", "II", "III", "IV"};
 
     private final int tier;
 
-    public TieredStorageBook(Settings settings, int tier) {
+    public TieredStorageBook(Item.Properties settings, int tier) {
         super(settings);
         this.tier = tier;
     }
@@ -66,29 +76,29 @@ public class TieredStorageBook extends BaseStorageBook {
     }
 
     @Override
-    public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
-        if(world.isClient)
+    public InteractionResult use(Level world, Player user, InteractionHand hand) {
+        if(world.isClientSide())
             return super.use(world, user, hand);
 
-        ItemStack stack = user.getStackInHand(hand);
+        ItemStack stack = user.getItemInHand(hand);
         var inventory = getInventory(stack);
 
-        if(user.isSneaking())
+        if(user.isShiftKeyDown())
             return deposit(world, user, hand, stack, inventory);
 
         // Withdraw: one stack of whatever sits in the first occupied slot.
-        for (int slot = 0; slot < inventory.size(); slot++) {
-            var stored = inventory.getStack(slot);
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            var stored = inventory.getItem(slot);
             if(stored.isEmpty())
                 continue;
 
-            var removed = inventory.removeStack(slot, Math.min(stored.getCount(), stored.getMaxCount()));
+            var removed = inventory.removeItem(slot, Math.min(stored.getCount(), stored.getMaxStackSize()));
             if(removed.isEmpty())
                 break;
 
-            user.getInventory().offerOrDrop(removed);
-            user.getItemCooldownManager().set(this, 10);
-            return TypedActionResult.success(stack);
+            user.getInventory().placeItemBackInInventory(removed);
+            user.getCooldowns().addCooldown(user.getItemInHand(hand), 10);
+            return InteractionResult.SUCCESS;
         }
 
         return super.use(world, user, hand);
@@ -96,12 +106,12 @@ public class TieredStorageBook extends BaseStorageBook {
 
     // Sweeps the hotbar and main inventory into the types this book already holds. New types are
     // never claimed here, so a deposit can never surprise the player by eating something.
-    private TypedActionResult<ItemStack> deposit(World world, PlayerEntity user, Hand hand, ItemStack stack, MultiTypeBookInventory inventory) {
+    private InteractionResult deposit(Level world, Player user, InteractionHand hand, ItemStack stack, MultiTypeBookInventory inventory) {
         var playerInventory = user.getInventory();
         boolean moved = false;
 
-        for (int slot = 0; slot < playerInventory.main.size(); slot++) {
-            var candidate = playerInventory.main.get(slot);
+        for (int slot = 0; slot < playerInventory.getNonEquipmentItems().size(); slot++) {
+            var candidate = playerInventory.getNonEquipmentItems().get(slot);
             if(candidate.isEmpty() || candidate == stack)
                 continue;
 
@@ -112,24 +122,23 @@ public class TieredStorageBook extends BaseStorageBook {
 
             moved = true;
             if(candidate.isEmpty())
-                playerInventory.main.set(slot, ItemStack.EMPTY);
+                playerInventory.getNonEquipmentItems().set(slot, ItemStack.EMPTY);
         }
 
         if(!moved)
             return super.use(world, user, hand);
 
-        world.playSound(null, user.getBlockPos(), SoundEvents.ITEM_BUNDLE_INSERT, SoundCategory.PLAYERS, 1.0f, 1.0f);
-        user.getItemCooldownManager().set(this, 10);
-        return TypedActionResult.success(stack);
+        world.playSound(null, user.blockPosition(), SoundEvents.BUNDLE_INSERT, SoundSource.PLAYERS, 1.0f, 1.0f);
+        user.getCooldowns().addCooldown(user.getItemInHand(hand), 10);
+        return InteractionResult.SUCCESS;
     }
-
     @Override
-    public boolean hasGlint(ItemStack stack) {
+    public boolean shouldGlint(ItemStack stack) {
         return !getInventory(stack).isEmpty();
     }
 
     @Override
-    public Optional<TooltipData> getTooltipData(ItemStack stack) {
+    public Optional<TooltipComponent> getTooltipImage(ItemStack stack) {
         var inventory = getInventory(stack);
         if(inventory.isEmpty())
             return Optional.empty();
@@ -139,32 +148,32 @@ public class TieredStorageBook extends BaseStorageBook {
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType type) {
-        tooltip.add(Text.translatable("tooltip.mystical_index.holding_book.tier", getTierNumeral()));
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
+        tooltip.accept(Component.translatable("tooltip.mystical_index.holding_book.tier", getTierNumeral()));
 
         var inventory = getInventory(stack);
         var summaries = inventory.getTypeSummaries();
         var stacksPerType = inventory.stacksPerType;
 
         if(stacksPerType == 1)
-            tooltip.add(Text.translatable("tooltip.mystical_index.holding_book.types_single",
+            tooltip.accept(Component.translatable("tooltip.mystical_index.holding_book.types_single",
                     summaries.size(), inventory.getTypeCapacity(), stacksPerType));
         else
-            tooltip.add(Text.translatable("tooltip.mystical_index.holding_book.types_multiple",
+            tooltip.accept(Component.translatable("tooltip.mystical_index.holding_book.types_multiple",
                     summaries.size(), inventory.getTypeCapacity(), stacksPerType));
 
         // The per-type list lives in BookContentsTooltipComponent's grid now.
-        tooltip.add(Text.literal(""));
+        tooltip.accept(Component.literal(""));
 
-        if(Screen.hasShiftDown()){
-            tooltip.add(Text.translatable("tooltip.mystical_index.holding_book_shift0"));
-            tooltip.add(Text.translatable("tooltip.mystical_index.holding_book_shift1"));
-            tooltip.add(Text.translatable("tooltip.mystical_index.holding_book_shift2"));
-            tooltip.add(Text.translatable("tooltip.mystical_index.holding_book_shift3"));
+        if(Minecraft.getInstance().hasShiftDown()){
+            tooltip.accept(Component.translatable("tooltip.mystical_index.holding_book_shift0"));
+            tooltip.accept(Component.translatable("tooltip.mystical_index.holding_book_shift1"));
+            tooltip.accept(Component.translatable("tooltip.mystical_index.holding_book_shift2"));
+            tooltip.accept(Component.translatable("tooltip.mystical_index.holding_book_shift3"));
         } else {
-            tooltip.add(Text.translatable("tooltip.mystical_index.holding_book"));
+            tooltip.accept(Component.translatable("tooltip.mystical_index.holding_book"));
         }
 
-        super.appendTooltip(stack, context, tooltip, type);
+        super.appendHoverText(stack, context, display, tooltip, type);
     }
 }

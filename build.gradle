@@ -1,5 +1,5 @@
 plugins {
-	id 'dev.architectury.loom' version '1.17-SNAPSHOT' apply false
+	id 'dev.architectury.loom-no-remap' version '1.17-SNAPSHOT' apply false
 	id 'architectury-plugin' version '3.5-SNAPSHOT'
 	id 'com.gradleup.shadow' version '9.4.3' apply false
 }
@@ -14,7 +14,7 @@ allprojects {
 }
 
 subprojects {
-	apply plugin: 'dev.architectury.loom'
+	apply plugin: 'dev.architectury.loom-no-remap'
 	apply plugin: 'architectury-plugin'
 	apply plugin: 'maven-publish'
 
@@ -34,12 +34,9 @@ subprojects {
 
 	dependencies {
 		minecraft "net.minecraft:minecraft:$rootProject.minecraft_version"
-		// Yarn on both loaders. NeoForge renames two vanilla members that yarn still names the
-		// vanilla way, so the mapping set is layered with Architectury's patch to cover them.
-		mappings loom.layered {
-			it.mappings("net.fabricmc:yarn:$rootProject.yarn_mappings:v2")
-			it.mappings("dev.architectury:yarn-mappings-patch-neoforge:$rootProject.yarn_mappings_patch_neoforge_version")
-		}
+		// No mappings. 26.1.2 ships unobfuscated, which is exactly what the loom-no-remap plugin
+		// above is for: the game is already under its official names on both loaders, so there is
+		// nothing to translate and no mapping set to declare.
 	}
 
 	java {
@@ -47,12 +44,18 @@ subprojects {
 		// if it is present.
 		withSourcesJar()
 
-		sourceCompatibility = JavaVersion.VERSION_21
-		targetCompatibility = JavaVersion.VERSION_21
+		// 26.1.2 declares java-runtime-epsilon / major version 25, and its classes are compiled to
+		// match, so nothing older can even read them. Gradle itself still runs on 21; the toolchain
+		// is what forks a 25 compiler.
+		toolchain {
+			languageVersion = JavaLanguageVersion.of(25)
+		}
 	}
 
 	tasks.withType(JavaCompile).configureEach {
-		it.options.release = 21
+		it.options.release = 25
+		// Default cap of 100 hides most of the surface while porting across major versions.
+		it.options.compilerArgs.addAll(["-Xmaxerrs", "3000"])
 	}
 
 	publishing {

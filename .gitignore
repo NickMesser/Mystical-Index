@@ -40,3 +40,12 @@ run-1.21.1-server/
 
 run-1.21.1-neoforge/
 run-1.21.1-neoforge-server/
+run-26.1.2/
+run-26.1.2-neoforge/
+
+
+
+.gradle-nf/
+
+# runtime logs at repo root
+logs/

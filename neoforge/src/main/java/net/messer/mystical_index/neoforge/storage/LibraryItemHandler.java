@@ -1,23 +1,46 @@
 package net.messer.mystical_index.neoforge.storage;
 
 import net.messer.mystical_index.block.entity.LibraryBlockEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.IItemHandlerModifiable;
-import net.neoforged.neoforge.items.wrapper.CombinedInvWrapper;
-import net.neoforged.neoforge.items.wrapper.InvWrapper;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.transaction.SnapshotJournal;
+import net.neoforged.neoforge.transfer.transaction.TransactionContext;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The NeoForge capability view of a library, mirroring what the Fabric module exposes through the
  * Transfer API: extraction and the slot listing come from the stored books' mirrors, while every
  * insertion is routed through the library's own two-pass fill rules instead of landing in whichever
  * slot the caller happened to name.
+ *
+ * <p>NeoForge replaced {@code IItemHandler} with {@link ResourceHandler}, which is transactional in
+ * the same way Fabric's Transfer API always was: a caller opens a transaction, asks for the move,
+ * and either commits it or drops it. Writes here land straight in the stored books' components, so
+ * on its own an insert would ignore that, and a dropped transaction would leave the items written
+ * while the source still had them - a dupe worth tens of items a second through a pipe. Extending
+ * {@link SnapshotJournal} and calling {@link SnapshotJournal#updateSnapshots} before every mutation
+ * is what makes both directions actually participate.
+ *
+ * <p>Because a never-committed transaction is by definition a complete dry run, the separate
+ * simulate path the old {@code IItemHandler} needed is gone rather than kept alongside this one:
+ * the snapshot restores whole book stacks and rebuilds the mirrors, so an aborted insert leaves
+ * nothing behind to tell it apart from one that never happened.
  */
-public class LibraryItemHandler implements IItemHandler, LibraryBlockEntity.StorageView {
+public class LibraryItemHandler extends SnapshotJournal<ItemStack[]>
+        implements ResourceHandler<ItemResource>, LibraryBlockEntity.StorageView {
 
     private final LibraryBlockEntity library;
-    private IItemHandlerModifiable delegate = new CombinedInvWrapper();
+
+    // Flattened view of the stored books' mirrors: global slot i lives in containers[k] at
+    // i - slotOffsets[k]. Rebuilt whenever the books change so a query never reconstructs it.
+    private final List<Container> containers = new ArrayList<>();
+    private final List<Integer> slotOffsets = new ArrayList<>();
+    private int totalSlots;
 
     public LibraryItemHandler(LibraryBlockEntity library) {
         this.library = library;
@@ -25,11 +48,15 @@ public class LibraryItemHandler implements IItemHandler, LibraryBlockEntity.Stor
 
     @Override
     public void rebuild() {
-        var wrappers = new IItemHandlerModifiable[library.bookInventories.size()];
-        for (int i = 0; i < wrappers.length; i++)
-            wrappers[i] = new InvWrapper(library.bookInventories.get(i).contents);
+        containers.clear();
+        slotOffsets.clear();
+        totalSlots = 0;
 
-        delegate = new CombinedInvWrapper(wrappers);
+        for (var bookInventory : library.bookInventories) {
+            containers.add(bookInventory.contents);
+            slotOffsets.add(totalSlots);
+            totalSlots += bookInventory.contents.getContainerSize();
+        }
     }
 
     /**
@@ -40,29 +67,54 @@ public class LibraryItemHandler implements IItemHandler, LibraryBlockEntity.Stor
      * can be pulled out of it.
      */
     @Override
-    public int getSlots() {
-        return Math.max(delegate.getSlots(), 1);
+    public int size() {
+        return Math.max(totalSlots, 1);
+    }
+
+    private int handlerIndex(int slot) {
+        if (slot < 0 || slot >= totalSlots)
+            return -1;
+
+        for (int i = containers.size() - 1; i >= 0; i--) {
+            if (slot >= slotOffsets.get(i))
+                return i;
+        }
+        return -1;
+    }
+
+    private ItemStack stackAt(int slot) {
+        int index = handlerIndex(slot);
+        return index < 0 ? ItemStack.EMPTY : containers.get(index).getItem(slot - slotOffsets.get(index));
     }
 
     @Override
-    public ItemStack getStackInSlot(int slot) {
-        return slot < delegate.getSlots() ? delegate.getStackInSlot(slot) : ItemStack.EMPTY;
+    public ItemResource getResource(int slot) {
+        return ItemResource.of(stackAt(slot));
     }
 
     @Override
-    public ItemStack extractItem(int slot, int amount, boolean simulate) {
-        return slot < delegate.getSlots() ? delegate.extractItem(slot, amount, simulate) : ItemStack.EMPTY;
+    public long getAmountAsLong(int slot) {
+        return stackAt(slot).getCount();
     }
 
     @Override
-    public int getSlotLimit(int slot) {
-        return slot < delegate.getSlots() ? delegate.getSlotLimit(slot) : Item.DEFAULT_MAX_COUNT;
+    public long getCapacityAsLong(int slot, ItemResource resource) {
+        int index = handlerIndex(slot);
+        // The always-advertised insert-only slot has no container behind it; it exists to be
+        // offered items, so it reports the resource's own stack limit rather than nothing.
+        int containerLimit = index < 0 ? Item.ABSOLUTE_MAX_STACK_SIZE : containers.get(index).getMaxStackSize();
+        if (resource.isEmpty())
+            return containerLimit;
+
+        return Math.min(containerLimit, resource.toStack().getMaxStackSize());
     }
 
+    /**
+     * Whether a book will take this is decided by the fill rules, not by the slot, so this can only
+     * answer "ask insert".
+     */
     @Override
-    public boolean isItemValid(int slot, ItemStack stack) {
-        // Whether a book will take this is decided by the fill rules, not by the slot, so this can
-        // only answer "ask insertItem".
+    public boolean isValid(int slot, ItemResource resource) {
         return true;
     }
 
@@ -70,31 +122,64 @@ public class LibraryItemHandler implements IItemHandler, LibraryBlockEntity.Stor
      * Inserts through the library rather than into {@code slot}: books already bound to this item
      * fill first, then an unbound Book of Holding claims the rest. The slot index is ignored for
      * the same reason the Fabric side overrides insert on the combined storage.
-     *
-     * <p>A simulated insert must leave no trace, so it goes to the library's dry run, which replays
-     * the real fill against throwaway copies of the books instead of writing and rolling back.
      */
     @Override
-    public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
-        if (stack.isEmpty())
-            return ItemStack.EMPTY;
+    public int insert(int slot, ItemResource resource, int amount, TransactionContext transaction) {
+        return insert(resource, amount, transaction);
+    }
 
-        if (simulate) {
-            long inserted = library.simulateInsert(stack);
-            if (inserted <= 0)
-                return stack;
-            if (inserted >= stack.getCount())
-                return ItemStack.EMPTY;
+    @Override
+    public int insert(ItemResource resource, int amount, TransactionContext transaction) {
+        if (resource.isEmpty() || amount <= 0)
+            return 0;
 
-            return stack.copyWithCount(stack.getCount() - (int) inserted);
-        }
+        // Snapshot before the write, not after: an aborted or simulated transaction has to be able
+        // to put every book back exactly as it was.
+        updateSnapshots(transaction);
 
-        // insertItem must not mutate the caller's stack, and the library's insert works by draining
-        // the stack it is handed, so it drains a copy and that copy is the remainder.
-        var remainder = stack.copy();
-        if (library.insert(remainder) <= 0)
-            return stack;
+        // insertIntoLibrary works by draining the stack it is handed, so what it removed from this
+        // one is the amount actually taken.
+        return (int) library.insert(resource.toStack(amount));
+    }
 
-        return remainder.isEmpty() ? ItemStack.EMPTY : remainder;
+    @Override
+    public int extract(int slot, ItemResource resource, int amount, TransactionContext transaction) {
+        if (resource.isEmpty() || amount <= 0)
+            return 0;
+
+        int index = handlerIndex(slot);
+        if (index < 0)
+            return 0;
+
+        var container = containers.get(index);
+        int local = slot - slotOffsets.get(index);
+        var present = container.getItem(local);
+        if (present.isEmpty() || !resource.matches(present))
+            return 0;
+
+        updateSnapshots(transaction);
+
+        var removed = container.removeItem(local, Math.min(amount, present.getCount()));
+        if (removed.isEmpty())
+            return 0;
+
+        container.setChanged();
+        return removed.getCount();
+    }
+
+    @Override
+    protected ItemStack[] createSnapshot() {
+        return library.snapshotBooks();
+    }
+
+    @Override
+    protected void revertToSnapshot(ItemStack[] snapshot) {
+        library.restoreBooks(snapshot);
+    }
+
+    @Override
+    protected void onRootCommit(ItemStack[] snapshot) {
+        // Only a committed change needs saving; an aborted one has already been put back.
+        library.setChanged();
     }
 }

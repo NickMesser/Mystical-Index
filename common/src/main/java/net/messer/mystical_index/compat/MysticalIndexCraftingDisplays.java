@@ -1,20 +1,22 @@
 package net.messer.mystical_index.compat;
 
+import net.minecraft.core.registries.Registries;
 import me.shedaniel.rei.api.common.entry.EntryIngredient;
 import me.shedaniel.rei.api.common.util.EntryIngredients;
 import me.shedaniel.rei.plugin.common.displays.crafting.DefaultCustomDisplay;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.util.MysticalUtil;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.entity.EntityType;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.item.SpawnEggItem;
-import net.minecraft.registry.Registries;
-import net.minecraft.text.Text;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.List;
 
 // Both of these are SpecialCraftingRecipes, which REI's default filler skips because they are
@@ -54,7 +56,7 @@ public class MysticalIndexCraftingDisplays {
         for (int slot : positions)
             grid.set(slot, EntryIngredients.of(material));
 
-        return new DefaultCustomDisplay(null, grid, List.of(EntryIngredients.of(result)));
+        return new DefaultCustomDisplay(grid, List.of(EntryIngredients.of(result)), Optional.empty());
     }
 
     private static List<DefaultCustomDisplay> holdingBookUpgrades() {
@@ -67,10 +69,10 @@ public class MysticalIndexCraftingDisplays {
     private static List<DefaultCustomDisplay> entityPaperSpawnEggs() {
         var displays = new ArrayList<DefaultCustomDisplay>();
 
-        for (var spawnEgg : SpawnEggItem.getAll()) {
+        for (var spawnEgg : BuiltInRegistries.ITEM.stream().filter(SpawnEggItem.class::isInstance).map(SpawnEggItem.class::cast).toList()) {
             // getEntityType reads the stack's entity_data component now, so it dereferences what
             // it is handed. A plain stack carries no override and falls back to the egg's own type.
-            var entityType = spawnEgg.getEntityType(new ItemStack(spawnEgg));
+            var entityType = SpawnEggItem.getType(new ItemStack(spawnEgg));
             if (entityType == null)
                 continue;
 
@@ -82,7 +84,7 @@ public class MysticalIndexCraftingDisplays {
                         : EntryIngredients.of(paper.copy()));
             }
 
-            displays.add(new DefaultCustomDisplay(null, grid, List.of(EntryIngredients.of(new ItemStack(spawnEgg)))));
+            displays.add(new DefaultCustomDisplay(grid, List.of(EntryIngredients.of(new ItemStack(spawnEgg))), Optional.empty()));
         }
 
         return displays;
@@ -91,10 +93,10 @@ public class MysticalIndexCraftingDisplays {
     private static ItemStack entityPaper(EntityType<?> entityType) {
         var stack = new ItemStack(ModItems.ENTITY_PAPER.get());
         MysticalUtil.editCustomData(stack,
-                nbt -> nbt.putString("entity", Registries.ENTITY_TYPE.getId(entityType).toString()));
+                nbt -> nbt.putString("entity", BuiltInRegistries.ENTITY_TYPE.getKey(entityType).toString()));
         // Same name EntityPaper.onCraftByPlayer applies. It has to match exactly, or the variant
         // this display advertises would not compare equal to the papers the network actually holds.
-        stack.set(DataComponentTypes.CUSTOM_NAME, Text.translatable("item.mystical_index.entity_paper.named", entityType.getName()));
+        stack.set(DataComponents.CUSTOM_NAME, Component.translatable("item.mystical_index.entity_paper.named", entityType.getDescription()));
         return stack;
     }
 }

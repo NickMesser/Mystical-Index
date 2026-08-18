@@ -8,6 +8,12 @@ pluginManagement {
     }
 }
 
+plugins {
+    // 26.1.2 needs a Java 25 toolchain and this machine only has 17 and 21 installed, so Gradle
+    // is allowed to fetch one itself rather than the build simply failing to configure.
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
 rootProject.name = 'mystical_index'
 
 include 'common'

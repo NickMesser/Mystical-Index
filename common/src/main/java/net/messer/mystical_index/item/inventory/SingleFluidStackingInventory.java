@@ -1,12 +1,13 @@
 package net.messer.mystical_index.item.inventory;
 
+import net.minecraft.core.registries.Registries;
 import net.messer.config.ModConfig;
 import net.messer.util.MysticalUtil;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 
 public class SingleFluidStackingInventory {
 
@@ -21,7 +22,7 @@ public class SingleFluidStackingInventory {
     public final ItemStack stack;
 
     public final BookFluidTank fluidStorage =
-            new BookFluidTank(ModConfig.FluidBookMaxBuckets * BookFluidTank.BUCKET, this::markDirty);
+            new BookFluidTank(ModConfig.FluidBookMaxBuckets * BookFluidTank.BUCKET, this::setChanged);
 
     public boolean hasFluid(){
         return fluidStorage.amount != 0;
@@ -33,17 +34,17 @@ public class SingleFluidStackingInventory {
             readNbt(stack);
     }
 
-    public void markDirty(){
+    public void setChanged(){
         writeNbt();
     }
 
     public void writeNbt(){
         // Merge into the existing compound: replacing it wholesale would drop the custom name
         // and everything else already on the stack.
-        NbtCompound tag = MysticalUtil.copyCustomData(stack);
+        CompoundTag tag = MysticalUtil.copyCustomData(stack);
 
-        NbtCompound fluid = new NbtCompound();
-        fluid.putString(FLUID_ID_KEY, Registries.FLUID.getId(fluidStorage.fluid).toString());
+        CompoundTag fluid = new CompoundTag();
+        fluid.putString(FLUID_ID_KEY, BuiltInRegistries.FLUID.getKey(fluidStorage.fluid).toString());
         tag.put(FLUID_KEY, fluid);
         tag.putLong(AMOUNT_KEY, fluidStorage.amount);
 
@@ -51,19 +52,19 @@ public class SingleFluidStackingInventory {
     }
 
     public void readNbt(ItemStack stack){
-        NbtCompound tag = MysticalUtil.getCustomData(stack);
+        CompoundTag tag = MysticalUtil.getCustomData(stack);
         if(tag == null)
             return;
 
         // Read only. The custom name is updated from FluidBook's fill/empty paths instead of
         // here: setting it during a read ran every render frame, reverted anvil renames and
         // never cleared when the book was drained.
-        var id = Identifier.tryParse(tag.getCompound(FLUID_KEY).getString(FLUID_ID_KEY));
+        var id = Identifier.tryParse(tag.getCompoundOrEmpty(FLUID_KEY).getStringOr(FLUID_ID_KEY, ""));
         // An unknown id (a fluid from a removed mod) degrades to empty rather than throwing, the
         // same way the codec parse used to fall back to a blank variant.
-        var fluid = id == null ? null : Registries.FLUID.get(id);
+        var fluid = id == null ? null : BuiltInRegistries.FLUID.getValue(id);
         fluidStorage.fluid = fluid == null ? Fluids.EMPTY : BookFluidTank.normalize(fluid);
-        fluidStorage.amount = tag.getLong(AMOUNT_KEY);
+        fluidStorage.amount = tag.getLongOr(AMOUNT_KEY, 0L);
 
         if (fluidStorage.fluid == Fluids.EMPTY)
             fluidStorage.amount = 0;

@@ -1,0 +1,27 @@
+{
+  "model": {
+    "type": "minecraft:range_dispatch",
+    "property": "minecraft:custom_model_data",
+    "index": 0,
+    "entries": [
+      {
+        "threshold": 0.05,
+        "model": {
+          "type": "minecraft:model",
+          "model": "mystical_index:item/farming_book_sprout"
+        }
+      },
+      {
+        "threshold": 0.99,
+        "model": {
+          "type": "minecraft:model",
+          "model": "mystical_index:item/farming_book_grown"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "mystical_index:item/farming_book_closed"
+    }
+  }
+}

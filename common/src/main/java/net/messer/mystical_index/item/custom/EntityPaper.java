@@ -1,44 +1,45 @@
 package net.messer.mystical_index.item.custom;
 
+import net.minecraft.core.registries.Registries;
 import net.messer.util.MysticalUtil;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.world.World;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.level.Level;
 
 public class EntityPaper extends Item {
-    public EntityPaper(Settings settings) {
+    public EntityPaper(Item.Properties settings) {
         super(settings);
     }
 
     @Override
-    public void onCraftByPlayer(ItemStack stack, World world, PlayerEntity player) {
+    public void onCraftedBy(ItemStack stack, Player player) {
         var nbt = MysticalUtil.getOrCreateCustomData(stack);
 
         // Paper crafted without a bound entity has no usable id here.
-        var entityId = nbt.getString("entity");
-        var entityType = EntityType.get(entityId).orElse(null);
+        var entityId = nbt.getStringOr("entity", "");
+        var entityType = EntityType.byString(entityId).orElse(null);
         if (entityType != null)
-            stack.set(DataComponentTypes.CUSTOM_NAME, Text.translatable("item.mystical_index.entity_paper.named", entityType.getName()));
+            stack.set(DataComponents.CUSTOM_NAME, Component.translatable("item.mystical_index.entity_paper.named", entityType.getDescription()));
 
-        super.onCraftByPlayer(stack, world, player);
+        super.onCraftedBy(stack, player);
     }
 
     @Override
-    public ActionResult useOnEntity(ItemStack stack, PlayerEntity user, LivingEntity entity, Hand hand) {
-        if(user.getWorld().isClient)
-            return super.useOnEntity(stack, user, entity, hand);
+    public InteractionResult interactLivingEntity(ItemStack stack, Player user, LivingEntity entity, InteractionHand hand) {
+        if(user.level().isClientSide())
+            return super.interactLivingEntity(stack, user, entity, hand);
 
-        var entityId = Registries.ENTITY_TYPE.getId(entity.getType()).toString();
-        stack.set(DataComponentTypes.CUSTOM_NAME, Text.translatable("item.mystical_index.entity_paper.named", entity.getType().getName()));
+        var entityId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
+        stack.set(DataComponents.CUSTOM_NAME, Component.translatable("item.mystical_index.entity_paper.named", entity.getType().getDescription()));
         MysticalUtil.editCustomData(stack, compound -> compound.putString("entity", entityId));
-        return super.useOnEntity(stack, user, entity, hand);
+        return super.interactLivingEntity(stack, user, entity, hand);
     }
 }

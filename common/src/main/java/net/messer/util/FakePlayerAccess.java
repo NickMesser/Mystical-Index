@@ -1,8 +1,8 @@
 package net.messer.util;
 
 import dev.architectury.injectables.annotations.ExpectPlatform;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
 
 /**
  * A stand-in player for actions the mod performs with nobody actually holding the item: crafting
@@ -14,7 +14,7 @@ import net.minecraft.server.world.ServerWorld;
 public class FakePlayerAccess {
 
     @ExpectPlatform
-    public static ServerPlayerEntity get(ServerWorld world) {
+    public static ServerPlayer get(ServerLevel world) {
         throw new AssertionError();
     }
 }

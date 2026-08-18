@@ -2,11 +2,13 @@ package net.messer.mystical_index.item.custom.base_books;
 
 
 import net.messer.util.MysticalUtil;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 
+
+import net.minecraft.world.item.Item;
 
 public class BaseGeneratingBook extends BaseStorageBook{
-    public BaseGeneratingBook(Settings settings) {
+    public BaseGeneratingBook(Item.Properties settings) {
         super(settings);
     }
 

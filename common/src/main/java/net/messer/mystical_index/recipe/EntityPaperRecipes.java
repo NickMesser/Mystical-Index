@@ -3,30 +3,30 @@ package net.messer.mystical_index.recipe;
 import net.messer.mystical_index.MysticalIndex;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.util.MysticalUtil;
-import net.minecraft.entity.EntityType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.item.SpawnEggItem;
-import net.minecraft.recipe.RecipeSerializer;
-import net.minecraft.recipe.SpecialCraftingRecipe;
-import net.minecraft.recipe.book.CraftingRecipeCategory;
-import net.minecraft.recipe.input.CraftingRecipeInput;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.CustomRecipe;
+import net.minecraft.world.item.crafting.CraftingBookCategory;
+import net.minecraft.world.item.crafting.CraftingInput;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.world.level.Level;
 
-public class EntityPaperRecipes extends SpecialCraftingRecipe {
+public class EntityPaperRecipes extends CustomRecipe {
 
-    public EntityPaperRecipes(CraftingRecipeCategory category) {
-        super(category);
+    public EntityPaperRecipes() {
+
     }
 
     @Override
-    public boolean matches(CraftingRecipeInput recipeInputInventory, World world) {
-        if (!this.fits(recipeInputInventory.getWidth(), recipeInputInventory.getHeight())) {
+    public boolean matches(CraftingInput recipeInputInventory, Level world) {
+        if (!(recipeInputInventory.width() == 3 && recipeInputInventory.height() == 3)) {
             return false;
         } else {
-            for(int i = 0; i < recipeInputInventory.getSize(); ++i) {
-                ItemStack itemStack = recipeInputInventory.getStackInSlot(i);
+            for(int i = 0; i < recipeInputInventory.size(); ++i) {
+                ItemStack itemStack = recipeInputInventory.getItem(i);
                 // Centre slot takes the egg, every other slot takes entity paper.
                 if (i == 4) {
                     if (itemStack.getItem() != Items.EGG)
@@ -41,8 +41,8 @@ public class EntityPaperRecipes extends SpecialCraftingRecipe {
     }
 
     @Override
-    public ItemStack craft(CraftingRecipeInput inventory, RegistryWrapper.WrapperLookup registryLookup) {
-        var firstItem = inventory.getStackInSlot(0);
+    public ItemStack assemble(CraftingInput inventory) {
+        var firstItem = inventory.getItem(0);
         var nbt = MysticalUtil.getCustomData(firstItem);
         if(nbt == null)
             return ItemStack.EMPTY;
@@ -51,7 +51,7 @@ public class EntityPaperRecipes extends SpecialCraftingRecipe {
             return ItemStack.EMPTY;
 
         boolean allNbtMatch = true;
-        for(var item : inventory.getStacks()){
+        for(var item : inventory.items()){
             if(item.getItem() == Items.EGG)
                 continue;
 
@@ -64,24 +64,24 @@ public class EntityPaperRecipes extends SpecialCraftingRecipe {
 
         // The stored id can name an entity that no longer exists (removed mod) or one with no
         // spawn egg, so neither lookup is guaranteed to resolve.
-        var entityType = EntityType.get(nbt.getString("entity")).orElse(null);
+        var entityType = EntityType.byString(nbt.getStringOr("entity", "")).orElse(null);
         if(entityType == null)
             return ItemStack.EMPTY;
 
-        var spawnEgg = SpawnEggItem.forEntity(entityType);
+        var spawnEgg = SpawnEggItem.byId(entityType);
         if(spawnEgg == null)
             return ItemStack.EMPTY;
 
-        return spawnEgg.getDefaultStack();
+        return spawnEgg.map(h -> h.value().getDefaultInstance()).orElse(ItemStack.EMPTY);
     }
 
-    @Override
-    public boolean fits(int width, int height) {
-        return width == 3 && height == 3;
-    }
 
     @Override
-    public RecipeSerializer<?> getSerializer() {
+    public CraftingBookCategory category() {
+        return CraftingBookCategory.MISC;
+    }
+    @Override
+    public RecipeSerializer<EntityPaperRecipes> getSerializer() {
         return ModRecipe.PAPER_SHAPED.get();
     }
 }

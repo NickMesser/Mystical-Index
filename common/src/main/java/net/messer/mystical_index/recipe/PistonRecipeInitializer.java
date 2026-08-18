@@ -1,19 +1,21 @@
 package net.messer.mystical_index.recipe;
 
+import net.minecraft.core.registries.Registries;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.messer.util.MysticalUtil;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.resource.ResourceReloader;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.JsonHelper;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
+import net.minecraft.server.packs.resources.PreparableReloadListener;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Unit;
-import net.minecraft.util.profiler.Profiler;
+import net.minecraft.util.profiling.ProfilerFiller;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -31,9 +33,9 @@ import java.util.concurrent.Executor;
  * default method that wrapper supplied is reproduced in {@link #reload} below, which is why the
  * whole load still happens in one synchronous step on the apply executor.
  */
-public class PistonRecipeInitializer implements ResourceReloader {
+public class PistonRecipeInitializer extends SimplePreparableReloadListener<List<PistonRecipe>> {
 
-    public static final Identifier ID = Identifier.of("mystical_index", "piston_recipes");
+    public static final Identifier ID = Identifier.fromNamespaceAndPath("mystical_index", "piston_recipes");
 
     private static final PistonRecipeInitializer INSTANCE = new PistonRecipeInitializer();
 
@@ -52,48 +54,51 @@ public class PistonRecipeInitializer implements ResourceReloader {
         return ID.toString();
     }
 
+    // prepare() does the reading off-thread and apply() publishes the result, which is the same
+    // load-then-swap the old synchronizer-based override performed in one step.
     @Override
-    public CompletableFuture<Void> reload(Synchronizer synchronizer, ResourceManager manager,
-                                          Profiler prepareProfiler, Profiler applyProfiler,
-                                          Executor prepareExecutor, Executor applyExecutor) {
-        return synchronizer.whenPrepared(Unit.INSTANCE)
-                .thenRunAsync(() -> reload(manager), applyExecutor);
-    }
-
-    public void reload(ResourceManager manager) {
-        pistonRecipes.clear();
-        for (Identifier id : manager.findResources("piston_recipes", path -> path.getPath().endsWith(".json")).keySet()) {
-            try (InputStream stream = manager.getResource(id).get().getInputStream()) {
+    protected List<PistonRecipe> prepare(ResourceManager manager, ProfilerFiller profiler) {
+        var loaded = new ArrayList<PistonRecipe>();
+        for (Identifier id : manager.listResources("piston_recipes", path -> path.getPath().endsWith(".json")).keySet()) {
+            try (InputStream stream = manager.getResource(id).get().open()) {
                 Reader reader = new InputStreamReader(stream);
                 JsonElement json = JsonParser.parseReader(reader);
-                processInputs(json.getAsJsonObject());
+                processInputs(json.getAsJsonObject(), loaded);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+        return loaded;
     }
 
-    protected void processInputs(JsonObject json) {
+    @Override
+    protected void apply(List<PistonRecipe> loaded, ResourceManager manager, ProfilerFiller profiler) {
+        pistonRecipes.clear();
+        pistonRecipes.addAll(loaded);
+    }
+
+
+    protected void processInputs(JsonObject json, List<PistonRecipe> sink) {
         PistonRecipe recipe = new PistonRecipe();
-        JsonArray inputs = JsonHelper.getArray(json, "input");
+        JsonArray inputs = GsonHelper.getAsJsonArray(json, "input");
         for (JsonElement input : inputs) {
             JsonObject inputObj = input.getAsJsonObject();
-            String itemName = JsonHelper.getString(inputObj, "item");
-            int amount = JsonHelper.getInt(inputObj, "amount");
+            String itemName = GsonHelper.getAsString(inputObj, "item");
+            int amount = GsonHelper.getAsInt(inputObj, "amount");
             String nbtData = inputObj.has("nbt") ? inputObj.get("nbt").getAsString() : null;
-            Item item = Registries.ITEM.get(Identifier.of(itemName));
+            Item item = BuiltInRegistries.ITEM.getValue(Identifier.parse(itemName));
             recipe.addInput(item, amount, nbtData);
         }
-        JsonArray outputs = JsonHelper.getArray(json, "output");
+        JsonArray outputs = GsonHelper.getAsJsonArray(json, "output");
         for (JsonElement output : outputs) {
             JsonObject outputObj = output.getAsJsonObject();
-            String itemName = JsonHelper.getString(outputObj, "item");
-            int amount = JsonHelper.getInt(outputObj, "amount");
+            String itemName = GsonHelper.getAsString(outputObj, "item");
+            int amount = GsonHelper.getAsInt(outputObj, "amount");
             String nbtData = outputObj.has("nbt") ? outputObj.get("nbt").getAsString() : null;
-            Item item = Registries.ITEM.get(Identifier.of(itemName));
+            Item item = BuiltInRegistries.ITEM.getValue(Identifier.parse(itemName));
             recipe.addOutput(item, amount, nbtData);
         }
-        pistonRecipes.add(recipe);
+        sink.add(recipe);
     }
 
     public PistonRecipe getRecipe(List<ItemStack> inputStacks) {
@@ -118,7 +123,7 @@ public class PistonRecipeInitializer implements ResourceReloader {
                     var nbt = entry.nbt.orElse(null);
                     if(nbt == null)
                         continue;
-                    var nbtKeys = nbt.getKeys();
+                    var nbtKeys = nbt.keySet();
                     for(var key: nbtKeys){
                         if(!inputStacks.stream().anyMatch(stack -> {
                             var stackNbt = MysticalUtil.copyCustomData(stack);

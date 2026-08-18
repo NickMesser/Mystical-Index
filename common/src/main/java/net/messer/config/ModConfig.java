@@ -43,7 +43,15 @@ public class ModConfig extends MidnightConfig {
     @Entry public static List<String> HostileBookBlackList = List.of("minecraft:ender_dragon", "minecraft:wither");
 
     @Comment public static Comment BookOfFarmingTitle;
+    @Comment public static Comment BookOfTransportTitle;
+    // Ticks between pump pulses, items moved per pulse, and how far a Library may be bound.
+    @Entry public static int TransportInterval = 40;
+    @Entry public static int TransportBatch = 16;
+    @Entry public static int TransportRange = 32;
+
     @Entry public static int BookOfFarmingDefaultCooldown = 120;
+    // World ticks for one full grow cycle. 12000 is about ten minutes of daylight-speed time.
+    @Entry public static int BookOfFarmingGrowthTicks = 12000;
     @Entry public static int BookOfFarmingMaxStacks = 5;
     @Entry public static Map<String, Integer> BookOfFarmingCooldowns = new HashMap<>(){
         {

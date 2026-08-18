@@ -6,7 +6,7 @@ import me.shedaniel.rei.api.client.registry.display.DisplayRegistry;
 import me.shedaniel.rei.api.client.registry.screen.ScreenRegistry;
 import me.shedaniel.rei.api.client.registry.transfer.TransferHandlerRegistry;
 import me.shedaniel.rei.api.common.util.EntryStacks;
-import net.minecraft.item.Items;
+import net.minecraft.world.item.Items;
 
 public class MysticalIndexREIClientPlugin implements REIClientPlugin {
     @Override

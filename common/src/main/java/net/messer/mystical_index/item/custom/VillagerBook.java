@@ -1,61 +1,75 @@
 package net.messer.mystical_index.item.custom;
 
+import net.minecraft.world.entity.npc.villager.VillagerData;
+import net.minecraft.world.item.trading.MerchantOffers;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.messer.mixin.VillagerEntityInvoker;
 import net.messer.mystical_index.item.ModItems;
 import net.messer.util.MysticalUtil;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.SpawnReason;
-import net.minecraft.entity.passive.VillagerEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUsage;
-import net.minecraft.item.ItemUsageContext;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.TypedActionResult;
-import net.minecraft.village.TradeOffer;
-import net.minecraft.village.VillagerProfession;
-import net.minecraft.village.VillagerType;
-import net.minecraft.world.World;
-import net.minecraft.world.poi.PointOfInterestType;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemUtils;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.Holder;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.trading.MerchantOffer;
+import net.minecraft.world.entity.npc.villager.VillagerProfession;
+import net.minecraft.world.entity.npc.villager.VillagerType;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.entity.ai.village.poi.PoiType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class VillagerBook extends Item {
-    public VillagerBook(Settings settings) {
+import net.minecraft.world.entity.EntitySpawnReason;
+
+import net.minecraft.world.item.component.TooltipDisplay;
+
+import java.util.function.Consumer;
+
+
+
+import net.messer.util.GlintingBook;
+
+public class VillagerBook extends Item implements GlintingBook {
+    public VillagerBook(Item.Properties settings) {
         super(settings);
     }
     @Override
-    public ActionResult useOnBlock(ItemUsageContext context) {
-        if(context.getWorld().isClient())
-            return super.useOnBlock(context);
+    public InteractionResult useOn(UseOnContext context) {
+        if(context.getLevel().isClientSide())
+            return super.useOn(context);
 
-        PlayerEntity player = context.getPlayer();
-        ItemStack stack = context.getStack();
-        NbtCompound nbt = MysticalUtil.getCustomData(stack);
-        World world = context.getWorld();
+        Player player = context.getPlayer();
+        ItemStack stack = context.getItemInHand();
+        CompoundTag nbt = MysticalUtil.getCustomData(stack);
+        Level world = context.getLevel();
 
-        if(player != null && player.isSneaking() && nbt != null){
-            var server = context.getWorld().getServer();
-            var jobSiteWorld = server.getWorld(context.getWorld().getRegistryKey());
-            var poiType = jobSiteWorld.getPointOfInterestStorage().getType(context.getBlockPos()).orElse(null);
+        if(player != null && player.isShiftKeyDown() && nbt != null){
+            var server = context.getLevel().getServer();
+            var jobSiteWorld = server.getLevel(context.getLevel().dimension());
+            var poiType = jobSiteWorld.getPoiManager().getType(context.getClickedPos()).orElse(null);
             if(poiType == null){
-                var position = context.getBlockPos();
-                var targetPos = switch (context.getSide()) {
-                    case UP -> position.up();
-                    case DOWN -> position.down(2);
+                var position = context.getClickedPos();
+                var targetPos = switch (context.getClickedFace()) {
+                    case UP -> position.above();
+                    case DOWN -> position.below(2);
                     case NORTH -> position.north();
                     case SOUTH -> position.south();
                     case EAST -> position.east();
@@ -63,11 +77,11 @@ public class VillagerBook extends Item {
                     default -> position;
                 };
 
-                ServerWorld serverWorld = world.getServer().getWorld(world.getRegistryKey());
+                ServerLevel serverWorld = world.getServer().getLevel(world.dimension());
 
-                Entity entity = EntityType.loadEntityWithPassengers(nbt.getCompound("Entity"), world, (entityx) -> {
-                    entityx.refreshPositionAndAngles(targetPos.getX()+.5, targetPos.getY(), targetPos.getZ()+.5, entityx.getYaw(), entityx.getPitch());
-                    if (!(serverWorld.tryLoadEntity(entityx)))
+                Entity entity = EntityType.loadEntityRecursive(nbt.getCompoundOrEmpty("Entity"), world, EntitySpawnReason.LOAD, (entityx) -> {
+                    entityx.absSnapTo(targetPos.getX()+.5, targetPos.getY(), targetPos.getZ()+.5, entityx.getYRot(), entityx.getXRot());
+                    if (!(serverWorld.addFreshEntity(entityx)))
                         return null;
 
                     return entityx;
@@ -75,123 +89,145 @@ public class VillagerBook extends Item {
 
                 // If the villager could not be placed, keep the book intact rather than trading it
                 // for an empty one and losing the stored villager.
-                if(entity == null)
-                    return super.useOnBlock(context);
+                if(entity == null) {
+                    // Two different failures used to look identical here - a placement that was
+                    // refused (blocked space), and stored data that cannot be read back at all.
+                    // The second is worth saying out loud: books written by a build that saved the
+                    // entity without its type id are unrecoverable, because nothing records what
+                    // kind of entity it was, and silence made them indistinguishable from a
+                    // no-op click.
+                    if(!nbt.getCompoundOrEmpty("Entity").isEmpty())
+                        player.sendOverlayMessage(
+                                Component.translatable("message.mystical_index.villager_data_invalid"));
+
+                    return super.useOn(context);
+                }
 
                 nbt.remove("Entity");
                 MysticalUtil.setCustomData(stack, nbt);
 
                 ItemStack emptyVillagerStack = new ItemStack(ModItems.EMPTY_VILLAGER_BOOK.get());
-                player.setStackInHand(context.getHand(), ItemUsage.exchangeStack(stack, player, emptyVillagerStack));
-                return super.useOnBlock(context);
+                player.setItemInHand(context.getHand(), ItemUtils.createFilledResult(stack, player, emptyVillagerStack));
+                return super.useOn(context);
             }
 
-            var profession = Registries.VILLAGER_PROFESSION.stream().filter(profession1 -> profession1.heldWorkstation().test((RegistryEntry<PointOfInterestType>)poiType)).findFirst().orElse(null);
+            var profession = BuiltInRegistries.VILLAGER_PROFESSION.listElements().filter(profession1 -> profession1.value().heldJobSite().test((Holder<PoiType>)poiType)).findFirst().orElse(null);
 
             if(profession == null)
-                return super.useOnBlock(context);
+                return super.useOn(context);
 
             // Set villager profession if profession is found at block.
 
-            VillagerEntity villagerEntity = (VillagerEntity) EntityType.loadEntityWithPassengers(nbt.getCompound("Entity"), world, (entityx) -> {
-                entityx.refreshPositionAndAngles(context.getBlockPos().getX(), context.getBlockPos().getY(), context.getBlockPos().getZ(), entityx.getYaw(), entityx.getPitch());
+            Villager villagerEntity = (Villager) EntityType.loadEntityRecursive(nbt.getCompoundOrEmpty("Entity"), world, EntitySpawnReason.LOAD, (entityx) -> {
+                entityx.absSnapTo(context.getClickedPos().getX(), context.getClickedPos().getY(), context.getClickedPos().getZ(), entityx.getYRot(), entityx.getXRot());
                 return entityx;
             });
 
             if(villagerEntity == null)
-                return super.useOnBlock(context);
+                return super.useOn(context);
 
-            if(villagerEntity.getVillagerData().getProfession() == VillagerProfession.NONE || villagerEntity.getExperience() == 0)
+            if(villagerEntity.getVillagerData().profession().is(VillagerProfession.NONE) || villagerEntity.getVillagerXp() == 0)
             {
-                player.sendMessage(Text.translatable("message.mystical_index.set_villager_profession", profession.toString()), true);
-                villagerEntity.setVillagerData(villagerEntity.getVillagerData().withProfession(VillagerProfession.NONE));
-                villagerEntity.reinitializeBrain((ServerWorld) world);
+                player.sendOverlayMessage(Component.translatable("message.mystical_index.set_villager_profession", profession.value().name()));
+                villagerEntity.setVillagerData(villagerEntity.getVillagerData().withProfession(world.registryAccess(), VillagerProfession.NONE));
+                villagerEntity.refreshBrain((ServerLevel) world);
                 villagerEntity.setVillagerData(villagerEntity.getVillagerData().withProfession(profession));
-                villagerEntity.reinitializeBrain((ServerWorld) world);
+                villagerEntity.refreshBrain((ServerLevel) world);
                 addVillagerToBook(stack, villagerEntity);
-                String professionName = profession.toString().substring(0,1).toUpperCase() + profession.toString().substring(1).toLowerCase();
-                stack.set(DataComponentTypes.CUSTOM_NAME, Text.translatable("item.mystical_index.villager_book.named", professionName));
+                stack.set(DataComponents.CUSTOM_NAME,
+                        Component.translatable("item.mystical_index.villager_book.named", profession.value().name()));
             }
         }
 
 
-        return super.useOnBlock(context);
+        return super.useOn(context);
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType type) {
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
         if(!MysticalUtil.hasCustomData(stack))
         {
-            super.appendTooltip(stack, context, tooltip, type);
+            super.appendHoverText(stack, context, display, tooltip, type);
             return;
         }
 
-        NbtCompound nbt = MysticalUtil.getCustomData(stack);
+        CompoundTag nbt = MysticalUtil.getCustomData(stack);
         if(nbt == null)
             return;
 
-        var world = MysticalUtil.tooltipWorld();
-        if(world == null)
+        var entityNbt = nbt.getCompoundOrEmpty("Entity");
+        if(entityNbt.isEmpty())
             return;
 
-        VillagerEntity villagerEntity = (VillagerEntity) EntityType.loadEntityWithPassengers(nbt.getCompound("Entity"), world, (entityx) -> {
-            return entityx;
-        });
+        // Everything this tooltip shows is read straight out of the stored compound instead of
+        // rebuilding the villager. That is not just an optimisation: getOffers() is server-only
+        // now and throws IllegalStateException outright when the entity's level is not a
+        // ServerLevel, which is always true here, so interrogating a tooltip-side villager
+        // crashed the moment the book had a profession. Dropping the load also retires a full
+        // entity deserialisation that was running on every frame the book was hovered.
+        var ops = MysticalUtil.registryLookup().createSerializationContext(NbtOps.INSTANCE);
 
-        if(villagerEntity == null)
+        var villagerData = entityNbt.read("VillagerData", VillagerData.CODEC, ops).orElse(null);
+        if(villagerData == null)
             return;
 
-        if(villagerEntity.getVillagerData().getProfession() == VillagerProfession.NONE){
-            tooltip.add(Text.translatable("tooltip.mystical_index.villager_book.set_profession0"));
-            tooltip.add(Text.translatable("tooltip.mystical_index.villager_book.set_profession1"));
+        if(villagerData.profession().is(VillagerProfession.NONE)){
+            tooltip.accept(Component.translatable("tooltip.mystical_index.villager_book.set_profession0"));
+            tooltip.accept(Component.translatable("tooltip.mystical_index.villager_book.set_profession1"));
             return;
         }
 
-        tooltip.add(Text.translatable("tooltip.mystical_index.villager_book.trade"));
-        tooltip.add(Text.of(""));
+        tooltip.accept(Component.translatable("tooltip.mystical_index.villager_book.trade"));
+        tooltip.accept(Component.literal(""));
 
-        var trades = villagerEntity.getOffers();
-        if(trades.isEmpty())
+        // Vanilla only writes Offers once the villager actually has trades, so an absent key is
+        // the ordinary state of one that has never been opened for trading - worth saying so
+        // rather than ending the tooltip on a blank line.
+        var trades = entityNbt.read("Offers", MerchantOffers.CODEC, ops).orElse(null);
+        if(trades == null || trades.isEmpty()) {
+            tooltip.accept(Component.translatable("tooltip.mystical_index.villager_book.no_trades"));
+            super.appendHoverText(stack, context, display, tooltip, type);
             return;
+        }
 
-        tooltip.add(Text.translatable("tooltip.mystical_index.villager_book.trades_header"));
+        tooltip.accept(Component.translatable("tooltip.mystical_index.villager_book.trades_header"));
 
-        for (TradeOffer trade : trades) {
-            ItemStack firstBuyItemStack = trade.getOriginalFirstBuyItem();
-            ItemStack secondBuyItemStack = trade.getDisplayedSecondBuyItem();
-            ItemStack sellItemStack = trade.getSellItem();
+        for (MerchantOffer trade : trades) {
+            ItemStack firstBuyItemStack = trade.getBaseCostA();
+            ItemStack secondBuyItemStack = trade.getCostB();
+            ItemStack sellItemStack = trade.getResult();
 
             if(secondBuyItemStack.isEmpty())
-                tooltip.add(Text.translatable("tooltip.mystical_index.villager_book.trade_single",
-                        firstBuyItemStack.getCount(), firstBuyItemStack.getName(),
-                        sellItemStack.getCount(), sellItemStack.getName()));
+                tooltip.accept(Component.translatable("tooltip.mystical_index.villager_book.trade_single",
+                        firstBuyItemStack.getCount(), firstBuyItemStack.getHoverName(),
+                        sellItemStack.getCount(), sellItemStack.getHoverName()));
             else
-                tooltip.add(Text.translatable("tooltip.mystical_index.villager_book.trade_double",
-                        firstBuyItemStack.getCount(), firstBuyItemStack.getName(),
-                        secondBuyItemStack.getCount(), secondBuyItemStack.getName(),
-                        sellItemStack.getCount(), sellItemStack.getName()));
+                tooltip.accept(Component.translatable("tooltip.mystical_index.villager_book.trade_double",
+                        firstBuyItemStack.getCount(), firstBuyItemStack.getHoverName(),
+                        secondBuyItemStack.getCount(), secondBuyItemStack.getHoverName(),
+                        sellItemStack.getCount(), sellItemStack.getHoverName()));
         }
 
-        super.appendTooltip(stack, context, tooltip, type);
+        super.appendHoverText(stack, context, display, tooltip, type);
     }
 
     @Override
-    public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
+    public InteractionResult use(Level world, Player user, InteractionHand hand) {
         // Server-side only: the client would deserialize a throwaway villager, run restock/levelUp
         // on it and play a second copy of the trade sound the server already broadcasts.
-        if(world.isClient())
+        if(world.isClientSide())
             return super.use(world, user, hand);
 
-        if(user.isSneaking())
+        if(user.isShiftKeyDown())
             return super.use(world, user, hand);
 
-        ItemStack stack = user.getStackInHand(hand);
-        NbtCompound nbt = MysticalUtil.getCustomData(stack);
+        ItemStack stack = user.getItemInHand(hand);
+        CompoundTag nbt = MysticalUtil.getCustomData(stack);
         if(nbt == null)
             return super.use(world, user, hand);
 
-        VillagerEntity villagerEntity = (VillagerEntity) EntityType.loadEntityWithPassengers(nbt.getCompound("Entity"), world, (entityx) -> {
-            entityx.refreshPositionAndAngles(user.getX(), user.getY(), user.getZ(), entityx.getYaw(), entityx.getPitch());
+        Villager villagerEntity = (Villager) EntityType.loadEntityRecursive(nbt.getCompoundOrEmpty("Entity"), world, EntitySpawnReason.LOAD, (entityx) -> {
+            entityx.absSnapTo(user.getX(), user.getY(), user.getZ(), entityx.getYRot(), entityx.getXRot());
             return entityx;
         });
 
@@ -199,55 +235,61 @@ public class VillagerBook extends Item {
             return super.use(world, user, hand);
 
 
-        if(villagerEntity.getVillagerData().getProfession() == VillagerProfession.NONE)
+        if(villagerEntity.getVillagerData().profession().is(VillagerProfession.NONE))
         {
-            world.playSound(null, user.getBlockPos(), net.minecraft.sound.SoundEvents.ENTITY_VILLAGER_NO, net.minecraft.sound.SoundCategory.NEUTRAL, 1f, 1f);
-            user.getItemCooldownManager().set(this, 20);
+            world.playSound(null, user.blockPosition(), net.minecraft.sounds.SoundEvents.VILLAGER_NO, net.minecraft.sounds.SoundSource.NEUTRAL, 1f, 1f);
+            user.getCooldowns().addCooldown(user.getItemInHand(hand), 20);
             return super.use(world, user, hand);
         }
 
-        if(villagerEntity.shouldRestock())
+        if(villagerEntity.shouldRestock((ServerLevel) world))
             villagerEntity.restock();
 
         if(((VillagerEntityInvoker) villagerEntity).getCanLevelUp())
-            ((VillagerEntityInvoker) villagerEntity).invokeLevelUp();
+            ((VillagerEntityInvoker) villagerEntity).invokeLevelUp((ServerLevel) world);
 
-        world.playSound(null, user.getBlockPos(), SoundEvents.ENTITY_VILLAGER_TRADE, SoundCategory.AMBIENT, 1f, 1.5f);
-        user.interact(villagerEntity, hand);
-        user.getItemCooldownManager().set(this, 20);
+        world.playSound(null, user.blockPosition(), SoundEvents.VILLAGER_TRADE, SoundSource.AMBIENT, 1f, 1.5f);
+        user.interactOn(villagerEntity, hand, villagerEntity.position());
+        user.getCooldowns().addCooldown(user.getItemInHand(hand), 20);
         // Return success so the hand swings; the afterUsing hook persists the throwaway villager
         // back into this book once a trade actually completes.
-        return TypedActionResult.success(stack);
+        return InteractionResult.SUCCESS;
     }
-
     @Override
-    public boolean hasGlint(ItemStack stack) {
+    public boolean shouldGlint(ItemStack stack) {
         return MysticalUtil.hasCustomData(stack);
     }
 
-    public void createAndAddVillager(ItemStack stack, ServerWorld serverWorld){
-        VillagerType villagerType = VillagerType.PLAINS;
-        VillagerEntity villagerEntity = new VillagerEntity(EntityType.VILLAGER, serverWorld, villagerType);
-        villagerEntity.initialize(serverWorld, serverWorld.getLocalDifficulty(villagerEntity.getBlockPos()), SpawnReason.SPAWN_EGG, null);
-        villagerEntity.getVillagerData().withProfession(VillagerProfession.NONE);
+    public void createAndAddVillager(ItemStack stack, ServerLevel serverWorld){
+        ResourceKey<VillagerType> villagerType = VillagerType.PLAINS;
+        Villager villagerEntity = new Villager(EntityType.VILLAGER, serverWorld, villagerType);
+        villagerEntity.finalizeSpawn(serverWorld, serverWorld.getCurrentDifficultyAt(villagerEntity.blockPosition()), EntitySpawnReason.SPAWN_ITEM_USE, null);
+        villagerEntity.getVillagerData().withProfession(serverWorld.registryAccess(), VillagerProfession.NONE);
         addVillagerToBook(stack, villagerEntity);
     }
 
-    public void addVillagerToBook(ItemStack stack, VillagerEntity villagerEntity){
-        NbtCompound stackNbt = MysticalUtil.getOrCreateCustomData(stack);
+    public void addVillagerToBook(ItemStack stack, Villager villagerEntity){
+        CompoundTag stackNbt = MysticalUtil.getOrCreateCustomData(stack);
 
-        NbtCompound entityNbt = new NbtCompound();
-        villagerEntity.saveSelfNbt(entityNbt);
+        CompoundTag entityNbt = MysticalUtil.saveEntityWithId(villagerEntity);
+        if (entityNbt == null)
+            return;
+
         stackNbt.remove("Entity");
         stackNbt.put("Entity", entityNbt);
         MysticalUtil.setCustomData(stack, stackNbt);
 
-        if(villagerEntity.getVillagerData().getProfession() == VillagerProfession.NONE){
-            stack.set(DataComponentTypes.CUSTOM_NAME, Text.translatable("item.mystical_index.villager_book"));
+        if(villagerEntity.getVillagerData().profession().is(VillagerProfession.NONE)){
+            stack.set(DataComponents.CUSTOM_NAME, Component.translatable("item.mystical_index.villager_book"));
         }
         else{
-            var professionName = villagerEntity.getVillagerData().getProfession().toString().substring(0,1).toUpperCase() + villagerEntity.getVillagerData().getProfession().toString().substring(1).toLowerCase();
-            stack.set(DataComponentTypes.CUSTOM_NAME, Text.translatable("item.mystical_index.villager_book.named", professionName));
+            // VillagerProfession carries its own display name - the same Component vanilla puts on a
+            // professioned villager - so it is used verbatim. Building the text from the profession
+            // object instead produced its debug form, which since professions became registry
+            // holders reads as "ResourceKey[minecraft:villager_profession / minecraft:cartographer]".
+            // It also localizes, which a capitalized id never did.
+            stack.set(DataComponents.CUSTOM_NAME, Component.translatable("item.mystical_index.villager_book.named",
+                    villagerEntity.getVillagerData().profession().value().name()));
         }
 
     }

@@ -2,13 +2,15 @@ package net.messer.mystical_index.item.inventory;
 
 import net.messer.mystical_index.item.custom.base_books.BaseStorageBook;
 import net.messer.util.MysticalUtil;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventories;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.resources.RegistryOps;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +30,7 @@ public class MultiTypeBookInventory implements BookInventory {
     public final ItemStack bookStack;
     public final int types;
     public final int stacksPerType;
-    public final DefaultedList<ItemStack> storedItems;
+    public final NonNullList<ItemStack> storedItems;
 
     public MultiTypeBookInventory(ItemStack bookStack, int types, int stacksPerType) {
         this.bookStack = bookStack;
@@ -45,7 +47,7 @@ public class MultiTypeBookInventory implements BookInventory {
             return;
         }
 
-        var loaded = DefaultedList.ofSize(sizeFor(this.types, this.stacksPerType, storedSlotCount(compound)), ItemStack.EMPTY);
+        var loaded = NonNullList.withSize(sizeFor(this.types, this.stacksPerType, storedSlotCount(compound)), ItemStack.EMPTY);
         if (compound != null)
             readInto(compound, loaded);
 
@@ -62,7 +64,7 @@ public class MultiTypeBookInventory implements BookInventory {
         }
     }
 
-    private static boolean hasMultiVariantBucket(DefaultedList<ItemStack> items, int stacksPerType) {
+    private static boolean hasMultiVariantBucket(NonNullList<ItemStack> items, int stacksPerType) {
         for (int start = 0; start < items.size(); start += stacksPerType) {
             ItemStack variant = ItemStack.EMPTY;
             for (int slot = start; slot < start + stacksPerType && slot < items.size(); slot++) {
@@ -72,7 +74,7 @@ public class MultiTypeBookInventory implements BookInventory {
 
                 if (variant.isEmpty())
                     variant = existing;
-                else if (!ItemStack.areItemsAndComponentsEqual(variant, existing))
+                else if (!ItemStack.isSameItemSameComponents(variant, existing))
                     return true;
             }
         }
@@ -80,29 +82,36 @@ public class MultiTypeBookInventory implements BookInventory {
         return false;
     }
 
+    // ItemStack lost its encode/fromNbt helpers; the codec is the supported route and
+    // produces the same compound shape they did.
+    private static RegistryOps<Tag> ops() {
+        return MysticalUtil.registryLookup().createSerializationContext(NbtOps.INSTANCE);
+    }
+
     // The only place a stored slot index is decoded. Books written before the int format stored
-    // "Slot" as a byte, and NbtCompound.getInt returns 0 for a byte tag, which would silently pile
+    // "Slot" as a byte, and reading a byte tag as an int yields nothing, which would silently pile
     // every stack of every old book into slot 0.
-    private static int readSlot(NbtCompound entry) {
+    private static int readSlot(CompoundTag entry) {
         var tag = entry.get(SLOT_KEY);
         if (tag == null)
             return -1;
 
-        if (tag.getType() == NbtElement.INT_TYPE)
-            return entry.getInt(SLOT_KEY);
+        if (tag.getId() == Tag.TAG_INT)
+            return entry.getIntOr(SLOT_KEY, -1);
 
-        return entry.getByte(SLOT_KEY) & 255;
+        // Unsigned: the legacy byte format stored slots 128..255 as negative bytes.
+        return entry.getByteOr(SLOT_KEY, (byte) 0) & 255;
     }
 
-    private static void readInto(NbtCompound compound, DefaultedList<ItemStack> target) {
-        var list = compound.getList(ITEMS_KEY, NbtElement.COMPOUND_TYPE);
+    private static void readInto(CompoundTag compound, NonNullList<ItemStack> target) {
+        var list = compound.getListOrEmpty(ITEMS_KEY);
         for (int i = 0; i < list.size(); i++) {
-            var entry = list.getCompound(i);
+            var entry = list.getCompoundOrEmpty(i);
             int slot = readSlot(entry);
             if (slot < 0 || slot >= target.size())
                 continue;
 
-            target.set(slot, ItemStack.fromNbt(MysticalUtil.registryLookup(), entry).orElse(ItemStack.EMPTY));
+            target.set(slot, ItemStack.CODEC.parse(ops(), entry).result().orElse(ItemStack.EMPTY));
         }
     }
 
@@ -120,14 +129,14 @@ public class MultiTypeBookInventory implements BookInventory {
         return clampSlots(buckets * stacksPerType, stacksPerType);
     }
 
-    private static int storedSlotCount(NbtCompound compound) {
+    private static int storedSlotCount(CompoundTag compound) {
         if (compound == null)
             return 0;
 
-        var list = compound.getList(ITEMS_KEY, NbtElement.COMPOUND_TYPE);
+        var list = compound.getListOrEmpty(ITEMS_KEY);
         int count = 0;
         for (int i = 0; i < list.size(); i++) {
-            int slot = readSlot(list.getCompound(i)) + 1;
+            int slot = readSlot(list.getCompoundOrEmpty(i)) + 1;
             if (slot > count)
                 count = slot;
         }
@@ -136,8 +145,8 @@ public class MultiTypeBookInventory implements BookInventory {
     }
 
     // Books written in the old single-type format are re-laid out into buckets on first read.
-    private static DefaultedList<ItemStack> migrate(NbtCompound compound, int types, int stacksPerType) {
-        var legacy = DefaultedList.ofSize(Math.max(1, storedSlotCount(compound)), ItemStack.EMPTY);
+    private static NonNullList<ItemStack> migrate(CompoundTag compound, int types, int stacksPerType) {
+        var legacy = NonNullList.withSize(Math.max(1, storedSlotCount(compound)), ItemStack.EMPTY);
         readInto(compound, legacy);
         compound.remove(LEGACY_ITEM_KEY);
 
@@ -148,7 +157,7 @@ public class MultiTypeBookInventory implements BookInventory {
     // by bucket, one type per bucket, padding to the bucket boundary between types. Grace overflow
     // is preserved: contents needing more buckets than the tier allows get them anyway, so nothing
     // is voided; such a book drains normally but takes nothing new until it fits.
-    private static DefaultedList<ItemStack> repack(List<ItemStack> contents, int types, int stacksPerType) {
+    private static NonNullList<ItemStack> repack(List<ItemStack> contents, int types, int stacksPerType) {
         var groups = new ArrayList<List<ItemStack>>();
         for (var stack : contents) {
             if (stack.isEmpty())
@@ -156,7 +165,7 @@ public class MultiTypeBookInventory implements BookInventory {
 
             List<ItemStack> group = null;
             for (var candidate : groups) {
-                if (ItemStack.areItemsAndComponentsEqual(candidate.get(0), stack)) {
+                if (ItemStack.isSameItemSameComponents(candidate.get(0), stack)) {
                     group = candidate;
                     break;
                 }
@@ -174,7 +183,7 @@ public class MultiTypeBookInventory implements BookInventory {
         for (var group : groups)
             neededBuckets += (group.size() + stacksPerType - 1) / stacksPerType;
 
-        var repacked = DefaultedList.ofSize(clampSlots(Math.max(types, neededBuckets) * stacksPerType, stacksPerType), ItemStack.EMPTY);
+        var repacked = NonNullList.withSize(clampSlots(Math.max(types, neededBuckets) * stacksPerType, stacksPerType), ItemStack.EMPTY);
 
         int slot = 0;
         for (var group : groups) {
@@ -197,18 +206,21 @@ public class MultiTypeBookInventory implements BookInventory {
         writeNbt(MysticalUtil.copyCustomData(bookStack));
     }
 
-    private void writeNbt(NbtCompound compound) {
-        var list = new NbtList();
+    private void writeNbt(CompoundTag compound) {
+        var list = new ListTag();
         for (int slot = 0; slot < storedItems.size(); slot++) {
             var stack = storedItems.get(slot);
             if (stack.isEmpty())
                 continue;
 
-            var entry = new NbtCompound();
+            // The codec writes the item's own keys; the slot index is added afterwards, which
+            // leaves exactly the {id, count, components, Slot} shape encode() used to produce.
+            var encoded = ItemStack.CODEC.encodeStart(ops(), stack).result().orElse(null);
+            if (!(encoded instanceof CompoundTag entry))
+                continue;
+
             entry.putInt(SLOT_KEY, slot);
-            // encode() merges into a copy of the prefix and returns it; the prefix itself is left
-            // untouched, so the returned compound is the only one carrying the item data.
-            list.add(stack.encode(MysticalUtil.registryLookup(), entry));
+            list.add(entry);
         }
 
         compound.put(ITEMS_KEY, list);
@@ -236,7 +248,7 @@ public class MultiTypeBookInventory implements BookInventory {
     }
 
     private void fillBucket(int bucket, ItemStack stack) {
-        int max = stack.getMaxCount();
+        int max = stack.getMaxStackSize();
         int start = bucket * stacksPerType;
 
         for (int slot = start; slot < start + stacksPerType && !stack.isEmpty(); slot++) {
@@ -246,16 +258,16 @@ public class MultiTypeBookInventory implements BookInventory {
                 var placed = stack.copy();
                 placed.setCount(Math.min(stack.getCount(), max));
                 storedItems.set(slot, placed);
-                stack.decrement(placed.getCount());
+                stack.shrink(placed.getCount());
                 continue;
             }
 
-            if (!ItemStack.areItemsAndComponentsEqual(existing, stack) || existing.getCount() >= max)
+            if (!ItemStack.isSameItemSameComponents(existing, stack) || existing.getCount() >= max)
                 continue;
 
             int room = Math.min(max - existing.getCount(), stack.getCount());
-            existing.increment(room);
-            stack.decrement(room);
+            existing.grow(room);
+            stack.shrink(room);
         }
     }
 
@@ -269,11 +281,11 @@ public class MultiTypeBookInventory implements BookInventory {
         if (stack.getItem() instanceof BaseStorageBook)
             return false;
 
-        int before = stack.getCount();
+        int parents = stack.getCount();
         int limit = getTypeCapacity();
 
         for (int bucket = 0; bucket < limit && !stack.isEmpty(); bucket++) {
-            if (ItemStack.areItemsAndComponentsEqual(bucketVariant(bucket), stack))
+            if (ItemStack.isSameItemSameComponents(bucketVariant(bucket), stack))
                 fillBucket(bucket, stack);
         }
 
@@ -284,8 +296,8 @@ public class MultiTypeBookInventory implements BookInventory {
             }
         }
 
-        if (stack.getCount() != before)
-            markDirty();
+        if (stack.getCount() != parents)
+            setChanged();
 
         return stack.isEmpty();
     }
@@ -301,7 +313,7 @@ public class MultiTypeBookInventory implements BookInventory {
     }
 
     @Override
-    public int size() {
+    public int getContainerSize() {
         return storedItems.size();
     }
 
@@ -316,50 +328,50 @@ public class MultiTypeBookInventory implements BookInventory {
     }
 
     @Override
-    public ItemStack getStack(int slot) {
+    public ItemStack getItem(int slot) {
         return storedItems.get(slot);
     }
 
     @Override
-    public ItemStack removeStack(int slot, int amount) {
-        var removed = Inventories.splitStack(storedItems, slot, amount);
-        markDirty();
+    public ItemStack removeItem(int slot, int amount) {
+        var removed = ContainerHelper.removeItem(storedItems, slot, amount);
+        setChanged();
         return removed;
     }
 
     @Override
-    public ItemStack removeStack(int slot) {
-        var removed = Inventories.removeStack(storedItems, slot);
-        markDirty();
+    public ItemStack removeItemNoUpdate(int slot) {
+        var removed = ContainerHelper.takeItem(storedItems, slot);
+        setChanged();
         return removed;
     }
 
     @Override
-    public void setStack(int slot, ItemStack stack) {
+    public void setItem(int slot, ItemStack stack) {
         storedItems.set(slot, stack);
-        if (!stack.isEmpty() && stack.getCount() > stack.getMaxCount())
-            stack.setCount(stack.getMaxCount());
+        if (!stack.isEmpty() && stack.getCount() > stack.getMaxStackSize())
+            stack.setCount(stack.getMaxStackSize());
 
-        markDirty();
+        setChanged();
     }
 
     @Override
-    public void markDirty() {
+    public void setChanged() {
         writeNbt();
     }
 
     @Override
-    public boolean canPlayerUse(PlayerEntity player) {
+    public boolean stillValid(Player player) {
         return true;
     }
 
     @Override
-    public void clear() {
+    public void clearContent() {
         storedItems.clear();
     }
 
     @Override
-    public int getMaxCountPerStack() {
+    public int getMaxStackSize() {
         return 64;
     }
 }

@@ -12,10 +12,10 @@ loom {
 		client {
 			// Relative to this subproject, so the dev world stays in the repo-root run-1.21.1 it
 			// has always lived in.
-			runDir "../run-1.21.1"
+			runDir "../run-26.1.2"
 		}
 		server {
-			runDir "../run-1.21.1-server"
+			runDir "../run-26.1.2-server"
 		}
 	}
 }
@@ -37,22 +37,22 @@ configurations {
 }
 
 dependencies {
-	modImplementation "net.fabricmc:fabric-loader:$rootProject.loader_version"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:$rootProject.fabric_version"
+	implementation "net.fabricmc:fabric-loader:$rootProject.loader_version"
+	implementation "net.fabricmc.fabric-api:fabric-api:$rootProject.fabric_version"
 
-	modImplementation "dev.architectury:architectury-fabric:$rootProject.architectury_api_version"
+	implementation "dev.architectury:architectury-fabric:$rootProject.architectury_api_version"
 
-	modImplementation "maven.modrinth:midnightlib:$rootProject.midnightlib_fabric_version"
+	implementation "maven.modrinth:midnightlib:$rootProject.midnightlib_fabric_version"
 
 	// REI Stuff
-	modCompileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:$rootProject.rei_version"
-	// Full REI on the compile classpath too: the default plugin classes (BuiltinPlugin,
-	// DefaultCraftingDisplay) are needed to register displays into the vanilla crafting
-	// category without a runtime ClassCastException. Still compileOnly - no hard dependency.
-	modCompileOnly "me.shedaniel:RoughlyEnoughItems-fabric:$rootProject.rei_version"
-	modRuntimeOnly "me.shedaniel:RoughlyEnoughItems-fabric:$rootProject.rei_version"
+	compileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:$rootProject.rei_version"
+	// The default-plugin artifact carries BuiltinPlugin and DefaultCustomDisplay, which the
+	// api jar does not. Compiling against it instead of the full loader jar keeps those
+	// classes reachable without putting two jars that share classes on one classpath.
+	compileOnly "me.shedaniel:RoughlyEnoughItems-default-plugin:$rootProject.rei_version"
+	runtimeOnly "me.shedaniel:RoughlyEnoughItems-fabric:$rootProject.rei_version"
 
-	common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
+	common(project(path: ':common')) { transitive = false }
 	shadowBundle project(path: ':common', configuration: 'transformProductionFabric')
 }
 
@@ -64,17 +64,23 @@ processResources {
 	}
 }
 
+// Minecraft is not obfuscated on this version, so loom-no-remap produces no remapJar task: the
+// shaded jar is the one that ships.
+jar {
+	archiveClassifier = 'dev'
+}
+
 shadowJar {
 	configurations = [project.configurations.shadowBundle]
-	archiveClassifier = 'dev-shadow'
-}
-
-remapJar {
-	inputFile.set shadowJar.archiveFile
-}
-
-jar {
+	archiveClassifier = null
 	from(rootProject.file("LICENSE")) {
 		rename { "${it}_${project.base.archivesName.get()}" }
 	}
+}
+
+assemble.dependsOn shadowJar
+
+configurations {
+	apiElements { outgoing.artifacts.clear(); outgoing.artifact(shadowJar) }
+	runtimeElements { outgoing.artifacts.clear(); outgoing.artifact(shadowJar) }
 }

@@ -1,14 +1,14 @@
 package net.messer.mystical_index.item.inventory;
 
-import net.minecraft.component.ComponentChanges;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.core.component.DataComponentPatch;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Holder;
 
 import java.util.Objects;
 
@@ -32,20 +32,20 @@ import java.util.Objects;
  */
 public final class BookItemVariant {
 
-    public static final PacketCodec<RegistryByteBuf, BookItemVariant> PACKET_CODEC = PacketCodec.tuple(
-            PacketCodecs.registryEntry(RegistryKeys.ITEM), BookItemVariant::getRegistryEntry,
-            ComponentChanges.PACKET_CODEC, BookItemVariant::getComponents,
+    public static final StreamCodec<RegistryFriendlyByteBuf, BookItemVariant> PACKET_CODEC = StreamCodec.composite(
+            ByteBufCodecs.holderRegistry(Registries.ITEM), BookItemVariant::getRegistryEntry,
+            DataComponentPatch.STREAM_CODEC, BookItemVariant::getComponents,
             BookItemVariant::of);
 
-    private static final BookItemVariant BLANK = new BookItemVariant(Items.AIR, ComponentChanges.EMPTY);
+    private static final BookItemVariant BLANK = new BookItemVariant(Items.AIR, DataComponentPatch.EMPTY);
 
     private final Item item;
-    private final ComponentChanges components;
+    private final DataComponentPatch components;
     // Component maps can be deep, and these are hashed on every aggregate/lookup, so the hash is
     // computed once at construction exactly as Fabric's variant does.
     private final int hashCode;
 
-    private BookItemVariant(Item item, ComponentChanges components) {
+    private BookItemVariant(Item item, DataComponentPatch components) {
         this.item = item;
         this.components = components;
         this.hashCode = Objects.hash(item, components);
@@ -55,7 +55,7 @@ public final class BookItemVariant {
         return BLANK;
     }
 
-    public static BookItemVariant of(Item item, ComponentChanges components) {
+    public static BookItemVariant of(Item item, DataComponentPatch components) {
         Objects.requireNonNull(item, "Item may not be null.");
         Objects.requireNonNull(components, "Components may not be null.");
 
@@ -65,23 +65,23 @@ public final class BookItemVariant {
         return new BookItemVariant(item, components);
     }
 
-    public static BookItemVariant of(RegistryEntry<Item> item, ComponentChanges components) {
+    public static BookItemVariant of(Holder<Item> item, DataComponentPatch components) {
         return of(item.value(), components);
     }
 
     public static BookItemVariant of(ItemStack stack) {
-        return of(stack.getItem(), stack.getComponentChanges());
+        return of(stack.getItem(), stack.getComponentsPatch());
     }
 
     public Item getItem() {
         return item;
     }
 
-    public RegistryEntry<Item> getRegistryEntry() {
-        return item.getRegistryEntry();
+    public Holder<Item> getRegistryEntry() {
+        return item.builtInRegistryHolder();
     }
 
-    public ComponentChanges getComponents() {
+    public DataComponentPatch getComponents() {
         return components;
     }
 
@@ -98,7 +98,7 @@ public final class BookItemVariant {
      * ignoring its count.
      */
     public boolean matches(ItemStack stack) {
-        return item == stack.getItem() && Objects.equals(stack.getComponentChanges(), components);
+        return item == stack.getItem() && Objects.equals(stack.getComponentsPatch(), components);
     }
 
     public ItemStack toStack() {

@@ -1,8 +1,8 @@
 package net.messer.mystical_index.recipe;
 
-import net.minecraft.item.Item;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.StringNbtReader;
+import net.minecraft.world.item.Item;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.TagParser;
 
 import java.util.*;
 
@@ -36,14 +36,14 @@ public class PistonRecipe {
     public static class ItemEntry {
         public Item item;
         public int count;
-        public Optional<NbtCompound> nbt;
+        public Optional<CompoundTag> nbt;
 
         public ItemEntry(Item item, int count, String nbtData) {
             this.item = item;
             this.count = count;
             if (nbtData != null && !nbtData.isEmpty()) {
                 try {
-                    this.nbt = Optional.of(StringNbtReader.parse(nbtData));
+                    this.nbt = Optional.of(TagParser.parseCompoundFully(nbtData));
                 } catch (Exception e) {
                     // Handle NBT parsing exception
                     this.nbt = Optional.empty();

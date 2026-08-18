@@ -9,9 +9,9 @@ import dev.architectury.networking.NetworkManager;
 import net.messer.mystical_index.item.inventory.BookItemVariant;
 import net.messer.mystical_index.network.LecternNetworking;
 import net.messer.mystical_index.screen.MysticalLecternScreenHandler;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -58,7 +58,7 @@ public class LecternTransferHandler implements TransferHandler {
 
         // Same answer on both passes, so a red button does nothing when clicked.
         if (!canSatisfy(supply, slotCandidates))
-            return Result.createFailed(Text.literal("Missing items"));
+            return Result.createFailed(Component.literal("Missing items"));
 
         if (!context.isActuallyCrafting())
             return Result.createSuccessful();
@@ -70,7 +70,7 @@ public class LecternTransferHandler implements TransferHandler {
         if (containerScreen != null)
             context.getMinecraft().setScreen(containerScreen);
 
-        NetworkManager.sendToServer(new LecternNetworking.FillRecipePayload(lectern.syncId, slotCandidates));
+        NetworkManager.sendToServer(new LecternNetworking.FillRecipePayload(lectern.containerId, slotCandidates));
         return Result.createSuccessful();
     }
 
@@ -81,9 +81,9 @@ public class LecternTransferHandler implements TransferHandler {
     private static Map<BookItemVariant, Long> buildSupply(MysticalLecternScreenHandler lectern) {
         Map<BookItemVariant, Long> supply = new HashMap<>();
 
-        var player = MinecraftClient.getInstance().player;
+        var player = Minecraft.getInstance().player;
         if (player != null) {
-            for (var stack : player.getInventory().main) {
+            for (var stack : player.getInventory().getNonEquipmentItems()) {
                 if (!stack.isEmpty())
                     supply.merge(BookItemVariant.of(stack), (long) stack.getCount(), Long::sum);
             }
@@ -91,7 +91,7 @@ public class LecternTransferHandler implements TransferHandler {
 
         // Slot 0 is the result; slots 1..9 are the 3x3 crafting input.
         for (int slot = 1; slot <= LecternNetworking.RECIPE_GRID_SIZE; slot++) {
-            var stack = lectern.getSlot(slot).getStack();
+            var stack = lectern.getSlot(slot).getItem();
             if (!stack.isEmpty())
                 supply.merge(BookItemVariant.of(stack), (long) stack.getCount(), Long::sum);
         }

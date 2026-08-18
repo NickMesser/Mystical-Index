@@ -1,8 +1,8 @@
 package net.messer.util;
 
 import dev.architectury.injectables.annotations.ExpectPlatform;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.server.level.ServerPlayer;
 
 /**
  * Sends a packet straight to one player's connection.
@@ -21,7 +21,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 public class ServerPacketSender {
 
     @ExpectPlatform
-    public static void send(ServerPlayerEntity player, Packet<?> packet) {
+    public static void send(ServerPlayer player, Packet<?> packet) {
         throw new AssertionError();
     }
 }

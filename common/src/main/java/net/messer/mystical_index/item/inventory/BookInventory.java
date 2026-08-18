@@ -1,9 +1,9 @@
 package net.messer.mystical_index.item.inventory;
 
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.ItemStack;
 
-public interface BookInventory extends Inventory {
+public interface BookInventory extends Container {
 
     /**
      * Inserts as much of {@code stack} as fits, mutating it downward by the amount taken.

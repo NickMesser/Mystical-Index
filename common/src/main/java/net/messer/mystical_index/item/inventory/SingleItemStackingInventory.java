@@ -1,18 +1,21 @@
 package net.messer.mystical_index.item.inventory;
+import net.minecraft.core.registries.Registries;
 import net.messer.config.ModConfig;
 import net.messer.mystical_index.item.custom.base_books.BaseStorageBook;
 import net.messer.util.MysticalUtil;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventories;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.resources.RegistryOps;
 
 import java.util.Iterator;
 
@@ -27,7 +30,7 @@ public class SingleItemStackingInventory implements BookInventory {
 
     public final ItemStack stack;
     public final int inventorySize;
-    public final DefaultedList<ItemStack> storedItems;
+    public final NonNullList<ItemStack> storedItems;
     public Item currentlyStoredItem;
 
     public int maxStacks = 1;
@@ -42,7 +45,7 @@ public class SingleItemStackingInventory implements BookInventory {
         // configured size, so lowering the config drains those slots gracefully instead of
         // truncating (and deleting) them on the next write.
         var compound = MysticalUtil.getCustomData(stack);
-        this.storedItems = DefaultedList.ofSize(sizeFor(size, storedSlotCount(compound)), ItemStack.EMPTY);
+        this.storedItems = NonNullList.withSize(sizeFor(size, storedSlotCount(compound)), ItemStack.EMPTY);
         if (compound != null) {
             readNbt();
         }
@@ -54,17 +57,17 @@ public class SingleItemStackingInventory implements BookInventory {
 
     public void setCurrentlyStoredItem(Item item){
         this.currentlyStoredItem = item;
-        this.markDirty();
+        this.setChanged();
     }
 
     public boolean tryRemoveOneItem(){
         for (int i = 0; i < storedItems.size(); i++) {
             if(storedItems.get(i).getItem() != Items.AIR){
-                storedItems.get(i).decrement(1);
+                storedItems.get(i).shrink(1);
                 if(storedItems.get(i).getCount() == 0){
                     storedItems.set(i, ItemStack.EMPTY);
                 }
-                this.markDirty();
+                this.setChanged();
                 return true;
             }
         }
@@ -91,9 +94,18 @@ public class SingleItemStackingInventory implements BookInventory {
 
 
     // Network-facing insert. A bound book is a single type by definition, so it never takes a new
-    // one whatever the caller asks for. The Boolean overload below is the internal bypass.
+    // one whatever the caller asks for.
+    //
+    // READ THE PARAMETER NAME: the flag is deliberately IGNORED, not forwarded. That is a load
+    // bearing property, not an oversight - it is what lets callers run a blanket "allow new types"
+    // pass over every book (LibraryNetwork.insertNewTypes, and the Scriptorium's pass three)
+    // knowing a single-type book can never be forced to accept something outside its binding.
+    //
+    // It is also a trap, so: neither this overload NOR the Boolean bypass below ever sets
+    // currentlyStoredItem. Passing true here does NOT bind an unbound book and does NOT make it
+    // accept anything. setItem is the only path that binds - see ScriptoriumBlockEntity pass four.
     @Override
-    public boolean tryAddStack(ItemStack stack, boolean allowNewTypes){
+    public boolean tryAddStack(ItemStack stack, boolean ignoredAllowNewTypes){
         return tryAddStack(stack, Boolean.FALSE);
     }
 
@@ -107,23 +119,23 @@ public class SingleItemStackingInventory implements BookInventory {
             return false;
 
         for (ItemStack item: storedItems) {
-            if (ItemStack.areItemsAndComponentsEqual(item, stack)) {
+            if (ItemStack.isSameItemSameComponents(item, stack)) {
                 int combinedCount = item.getCount() + stack.getCount();
-                if (combinedCount > this.getMaxCountPerStack() && item.getCount() < this.getMaxCountPerStack()) {
-                    var remainder = this.getMaxCountPerStack() - item.getCount();
-                    item.increment(remainder);
-                    stack.decrement(remainder);
-                    this.markDirty();
+                if (combinedCount > this.getMaxStackSize() && item.getCount() < this.getMaxStackSize()) {
+                    var remainder = this.getMaxStackSize() - item.getCount();
+                    item.grow(remainder);
+                    stack.shrink(remainder);
+                    this.setChanged();
                     if(stack.getCount() > 0)
                         return tryAddStack(stack, Boolean.TRUE);
                     else
                         return true;
                 }
 
-                if(combinedCount <= this.getMaxCountPerStack()){
-                    item.increment(stack.getCount());
+                if(combinedCount <= this.getMaxStackSize()){
+                    item.grow(stack.getCount());
                     stack.setCount(0);
-                    this.markDirty();
+                    this.setChanged();
                     return true;
                 }
             }
@@ -133,42 +145,52 @@ public class SingleItemStackingInventory implements BookInventory {
         // max, and split the input rather than dropping the whole thing into one slot. A count
         // above the max would overflow vanilla's single-byte Count field and be wiped on reload;
         // splitting also lets one oversized insert spill across several empty slots.
-        boolean changed = false;
+        boolean deserialize = false;
         for (int i = 0; i < storedItems.size() && !stack.isEmpty(); i++) {
             if (storedItems.get(i).isEmpty()) {
-                int cap = Math.min(this.getMaxCountPerStack(), stack.getMaxCount());
-                storedItems.set(i, stack.split(cap));
-                changed = true;
+                int state = Math.min(this.getMaxStackSize(), stack.getMaxStackSize());
+                storedItems.set(i, stack.split(state));
+                deserialize = true;
             }
         }
 
-        if (changed)
-            this.markDirty();
+        if (deserialize)
+            this.setChanged();
 
         return stack.isEmpty();
     }
 
+    // The registry-aware ops every item read and write goes through. ItemStack lost its encode/
+    // fromNbt helpers; the codec is the supported route now, and it produces the same compound
+    // shape those helpers did.
+    private static RegistryOps<Tag> ops() {
+        return MysticalUtil.registryLookup().createSerializationContext(NbtOps.INSTANCE);
+    }
+
     // Same "Items" shape vanilla uses, but the slot index is an int, so a book configured with more
-    // than 256 slots no longer wraps slot 256 onto 0 the way Inventories.writeNbt's byte "Slot"
+    // than 256 slots no longer wraps slot 256 onto 0 the way ContainerHelper's byte "Slot"
     // tag does.
     public void writeNbt(){
         // The compound fetched from a component is a copy, so the whole thing has to be handed
         // back to the stack once the writes are in.
-        NbtCompound nbtData = MysticalUtil.copyCustomData(stack);
+        CompoundTag nbtData = MysticalUtil.copyCustomData(stack);
 
-        nbtData.putString(STORED_ITEM_KEY, Registries.ITEM.getId(this.currentlyStoredItem).toString());
+        nbtData.putString(STORED_ITEM_KEY, BuiltInRegistries.ITEM.getKey(this.currentlyStoredItem).toString());
 
-        var list = new NbtList();
+        var list = new ListTag();
         for (int slot = 0; slot < storedItems.size(); slot++) {
             var item = storedItems.get(slot);
             if (item.isEmpty())
                 continue;
 
-            var entry = new NbtCompound();
+            // The codec writes the item's own keys; the slot index is added afterwards, which
+            // leaves exactly the {id, count, components, Slot} shape encode() used to produce.
+            var encoded = ItemStack.CODEC.encodeStart(ops(), item).result().orElse(null);
+            if (!(encoded instanceof CompoundTag entry))
+                continue;
+
             entry.putInt(SLOT_KEY, slot);
-            // encode() merges into a copy of the prefix and returns it; the prefix itself is left
-            // untouched, so the returned compound is the only one carrying the item data.
-            list.add(item.encode(MysticalUtil.registryLookup(), entry));
+            list.add(entry);
         }
 
         nbtData.put(ITEMS_KEY, list);
@@ -176,50 +198,55 @@ public class SingleItemStackingInventory implements BookInventory {
     }
 
     public void readNbt(){
-        NbtCompound compound = MysticalUtil.getCustomData(stack);
+        CompoundTag compound = MysticalUtil.getCustomData(stack);
         if (compound == null) {
             return;
         }
 
         readInto(compound, storedItems);
-        var itemName = compound.getString(STORED_ITEM_KEY);
-        currentlyStoredItem = Registries.ITEM.get(Identifier.tryParse(itemName));
+        // getString hands back an Optional now; an absent key has to keep meaning "" so the
+        // lookup below still lands on AIR exactly as it did before.
+        var itemName = compound.getStringOr(STORED_ITEM_KEY, "");
+        currentlyStoredItem = BuiltInRegistries.ITEM.getValue(Identifier.tryParse(itemName));
     }
 
-    private static void readInto(NbtCompound compound, DefaultedList<ItemStack> target) {
-        var list = compound.getList(ITEMS_KEY, NbtElement.COMPOUND_TYPE);
+    private static void readInto(CompoundTag compound, NonNullList<ItemStack> target) {
+        // getListOrEmpty replaces the old type-filtered getList: a missing or wrongly typed key
+        // yields an empty list, which is the same "read nothing" outcome as before.
+        var list = compound.getListOrEmpty(ITEMS_KEY);
         for (int i = 0; i < list.size(); i++) {
-            var entry = list.getCompound(i);
+            var entry = list.getCompoundOrEmpty(i);
             int slot = readSlot(entry);
             if (slot < 0 || slot >= target.size())
                 continue;
 
-            target.set(slot, ItemStack.fromNbt(MysticalUtil.registryLookup(), entry).orElse(ItemStack.EMPTY));
+            target.set(slot, ItemStack.CODEC.parse(ops(), entry).result().orElse(ItemStack.EMPTY));
         }
     }
 
-    // Books written before the int format stored "Slot" as a byte, and NbtCompound.getInt returns
-    // 0 for a byte tag, which would silently pile every old stack into slot 0. Fall back to reading
-    // it as a byte so those books still load.
-    private static int readSlot(NbtCompound entry) {
+    // Books written before the int format stored "Slot" as a byte, and reading a byte tag as an
+    // int yields nothing, which would silently pile every old stack into slot 0. Sniff the tag's
+    // actual type and fall back to reading it as a byte so those books still load.
+    private static int readSlot(CompoundTag entry) {
         var tag = entry.get(SLOT_KEY);
         if (tag == null)
             return -1;
 
-        if (tag.getType() == NbtElement.INT_TYPE)
-            return entry.getInt(SLOT_KEY);
+        if (tag.getId() == Tag.TAG_INT)
+            return entry.getIntOr(SLOT_KEY, -1);
 
-        return entry.getByte(SLOT_KEY) & 255;
+        // Unsigned: the legacy byte format stored slots 128..255 as negative bytes.
+        return entry.getByteOr(SLOT_KEY, (byte) 0) & 255;
     }
 
-    private static int storedSlotCount(NbtCompound compound) {
+    private static int storedSlotCount(CompoundTag compound) {
         if (compound == null)
             return 0;
 
-        var list = compound.getList(ITEMS_KEY, NbtElement.COMPOUND_TYPE);
+        var list = compound.getListOrEmpty(ITEMS_KEY);
         int count = 0;
         for (int i = 0; i < list.size(); i++) {
-            int slot = readSlot(list.getCompound(i)) + 1;
+            int slot = readSlot(list.getCompoundOrEmpty(i)) + 1;
             if (slot > count)
                 count = slot;
         }
@@ -229,19 +256,19 @@ public class SingleItemStackingInventory implements BookInventory {
 
 
     @Override
-    public int getMaxCountPerStack() {
+    public int getMaxStackSize() {
         // The book's per-stack cap is the stored item's own max, not a hardcoded 64: storing 64 of
         // a 16-max item (ender pearls, signs, ...) would produce an invalid stack.
         ItemStack first = getFirstItemStack();
         if (!first.isEmpty())
-            return first.getMaxCount();
+            return first.getMaxStackSize();
         if (currentlyStoredItem != Items.AIR)
-            return currentlyStoredItem.getMaxCount();
+            return currentlyStoredItem.getDefaultMaxStackSize();
         return 64;
     }
 
     @Override
-    public int size() {
+    public int getContainerSize() {
         // The backing list, not the configured size: when a lowered config left more stored slots
         // than it allows, those extra slots must stay visible so they can drain instead of being
         // hidden (and effectively lost) behind a smaller reported size.
@@ -259,51 +286,51 @@ public class SingleItemStackingInventory implements BookInventory {
     }
 
     @Override
-    public ItemStack getStack(int slot) {
+    public ItemStack getItem(int slot) {
         return storedItems.get(slot);
     }
 
     @Override
-    public ItemStack removeStack(int slot, int amount) {
-        ItemStack stack = Inventories.splitStack(storedItems, slot, amount);
-        this.markDirty();
+    public ItemStack removeItem(int slot, int amount) {
+        ItemStack stack = ContainerHelper.removeItem(storedItems, slot, amount);
+        this.setChanged();
         return stack;
     }
 
     @Override
-    public ItemStack removeStack(int slot) {
-        ItemStack removed = Inventories.removeStack(storedItems, slot);
-        this.markDirty();
+    public ItemStack removeItemNoUpdate(int slot) {
+        ItemStack removed = ContainerHelper.takeItem(storedItems, slot);
+        this.setChanged();
         return removed;
     }
 
     @Override
-    public void setStack(int slot, ItemStack stack) {
+    public void setItem(int slot, ItemStack stack) {
         this.storedItems.set(slot, stack);
         // Only a real item redefines what this book stores; clearing a slot must not reset the
         // filter to air, or emptying the book forgets what it was bound to.
         if (!stack.isEmpty()) {
             this.currentlyStoredItem = stack.getItem();
-            if (stack.getCount() > this.getMaxCountPerStack()) {
-                stack.setCount(this.getMaxCountPerStack());
+            if (stack.getCount() > this.getMaxStackSize()) {
+                stack.setCount(this.getMaxStackSize());
             }
         }
 
-        this.markDirty();
+        this.setChanged();
     }
 
     @Override
-    public void markDirty() {
+    public void setChanged() {
         writeNbt();
     }
 
     @Override
-    public boolean canPlayerUse(PlayerEntity player) {
+    public boolean stillValid(Player player) {
         return true;
     }
 
     @Override
-    public void clear() {
+    public void clearContent() {
         storedItems.clear();
     }
 

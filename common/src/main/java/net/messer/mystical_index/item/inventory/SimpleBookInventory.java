@@ -2,9 +2,9 @@ package net.messer.mystical_index.item.inventory;
 
 import net.messer.config.ModConfig;
 import net.messer.mystical_index.item.custom.base_books.BaseStorageBook;
-import net.minecraft.inventory.SimpleInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 public class SimpleBookInventory {
     ItemStack bookStack;
@@ -17,18 +17,18 @@ public class SimpleBookInventory {
 
     public SimpleBookInventory(ItemStack stack){
         bookStack = stack;
-        book.addStack(bookStack);
+        book.addItem(bookStack);
     }
 
-    public void clearInventory(SimpleInventory inventory){
-        for (int i = 0; i < inventory.size(); i++) {
-            inventory.setStack(i, ItemStack.EMPTY);
+    public void clearInventory(SimpleContainer inventory){
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
+            inventory.setItem(i, ItemStack.EMPTY);
         }
     }
 
-    public SimpleInventory book = new SimpleInventory(1){
+    public SimpleContainer book = new SimpleContainer(1){
         @Override
-        public void markDirty() {
+        public void setChanged() {
             if(syncing)
                 return;
 
@@ -37,8 +37,8 @@ public class SimpleBookInventory {
                 try {
                     var content = storageBook.getInventory(bookStack);
                     clearInventory(contents);
-                    for(int i = 0; i < content.size() && i < contents.size(); i++){
-                        contents.setStack(i, content.getStack(i));
+                    for(int i = 0; i < content.getContainerSize() && i < contents.getContainerSize(); i++){
+                        contents.setItem(i, content.getItem(i));
                     }
                 } finally {
                     syncing = false;
@@ -47,9 +47,9 @@ public class SimpleBookInventory {
         }
     };
 
-    public SimpleInventory contents = new SimpleInventory(ModConfig.StorageBookMaxStacks * 5){
+    public SimpleContainer contents = new SimpleContainer(ModConfig.StorageBookMaxStacks * 5){
         @Override
-        public void markDirty() {
+        public void setChanged() {
             if(syncing)
                 return;
 
@@ -60,18 +60,18 @@ public class SimpleBookInventory {
                     // Only the mirrored range may be cleared. A book with more slots than this
                     // mirror (a high tier Book of Holding) would otherwise lose everything past
                     // the end of the mirror, since the restore loop below cannot reach it.
-                    for (int i = 0; i < content.size() && i < contents.size(); i++) {
-                        content.setStack(i, ItemStack.EMPTY);
+                    for (int i = 0; i < content.getContainerSize() && i < contents.getContainerSize(); i++) {
+                        content.setItem(i, ItemStack.EMPTY);
                     }
-                    for (int i = 0; i < contents.size(); i++) {
-                        if (i >= content.size())
+                    for (int i = 0; i < contents.getContainerSize(); i++) {
+                        if (i >= content.getContainerSize())
                             break;
-                        var stack = contents.getStack(i);
+                        var stack = contents.getItem(i);
                         if(stack.isEmpty() || stack.getItem() == Items.AIR)
                             continue;
-                        content.setStack(i, contents.getStack(i));
+                        content.setItem(i, contents.getItem(i));
                     }
-                    content.markDirty();
+                    content.setChanged();
                 } finally {
                     syncing = false;
                 }
@@ -79,8 +79,8 @@ public class SimpleBookInventory {
         }
 
         @Override
-        public void clear() {
-            this.getHeldStacks().clear();
+        public void clearContent() {
+            this.getItems().clear();
         }
     };
 

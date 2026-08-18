@@ -6,30 +6,31 @@ import net.messer.mystical_index.item.ModItems;
 import net.messer.mystical_index.item.custom.HostileBook;
 import net.messer.mystical_index.recipe.PistonRecipeInitializer;
 import net.messer.util.MysticalUtil;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.entity.PistonBlockEntity;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.world.World;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.piston.PistonMovingBlockEntity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.particles.ColorParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.core.Direction;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class PistonEntityHook {
-    public static void tryCrafting(World world, BlockPos pos, float f, PistonBlockEntity blockEntity, CallbackInfo ci, Direction direction, double d, VoxelShape voxelShape, Box box, List list) {
-        if(world.isClient)
+    public static void tryCrafting(Level world, BlockPos pos, float f, PistonMovingBlockEntity blockEntity, CallbackInfo ci, Direction direction, double d, VoxelShape voxelShape, AABB box, List list) {
+        if(world.isClientSide())
             return;
 
-        var otherBlock = world.getBlockState(blockEntity.getPos().add(direction.getVector()));
+        var otherBlock = world.getBlockState(blockEntity.getBlockPos().offset(direction.getUnitVec3i()));
         if(direction == Direction.DOWN && otherBlock.getBlock() == Blocks.IRON_BLOCK){
             List<ItemEntity> itemEntityList = new ArrayList(list.stream()
                     .filter(ItemEntity.class::isInstance)
@@ -42,7 +43,7 @@ public class PistonEntityHook {
 
             // add items to stacks list
             for(var entity: itemEntityList){
-                var itemStack = entity.getStack();
+                var itemStack = entity.getItem();
                 itemStacks.add(itemStack);
             }
 
@@ -56,7 +57,7 @@ public class PistonEntityHook {
                                 var compound = MysticalUtil.getCustomData(stack2);
                                 if(compound == null)
                                     continue;
-                                entityId = compound.getString("entity");
+                                entityId = compound.getStringOr("entity", "");
                             }
                         }
                         if(!entityId.equals("")){
@@ -64,17 +65,17 @@ public class PistonEntityHook {
                             // Credit one kill per paper item consumed (capped), never destroying
                             // papers we did not credit.
                             if(chargeBookWithPapers(hostileBook, stack, entityId, itemStacks) > 0)
-                                playChargeEffects(world, blockEntity.getPos());
+                                playChargeEffects(world, blockEntity.getBlockPos());
                             return;
                         }
                     } else {
                         var compound = MysticalUtil.getCustomData(stack);
                         if(compound != null && compound.contains("storedEntityId")){
-                            var storedEntityId = compound.getString("storedEntityId");
+                            var storedEntityId = compound.getStringOr("storedEntityId", "");
                             // pushEntities can fire several times per piston cycle; re-fires find the
                             // matching papers already at count 0 and so credit nothing.
                             if(chargeBookWithPapers(hostileBook, stack, storedEntityId, itemStacks) > 0){
-                                playChargeEffects(world, blockEntity.getPos());
+                                playChargeEffects(world, blockEntity.getBlockPos());
                                 return;
                             }
                         }
@@ -82,7 +83,7 @@ public class PistonEntityHook {
                 }
             }
 
-            var itemPos = blockEntity.getPos().up();
+            var itemPos = blockEntity.getBlockPos().above();
             var recipe = PistonRecipeInitializer.getInstance().getRecipe(itemStacks);
             if(recipe == null) return;
 
@@ -92,9 +93,9 @@ public class PistonEntityHook {
                 var itemEntry = inputs.get(input);
                 for(var entity: itemEntityList){
                     var itemEntity = (ItemEntity) entity;
-                    var itemStack = itemEntity.getStack();
+                    var itemStack = itemEntity.getItem();
                     if(itemStack.getItem() == input){
-                        itemStack.decrement(itemEntry.count);
+                        itemStack.shrink(itemEntry.count);
                         break;
                     }
                 }
@@ -106,11 +107,11 @@ public class PistonEntityHook {
                 var itemEntry = craftedItems.get(craftedItem);
                 var itemStack = new ItemStack(craftedItem, itemEntry.count);
                 itemEntry.nbt.ifPresent(nbt -> MysticalUtil.setCustomData(itemStack, nbt.copy()));
-                itemStack.onCraftByPlayer(world, FakePlayerAccess.get((ServerWorld) world), itemStack.getCount());
+                itemStack.onCraftedBy(FakePlayerAccess.get((ServerLevel) world), 1);
                 var itemEntity = new ItemEntity(world, itemPos.getX(), itemPos.getY(), itemPos.getZ(), itemStack);
-                world.spawnEntity(itemEntity);
-                world.playSound(null, itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(), SoundEvents.BLOCK_SLIME_BLOCK_PLACE, SoundCategory.BLOCKS, 2f, 2f);
-                ((ServerWorld) world).spawnParticles(ParticleTypes.FLASH, itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(), 1, 0.5, 0.5, 0.5, 0.1);
+                world.addFreshEntity(itemEntity);
+                world.playSound(null, itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(), SoundEvents.SLIME_BLOCK_PLACE, SoundSource.BLOCKS, 2f, 2f);
+                ((ServerLevel) world).sendParticles(ColorParticleOption.create(ParticleTypes.FLASH, 0xFFFFFF), itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(), 1, 0.5, 0.5, 0.5, 0.1);
             }
         }
     }
@@ -124,7 +125,7 @@ public class PistonEntityHook {
         if(compound == null)
             return 0;
 
-        int remaining = ModConfig.HostileBookMaxKills - compound.getInt("numberOfKills");
+        int remaining = ModConfig.HostileBookMaxKills - compound.getIntOr("numberOfKills", 0);
         if(remaining <= 0)
             return 0;
 
@@ -142,7 +143,7 @@ public class PistonEntityHook {
                 continue;
 
             int take = Math.min(item.getCount(), remaining);
-            item.decrement(take);
+            item.shrink(take);
             remaining -= take;
             credited += take;
         }
@@ -153,8 +154,8 @@ public class PistonEntityHook {
         return credited;
     }
 
-    private static void playChargeEffects(World world, BlockPos pos){
-        world.playSound(null, pos.getX(), pos.getY(), pos.getZ(), SoundEvents.BLOCK_SLIME_BLOCK_PLACE, SoundCategory.BLOCKS, 2f, 2f);
-        ((ServerWorld) world).spawnParticles(ParticleTypes.FLASH, pos.getX(), pos.getY(), pos.getZ(), 1, 0.5, 0.5, 0.5, 0.1);
+    private static void playChargeEffects(Level world, BlockPos pos){
+        world.playSound(null, pos.getX(), pos.getY(), pos.getZ(), SoundEvents.SLIME_BLOCK_PLACE, SoundSource.BLOCKS, 2f, 2f);
+        ((ServerLevel) world).sendParticles(ColorParticleOption.create(ParticleTypes.FLASH, 0xFFFFFF), pos.getX(), pos.getY(), pos.getZ(), 1, 0.5, 0.5, 0.5, 0.1);
     }
 }

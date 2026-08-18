@@ -1,14 +1,14 @@
 package net.messer.mystical_index.screen;
 
 import net.messer.mystical_index.item.inventory.BookContentsTooltipData;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.tooltip.TooltipComponent;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 
 import java.util.List;
 import java.util.Locale;
 
-public class BookContentsTooltipComponent implements TooltipComponent {
+public class BookContentsTooltipComponent implements ClientTooltipComponent {
 
     private static final int CELL = 18;
     private static final int MAX_COLUMNS = 9;
@@ -34,17 +34,17 @@ public class BookContentsTooltipComponent implements TooltipComponent {
     }
 
     @Override
-    public int getHeight() {
+    public int getHeight(Font font) {
         return summaries.isEmpty() ? 0 : rows() * CELL + 2;
     }
 
     @Override
-    public int getWidth(TextRenderer textRenderer) {
+    public int getWidth(Font font) {
         return summaries.isEmpty() ? 0 : columns() * CELL + 2;
     }
 
     @Override
-    public void drawItems(TextRenderer textRenderer, int x, int y, DrawContext context) {
+    public void extractImage(Font font, int x, int y, int width, int height, GuiGraphicsExtractor context) {
         boolean overflow = summaries.size() > MAX_CELLS;
         // When there are more types than cells, give up the last cell to a "+N" indicator so the
         // hidden types are still accounted for instead of silently dropped off the bottom.
@@ -55,24 +55,24 @@ public class BookContentsTooltipComponent implements TooltipComponent {
             int cellX = x + (i % MAX_COLUMNS) * CELL + 1;
             int cellY = y + (i / MAX_COLUMNS) * CELL + 1;
 
-            context.drawItem(summary.representative(), cellX, cellY);
-            drawCount(context, textRenderer, formatCount(summary.total()), cellX, cellY);
+            context.item(summary.representative(), cellX, cellY);
+            drawCount(context, font, formatCount(summary.total()), cellX, cellY);
         }
 
         if (overflow) {
             int cellX = x + (drawn % MAX_COLUMNS) * CELL + 1;
             int cellY = y + (drawn / MAX_COLUMNS) * CELL + 1;
-            drawCount(context, textRenderer, "+" + (summaries.size() - drawn), cellX, cellY);
+            drawCount(context, font, "+" + (summaries.size() - drawn), cellX, cellY);
         }
     }
 
-    private static void drawCount(DrawContext context, TextRenderer textRenderer, String text, int cellX, int cellY) {
-        var matrices = context.getMatrices();
-        matrices.push();
-        matrices.translate(0.0F, 0.0F, 200.0F);
-        matrices.scale(0.5F, 0.5F, 1.0F);
-        context.drawTextWithShadow(textRenderer, text, cellX * 2 + 33 - textRenderer.getWidth(text), cellY * 2 + 24, 0xFFFFFF);
-        matrices.pop();
+    private static void drawCount(GuiGraphicsExtractor context, Font font, String text, int cellX, int cellY) {
+        var pose = context.pose();
+        context.nextStratum();
+        pose.pushMatrix();
+        pose.scale(0.5F, 0.5F);
+        context.text(font, text, cellX * 2 + 33 - font.width(text), cellY * 2 + 24, 0xFFFFFFFF);
+        pose.popMatrix();
     }
 
     private static String formatCount(long count) {
