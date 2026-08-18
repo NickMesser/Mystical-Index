@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " H ",
+    "EBE",
+    " H "
+  ],
+  "key": {
+    "H": "minecraft:hopper",
+    "E": "minecraft:ender_pearl",
+    "B": "minecraft:book"
+  },
+  "result": {
+    "id": "mystical_index:transport_book"
+  }
+}
