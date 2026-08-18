@@ -1,0 +1,93 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "mystical_index:item/farming_book"
+  },
+  "display": {
+    "gui": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.75,
+        0.75,
+        0.75
+      ]
+    },
+    "ground": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        2,
+        0
+      ],
+      "scale": [
+        0.375,
+        0.375,
+        0.375
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.75,
+        0.75,
+        0.75
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        0,
+        -90,
+        55
+      ],
+      "translation": [
+        0,
+        4.0,
+        0.5
+      ],
+      "scale": [
+        0.6375,
+        0.6375,
+        0.6375
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        -90,
+        25
+      ],
+      "translation": [
+        1.13,
+        3.2,
+        1.13
+      ],
+      "scale": [
+        0.51,
+        0.51,
+        0.51
+      ]
+    }
+  }
+}
