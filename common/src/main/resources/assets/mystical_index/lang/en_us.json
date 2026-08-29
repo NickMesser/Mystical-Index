@@ -1,6 +1,6 @@
 {
   "item.mystical_index.storage_book": "Book of Storage",
-  "item.mystical_index.storage_book.named": "Book of %s",
+  "item.mystical_index.storage_book.named": "%s Book",
   "tooltip.mystical_index.storage_book": "Hold §eSHIFT§r for more info.",
   "tooltip.mystical_index.storage_book_shift0": "§eSHIFT§r + §eRIGHT CLICK§r a block to set this book.",
   "tooltip.mystical_index.storage_book_shift1": "§eRIGHT CLICK§r with a stored block to place it.",

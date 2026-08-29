@@ -34,6 +34,13 @@ versionRange = "[20.0.12,)"
 ordering = "AFTER"
 side = "BOTH"
 
+[[dependencies.mystical_index]]
+modId = "midnightlib"
+type = "required"
+versionRange = "[0,)"
+ordering = "AFTER"
+side = "BOTH"
+
 [[mixins]]
 config = "mystical_index.mixins.json"
 
